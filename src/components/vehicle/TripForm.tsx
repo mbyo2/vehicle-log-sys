@@ -56,6 +56,13 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
     }
   };
 
+  const handleEndKilometersChange = (value: number) => {
+    onTripLogChange({ 
+      endKilometers: value,
+      totalKilometers: value - tripLog.startKilometers
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
@@ -101,7 +108,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
             type="number"
             placeholder="End Kilometers" 
             value={tripLog.endKilometers || ''}
-            onChange={(e) => onTripLogChange({ endKilometers: Number(e.target.value) })}
+            onChange={(e) => handleEndKilometersChange(Number(e.target.value))}
           />
           <Input 
             type="time"
@@ -110,6 +117,14 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
           />
         </div>
       </div>
+
+      {tripLog.totalKilometers > 0 && (
+        <div className="bg-primary/10 p-4 rounded-md">
+          <p className="text-sm font-medium">
+            Distance Covered: <span className="text-primary">{tripLog.totalKilometers} km</span>
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2 relative">
         <Input 
