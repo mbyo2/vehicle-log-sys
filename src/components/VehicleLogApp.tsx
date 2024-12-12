@@ -6,7 +6,18 @@ import { VehicleSelect } from './vehicle/VehicleSelect';
 import { ServiceStatus } from './vehicle/ServiceStatus';
 import { TripForm } from './vehicle/TripForm';
 import { CommentsHistory } from './vehicle/CommentsHistory';
+import { ThemeToggle } from './ThemeToggle';
 import { Vehicle, TripLog } from '@/types/vehicle';
+
+const tripPurposes = [
+  "Cash Movement", "Client Visits", "Document Delivery", "Staff Shuttle",
+  "Event Logistics", "Site Visits", "Material Delivery", "Equipment Maintenance",
+  "Team Transport", "Permit Acquisition", "Client Audits", "Document Collection",
+  "Internal Team Coordination", "Training/Workshops", "Data Retrieval",
+  "Patrol Operations", "Emergency Response", "Client Onboarding",
+  "Equipment Delivery", "Shift Changeovers", "Vehicle Maintenance",
+  "Vendor Visits", "Training & Team Development", "Event Logistics"
+];
 
 const VehicleLogApp = () => {
   const { toast } = useToast();
@@ -110,9 +121,13 @@ const VehicleLogApp = () => {
   
   return (
     <div className="container mx-auto p-4 space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Munjila Otwow Transport Limited</h1>
+        <ThemeToggle />
+      </div>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Munjila Otwow Transport Vehicle Log</CardTitle>
+          <CardTitle>Vehicle Log</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
@@ -130,6 +145,7 @@ const VehicleLogApp = () => {
                 <TripForm 
                   tripLog={tripLog}
                   onTripLogChange={(updates) => setTripLog(prev => ({ ...prev, ...updates }))}
+                  tripPurposes={tripPurposes}
                 />
 
                 <CommentsHistory 

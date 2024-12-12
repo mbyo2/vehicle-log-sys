@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { TripLog } from '@/types/vehicle';
+import { Card } from '@/components/ui/card';
 
 interface TripFormProps {
   tripLog: TripLog;
   onTripLogChange: (updates: Partial<TripLog>) => void;
+  tripPurposes: string[];
 }
 
-export const TripForm = ({ tripLog, onTripLogChange }: TripFormProps) => {
+export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormProps) => {
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredPurposes = tripPurposes.filter(purpose =>
+    purpose.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
@@ -56,12 +65,36 @@ export const TripForm = ({ tripLog, onTripLogChange }: TripFormProps) => {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
         <Input 
           placeholder="Purpose of Trip" 
-          value={tripLog.purpose}
-          onChange={(e) => onTripLogChange({ purpose: e.target.value })}
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowSuggestions(true);
+            onTripLogChange({ purpose: e.target.value });
+          }}
+          onFocus={() => setShowSuggestions(true)}
         />
+        {showSuggestions && searchTerm && (
+          <Card className="absolute z-10 w-full mt-1 max-h-60 overflow-auto">
+            <div className="p-2">
+              {filteredPurposes.map((purpose, index) => (
+                <div
+                  key={index}
+                  className="p-2 hover:bg-accent cursor-pointer"
+                  onClick={() => {
+                    setSearchTerm(purpose);
+                    onTripLogChange({ purpose });
+                    setShowSuggestions(false);
+                  }}
+                >
+                  {purpose}
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
         <Textarea 
           placeholder="Additional Comments about the Vehicle" 
           value={tripLog.comment}
