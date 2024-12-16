@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { UserProfile } from '@/types/auth';
+import { UserProfile, UserRole } from '@/types/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -61,8 +61,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) throw error;
-      console.log('Profile loaded:', data);
-      setProfile(data);
+      
+      // Ensure the role is of type UserRole
+      if (data) {
+        const userProfile: UserProfile = {
+          id: data.id,
+          email: data.email,
+          role: data.role as UserRole, // Type assertion since we know the role is valid
+          full_name: data.full_name || undefined
+        };
+        setProfile(userProfile);
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
     }
