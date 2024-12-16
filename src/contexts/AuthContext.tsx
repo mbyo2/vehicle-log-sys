@@ -3,6 +3,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile } from '@/types/auth';
 import { useToast } from '@/components/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check active sessions and get user profile
@@ -33,11 +35,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
       setUser(session?.user ?? null);
       if (session?.user) {
         await getProfile(session.user.id);
+        navigate('/');
       } else {
         setProfile(null);
+        navigate('/signin');
       }
       setLoading(false);
     });
@@ -45,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   async function getProfile(userId: string) {
     try {
@@ -56,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) throw error;
+      console.log('Profile loaded:', data);
       setProfile(data);
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -67,30 +73,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { user }, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
       });
 
       if (error) throw error;
-
-      if (user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              email,
-              role,
-              full_name: fullName,
-            },
-          ]);
-
-        if (profileError) throw profileError;
-      }
 
       toast({
         title: "Success!",
         description: "Please check your email to verify your account.",
       });
+      
+      navigate('/signin');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -113,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
+      
+      navigate('/');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -130,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Signed out",
         description: "Successfully signed out.",
       });
+      navigate('/signin');
     } catch (error: any) {
       toast({
         variant: "destructive",
