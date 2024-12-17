@@ -2,25 +2,29 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-export default function Profile() {
+const Profile = () => {
   const { profile, user } = useAuth();
   const [fullName, setFullName] = useState(profile?.full_name || "");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    setIsLoading(true);
     try {
+      setLoading(true);
+      
       const { error } = await supabase
         .from('profiles')
-        .update({ full_name: fullName })
+        .update({ 
+          full_name: fullName,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -36,7 +40,7 @@ export default function Profile() {
         description: error.message,
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -45,6 +49,7 @@ export default function Profile() {
       <Card>
         <CardHeader>
           <CardTitle>Profile Settings</CardTitle>
+          <CardDescription>Update your profile information</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -57,6 +62,7 @@ export default function Profile() {
                 type="email"
                 value={profile?.email || ""}
                 disabled
+                className="bg-muted"
               />
             </div>
             <div className="space-y-2">
@@ -65,8 +71,10 @@ export default function Profile() {
               </label>
               <Input
                 id="fullName"
+                type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
+                placeholder="Enter your full name"
               />
             </div>
             <div className="space-y-2">
@@ -75,16 +83,20 @@ export default function Profile() {
               </label>
               <Input
                 id="role"
+                type="text"
                 value={profile?.role || ""}
                 disabled
+                className="bg-muted capitalize"
               />
             </div>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Profile"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Updating..." : "Update Profile"}
             </Button>
           </form>
         </CardContent>
       </Card>
     </div>
   );
-}
+};
+
+export default Profile;
