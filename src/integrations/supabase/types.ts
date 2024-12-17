@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      drivers: {
+        Row: {
+          created_at: string
+          id: string
+          license_expiry: string | null
+          license_number: string | null
+          man_number: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          license_expiry?: string | null
+          license_number?: string | null
+          man_number: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          license_expiry?: string | null
+          license_number?: string | null
+          man_number?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -33,6 +71,140 @@ export type Database = {
           id?: string
           role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      vehicle_logs: {
+        Row: {
+          comments: string | null
+          created_at: string
+          driver_id: string
+          end_kilometers: number
+          end_time: string
+          id: string
+          purpose: string
+          start_kilometers: number
+          start_time: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          comments?: string | null
+          created_at?: string
+          driver_id: string
+          end_kilometers: number
+          end_time: string
+          id?: string
+          purpose: string
+          start_kilometers: number
+          start_time: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          comments?: string | null
+          created_at?: string
+          driver_id?: string
+          end_kilometers?: number
+          end_time?: string
+          id?: string
+          purpose?: string
+          start_kilometers?: number
+          start_time?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_services: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          id: string
+          kilometers: number
+          service_date: string
+          service_type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kilometers: number
+          service_date: string
+          service_type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          kilometers?: number
+          service_date?: string
+          service_type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_services_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          id: string
+          make: string
+          model: string
+          plate_number: string
+          service_interval: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          make: string
+          model: string
+          plate_number: string
+          service_interval?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          make?: string
+          model?: string
+          plate_number?: string
+          service_interval?: number
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }
