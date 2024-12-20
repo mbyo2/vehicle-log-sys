@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
@@ -7,7 +7,8 @@ import { ServiceStatus } from './vehicle/ServiceStatus';
 import { TripForm } from './vehicle/TripForm';
 import { CommentsHistory } from './vehicle/CommentsHistory';
 import { ThemeToggle } from './ThemeToggle';
-import { Vehicle, TripLog } from '@/types/vehicle';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const tripPurposes = [
   "Cash Movement", "Client Visits", "Document Delivery", "Staff Shuttle",
@@ -21,24 +22,12 @@ const tripPurposes = [
 
 const VehicleLogApp = () => {
   const { toast } = useToast();
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      plateNumber: 'KAA 123A',
-      currentKilometers: 45000,
-      lastServiceKilometers: 40000,
-      serviceInterval: 5000,
-      comments: []
-    },
-    {
-      plateNumber: 'KBB 456B',
-      currentKilometers: 30000,
-      lastServiceKilometers: 25000,
-      serviceInterval: 5000,
-      comments: []
-    }
-  ]);
+  const { user } = useAuth();
+  const [vehicles, setVehicles] = useState([]);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [tripLog, setTripLog] = useState<TripLog>({
+  const [tripLog, setTripLog] = useState({
     plateNumber: '',
     driver: '',
     date: '',
@@ -52,77 +41,156 @@ const VehicleLogApp = () => {
     timestamp: null
   });
 
-  const handleVehicleSelect = (plateNumber: string) => {
-    const selectedVehicle = vehicles.find(v => v.plateNumber === plateNumber);
-    if (selectedVehicle) {
-      setTripLog(prev => ({
-        ...prev,
-        plateNumber,
-        startKilometers: selectedVehicle.currentKilometers
-      }));
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select(`
+          id,
+          plate_number,
+          make,
+          model,
+          year,
+          service_interval,
+          vehicle_services (
+            kilometers,
+            service_date
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setVehicles(data || []);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not fetch vehicles",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const saveVehicleLog = () => {
-    const selectedVehicle = vehicles.find(v => v.plateNumber === tripLog.plateNumber);
-    
-    if (!selectedVehicle) {
+  const handleVehicleSelect = async (vehicleId) => {
+    const vehicle = vehicles.find(v => v.id === vehicleId);
+    if (vehicle) {
+      setSelectedVehicle(vehicle);
+      
+      // Get the last trip for this vehicle to set the start kilometers
+      const { data: lastTrip, error } = await supabase
+        .from('vehicle_logs')
+        .select('end_kilometers')
+        .eq('vehicle_id', vehicleId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (!error && lastTrip) {
+        setTripLog(prev => ({
+          ...prev,
+          vehicleId,
+          plateNumber: vehicle.plate_number,
+          startKilometers: lastTrip.end_kilometers
+        }));
+      } else {
+        setTripLog(prev => ({
+          ...prev,
+          vehicleId,
+          plateNumber: vehicle.plate_number,
+          startKilometers: 0
+        }));
+      }
+    }
+  };
+
+  const saveVehicleLog = async () => {
+    if (!user) {
       toast({
+        variant: "destructive",
         title: "Error",
-        description: "Please select a vehicle",
-        variant: "destructive"
+        description: "You must be logged in to save a vehicle log",
       });
       return;
     }
 
-    if (!tripLog.driver || !tripLog.date || !tripLog.startTime || !tripLog.endTime || 
+    if (!tripLog.vehicleId || !tripLog.date || !tripLog.startTime || !tripLog.endTime || 
         !tripLog.endKilometers || !tripLog.purpose) {
       toast({
+        variant: "destructive",
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive"
       });
       return;
     }
 
-    const updatedVehicles = vehicles.map(vehicle => 
-      vehicle.plateNumber === tripLog.plateNumber
-        ? {
-            ...vehicle,
-            currentKilometers: tripLog.endKilometers,
-            comments: tripLog.comment 
-              ? [...vehicle.comments, {
-                  text: tripLog.comment,
-                  timestamp: new Date().toLocaleString()
-                }]
-              : vehicle.comments
-          }
-        : vehicle
-    );
+    try {
+      // First get the driver ID
+      const { data: driverData, error: driverError } = await supabase
+        .from('drivers')
+        .select('id')
+        .eq('profile_id', user.id)
+        .single();
 
-    setVehicles(updatedVehicles);
+      if (driverError) throw driverError;
 
-    toast({
-      title: "Success",
-      description: "Vehicle log saved successfully",
-    });
+      const { error } = await supabase
+        .from('vehicle_logs')
+        .insert({
+          vehicle_id: tripLog.vehicleId,
+          driver_id: driverData.id,
+          start_kilometers: tripLog.startKilometers,
+          end_kilometers: tripLog.endKilometers,
+          start_time: new Date(`${tripLog.date}T${tripLog.startTime}`).toISOString(),
+          end_time: new Date(`${tripLog.date}T${tripLog.endTime}`).toISOString(),
+          purpose: tripLog.purpose,
+          comments: tripLog.comment || null
+        });
 
-    setTripLog(prev => ({
-      ...prev,
-      driver: '',
-      date: '',
-      startTime: '',
-      endTime: '',
-      endKilometers: 0,
-      purpose: '',
-      comment: ''
-    }));
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Vehicle log saved successfully",
+      });
+
+      // Reset form
+      setTripLog(prev => ({
+        ...prev,
+        date: '',
+        startTime: '',
+        endTime: '',
+        endKilometers: 0,
+        purpose: '',
+        comment: ''
+      }));
+
+      // Refresh vehicles to get updated data
+      fetchVehicles();
+    } catch (error) {
+      console.error('Error saving vehicle log:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not save vehicle log",
+      });
+    }
   };
   
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container mx-auto p-4 space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Munjila Otwow Transport Limited</h1>
+        <h1 className="text-2xl font-bold">Vehicle Log Entry</h1>
         <ThemeToggle />
       </div>
       <Card>
@@ -136,11 +204,9 @@ const VehicleLogApp = () => {
               onVehicleSelect={handleVehicleSelect}
             />
 
-            {tripLog.plateNumber && (
+            {selectedVehicle && (
               <>
-                <ServiceStatus 
-                  vehicle={vehicles.find(v => v.plateNumber === tripLog.plateNumber)!}
-                />
+                <ServiceStatus vehicle={selectedVehicle} />
                 
                 <TripForm 
                   tripLog={tripLog}
@@ -148,9 +214,7 @@ const VehicleLogApp = () => {
                   tripPurposes={tripPurposes}
                 />
 
-                <CommentsHistory 
-                  vehicle={vehicles.find(v => v.plateNumber === tripLog.plateNumber)!}
-                />
+                <CommentsHistory vehicle={selectedVehicle} />
               </>
             )}
 

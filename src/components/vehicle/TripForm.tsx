@@ -1,26 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { TripLog } from '@/types/vehicle';
 import { Card } from '@/components/ui/card';
-
-// Mock database of drivers and their man numbers
-const driverDatabase = {
-  'John Doe': 'MN001',
-  'Jane Smith': 'MN002',
-  'Mike Johnson': 'MN003',
-  // Add more drivers as needed
-};
-
-// Reverse lookup for man numbers to names
-const manNumberDatabase = Object.entries(driverDatabase).reduce((acc, [name, num]) => {
-  acc[num] = name;
-  return acc;
-}, {} as Record<string, string>);
+import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TripFormProps {
-  tripLog: TripLog;
-  onTripLogChange: (updates: Partial<TripLog>) => void;
+  tripLog: any;
+  onTripLogChange: (updates: Partial<any>) => void;
   tripPurposes: string[];
 }
 
@@ -28,33 +16,38 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [manNumber, setManNumber] = useState('');
+  const [driverId, setDriverId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const filteredPurposes = tripPurposes.filter(purpose =>
     purpose.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Effect to handle driver name changes
   useEffect(() => {
-    if (tripLog.driver && driverDatabase[tripLog.driver]) {
-      setManNumber(driverDatabase[tripLog.driver]);
-    }
-  }, [tripLog.driver]);
+    const fetchDriverId = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('drivers')
+          .select('id, man_number')
+          .eq('profile_id', user.id)
+          .single();
 
-  const handleDriverChange = (value: string) => {
-    onTripLogChange({ driver: value });
-    // Check if the entered name exists in the database
-    if (driverDatabase[value]) {
-      setManNumber(driverDatabase[value]);
-    }
-  };
+        if (error) {
+          console.error('Error fetching driver:', error);
+          return;
+        }
 
-  const handleManNumberChange = (value: string) => {
-    setManNumber(value);
-    // Check if the entered man number exists in the database
-    if (manNumberDatabase[value]) {
-      onTripLogChange({ driver: manNumberDatabase[value] });
-    }
-  };
+        if (data) {
+          setDriverId(data.id);
+          setManNumber(data.man_number);
+          onTripLogChange({ driver: data.man_number });
+        }
+      }
+    };
+
+    fetchDriverId();
+  }, [user]);
 
   const handleEndKilometersChange = (value: number) => {
     onTripLogChange({ 
@@ -66,19 +59,12 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
   return (
     <div className="space-y-4">
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="flex gap-2">
-          <Input 
-            placeholder="Driver Name" 
-            value={tripLog.driver}
-            onChange={(e) => handleDriverChange(e.target.value)}
-          />
-          <Input 
-            placeholder="Man Number"
-            value={manNumber}
-            onChange={(e) => handleManNumberChange(e.target.value)}
-            className="w-32"
-          />
-        </div>
+        <Input 
+          placeholder="Man Number" 
+          value={manNumber}
+          readOnly
+          className="bg-gray-100"
+        />
         <Input 
           type="date"
           value={tripLog.date}
@@ -94,6 +80,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
             placeholder="Start Kilometers" 
             value={tripLog.startKilometers}
             readOnly
+            className="bg-gray-100"
           />
           <Input 
             type="time"
