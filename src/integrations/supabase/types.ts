@@ -47,6 +47,47 @@ export type Database = {
           },
         ]
       }
+      fuel_logs: {
+        Row: {
+          cost_per_liter: number
+          created_at: string
+          id: string
+          liters_added: number
+          odometer_reading: number
+          total_cost: number
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          cost_per_liter: number
+          created_at?: string
+          id?: string
+          liters_added: number
+          odometer_reading: number
+          total_cost: number
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          cost_per_liter?: number
+          created_at?: string
+          id?: string
+          liters_added?: number
+          odometer_reading?: number
+          total_cost?: number
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -178,30 +219,42 @@ export type Database = {
       vehicles: {
         Row: {
           created_at: string
+          current_kilometers: number | null
+          fitness_cert_expiry: string | null
           id: string
+          insurance_expiry: string | null
           make: string
           model: string
           plate_number: string
+          road_tax_expiry: string | null
           service_interval: number
           updated_at: string
           year: number
         }
         Insert: {
           created_at?: string
+          current_kilometers?: number | null
+          fitness_cert_expiry?: string | null
           id?: string
+          insurance_expiry?: string | null
           make: string
           model: string
           plate_number: string
+          road_tax_expiry?: string | null
           service_interval?: number
           updated_at?: string
           year: number
         }
         Update: {
           created_at?: string
+          current_kilometers?: number | null
+          fitness_cert_expiry?: string | null
           id?: string
+          insurance_expiry?: string | null
           make?: string
           model?: string
           plate_number?: string
+          road_tax_expiry?: string | null
           service_interval?: number
           updated_at?: string
           year?: number

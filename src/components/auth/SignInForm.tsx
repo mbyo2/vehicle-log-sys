@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Icons } from '@/components/ui/icons';
 import { supabase } from '@/integrations/supabase/client';
 
 export function SignInForm() {
@@ -44,29 +46,38 @@ export function SignInForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <Card className="w-full max-w-[400px]">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl text-center">Sign in</CardTitle>
+          <CardDescription className="text-center">
+            Enter your email and password to sign in to your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
+                id="email"
                 type="email"
-                placeholder="Email"
+                placeholder="m@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
+                id="password"
                 type="password"
-                placeholder="Password"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
             <Button
@@ -74,9 +85,21 @@ export function SignInForm() {
               className="w-full"
               disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading && (
+                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Sign In
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm">
+            Don't have an account?{" "}
+            <Link 
+              to="/signup" 
+              className="text-primary hover:underline"
+            >
+              Sign up
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
