@@ -1,15 +1,21 @@
 export interface Vehicle {
-  plateNumber: string;
-  currentKilometers: number;
-  lastServiceKilometers: number;
-  serviceInterval: number;
-  comments: Array<{
-    text: string;
-    timestamp: string;
-  }>;
+  id: string;
+  plate_number: string;
+  make: string;
+  model: string;
+  year: number;
+  service_interval: number;
+  vehicle_services?: VehicleService[];
+}
+
+export interface VehicleService {
+  id: string;
+  kilometers: number;
+  service_date: string;
 }
 
 export interface TripLog {
+  vehicleId: string;
   plateNumber: string;
   driver: string;
   date: string;

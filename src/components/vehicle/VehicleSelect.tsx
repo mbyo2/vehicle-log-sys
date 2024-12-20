@@ -4,7 +4,7 @@ import { Vehicle } from '@/types/vehicle';
 
 interface VehicleSelectProps {
   vehicles: Vehicle[];
-  onVehicleSelect: (plateNumber: string) => void;
+  onVehicleSelect: (vehicleId: string) => void;
 }
 
 export const VehicleSelect = ({ vehicles, onVehicleSelect }: VehicleSelectProps) => {
@@ -17,8 +17,8 @@ export const VehicleSelect = ({ vehicles, onVehicleSelect }: VehicleSelectProps)
         </SelectTrigger>
         <SelectContent>
           {vehicles.map((vehicle) => (
-            <SelectItem key={vehicle.plateNumber} value={vehicle.plateNumber}>
-              {vehicle.plateNumber}
+            <SelectItem key={vehicle.id} value={vehicle.id}>
+              {vehicle.plate_number}
             </SelectItem>
           ))}
         </SelectContent>
