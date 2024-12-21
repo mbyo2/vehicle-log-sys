@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Car, Users, FileText, Bell } from "lucide-react";
+import { ModalDemo } from "@/components/ModalDemo";
 
 export function Dashboard() {
   const { profile } = useAuth();
@@ -50,6 +51,15 @@ export function Dashboard() {
           );
         })}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Modal System Demo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ModalDemo />
+        </CardContent>
+      </Card>
     </div>
   );
 }
