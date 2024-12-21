@@ -1,10 +1,10 @@
 import { BrowserRouter as Router } from "react-router-dom";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ModalProvider } from "@/contexts/ModalContext";
-import AppRoutes from "@/routes";
+import { AppRoutes } from "@/routes";
 
 const queryClient = new QueryClient();
 
