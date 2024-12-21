@@ -4,12 +4,12 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/ui/icons';
 import { supabase } from '@/integrations/supabase/client';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { ThemeToggle } from '@/components/ThemeToggle';
 import {
   Form,
   FormControl,
@@ -68,7 +68,10 @@ export function SignInForm() {
   };
 
   return (
-    <div className="container flex h-screen w-screen flex-col items-center justify-center">
+    <div className="container relative flex h-screen w-screen flex-col items-center justify-center">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-[400px]">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">Sign in</CardTitle>
