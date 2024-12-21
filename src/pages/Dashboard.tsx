@@ -1,65 +1,83 @@
-import { useAuth } from "@/contexts/AuthContext";
+import React from "react";
+import { AdvertisementList } from "@/components/advertisements/AdvertisementList";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Car, Users, FileText, Bell } from "lucide-react";
-import { ModalDemo } from "@/components/ModalDemo";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-export function Dashboard() {
-  const { profile } = useAuth();
+export default function Dashboard() {
+  const { data: vehicleCount } = useQuery({
+    queryKey: ["vehicleCount"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("vehicles")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count;
+    },
+  });
 
-  const stats = {
-    driver: [
-      { name: 'Total Trips', value: '0', icon: Car },
-      { name: 'Total Distance', value: '0 km', icon: FileText },
-      { name: 'Active Vehicles', value: '0', icon: Car },
-      { name: 'Notifications', value: '0', icon: Bell },
-    ],
-    supervisor: [
-      { name: 'Active Drivers', value: '0', icon: Users },
-      { name: 'Pending Approvals', value: '0', icon: FileText },
-      { name: 'Active Vehicles', value: '0', icon: Car },
-      { name: 'Maintenance Alerts', value: '0', icon: Bell },
-    ],
-    admin: [
-      { name: 'Total Users', value: '0', icon: Users },
-      { name: 'Total Vehicles', value: '0', icon: Car },
-      { name: 'Monthly Trips', value: '0', icon: FileText },
-      { name: 'System Alerts', value: '0', icon: Bell },
-    ],
-  };
+  const { data: driverCount } = useQuery({
+    queryKey: ["driverCount"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("drivers")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count;
+    },
+  });
 
-  const userStats = profile ? stats[profile.role] : [];
+  const { data: logCount } = useQuery({
+    queryKey: ["logCount"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("vehicle_logs")
+        .select("*", { count: "exact", head: true });
+      if (error) throw error;
+      return count;
+    },
+  });
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {userStats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.name}
-                </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Announcements</h2>
+          <AdvertisementList />
+        </div>
+        
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Overview</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Vehicles</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-3xl font-bold">{vehicleCount ?? 0}</p>
               </CardContent>
             </Card>
-          );
-        })}
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Drivers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{driverCount ?? 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Total Logs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{logCount ?? 0}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Modal System Demo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ModalDemo />
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -9,6 +9,69 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      advertisements: {
+        Row: {
+          content: string
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean | null
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          start_date: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      currency_settings: {
+        Row: {
+          created_at: string
+          currency_code: string
+          exchange_rate: number
+          id: string
+          is_default: boolean | null
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_code: string
+          exchange_rate?: number
+          id?: string
+          is_default?: boolean | null
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          exchange_rate?: number
+          id?: string
+          is_default?: boolean | null
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           created_at: string
@@ -84,6 +147,44 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuel_prices: {
+        Row: {
+          created_at: string
+          currency_id: string | null
+          effective_date: string
+          fuel_type: string
+          id: string
+          price_per_liter: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_id?: string | null
+          effective_date: string
+          fuel_type: string
+          id?: string
+          price_per_liter: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_id?: string | null
+          effective_date?: string
+          fuel_type?: string
+          id?: string
+          price_per_liter?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuel_prices_currency_id_fkey"
+            columns: ["currency_id"]
+            isOneToOne: false
+            referencedRelation: "currency_settings"
             referencedColumns: ["id"]
           },
         ]

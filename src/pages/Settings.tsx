@@ -1,8 +1,11 @@
-export function Settings() {
+import React from "react";
+import { CurrencySettings } from "@/components/currency/CurrencySettings";
+
+export default function Settings() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">System Settings</h1>
-      <p>System configuration interface coming soon...</p>
+    <div className="container mx-auto py-6">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      <CurrencySettings />
     </div>
   );
 }
