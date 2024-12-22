@@ -43,6 +43,14 @@ export function SignInForm() {
     setLoading(true);
     try {
       console.log('Attempting to sign in with email:', values.email);
+      
+      // First, check if the user exists
+      const { data: { user: existingUser }, error: checkError } = await supabase.auth.getUser();
+      
+      if (existingUser) {
+        await supabase.auth.signOut(); // Sign out first if there's an existing session
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -54,6 +62,8 @@ export function SignInForm() {
         
         if (error.message.includes("Email not confirmed")) {
           errorMessage = "Please confirm your email address before signing in";
+        } else if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "The email or password you entered is incorrect";
         }
         
         toast({
@@ -61,7 +71,7 @@ export function SignInForm() {
           title: "Error signing in",
           description: errorMessage,
         });
-        throw error;
+        return; // Return early instead of throwing
       }
 
       if (data.user) {
@@ -70,13 +80,15 @@ export function SignInForm() {
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
+        navigate('/'); // Explicitly navigate to home on success
       }
-
-      // The user will be automatically redirected based on their role
-      // through the AuthContext's auth state change handler
     } catch (error: any) {
       console.error('Caught error:', error);
-      // Error already handled in the previous block
+      toast({
+        variant: "destructive",
+        title: "Error signing in",
+        description: "An unexpected error occurred. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
