@@ -42,26 +42,41 @@ export function SignInForm() {
   const onSubmit = async (values: SignInValues) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting to sign in with email:', values.email);
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        let errorMessage = "Invalid email or password";
+        
+        if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please confirm your email address before signing in";
+        }
+        
+        toast({
+          variant: "destructive",
+          title: "Error signing in",
+          description: errorMessage,
+        });
+        throw error;
+      }
 
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in.",
-      });
+      if (data.user) {
+        console.log('Sign in successful:', data.user);
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
+      }
 
       // The user will be automatically redirected based on their role
       // through the AuthContext's auth state change handler
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error signing in",
-        description: error.message,
-      });
+      console.error('Caught error:', error);
+      // Error already handled in the previous block
     } finally {
       setLoading(false);
     }
