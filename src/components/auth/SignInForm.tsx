@@ -42,15 +42,11 @@ export function SignInForm() {
   const onSubmit = async (values: SignInValues) => {
     setLoading(true);
     try {
+      // Clear any existing sessions first
+      await supabase.auth.signOut();
+      
       console.log('Attempting to sign in with email:', values.email);
       
-      // First, check if the user exists
-      const { data: { user: existingUser }, error: checkError } = await supabase.auth.getUser();
-      
-      if (existingUser) {
-        await supabase.auth.signOut(); // Sign out first if there's an existing session
-      }
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
@@ -71,7 +67,7 @@ export function SignInForm() {
           title: "Error signing in",
           description: errorMessage,
         });
-        return; // Return early instead of throwing
+        return;
       }
 
       if (data.user) {
@@ -80,7 +76,7 @@ export function SignInForm() {
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
-        navigate('/'); // Explicitly navigate to home on success
+        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Caught error:', error);
