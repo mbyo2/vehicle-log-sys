@@ -42,23 +42,15 @@ export function SignInForm() {
   const onSubmit = async (values: SignInValues) => {
     setLoading(true);
     try {
-      console.log('Starting sign in process...');
-      
       // First, check if there's an existing session and clear it
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) {
-        console.warn('Error clearing existing session:', signOutError);
-      }
+      await supabase.auth.signOut();
       
-      console.log('Attempting to sign in with email:', values.email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: { user, session }, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (error) {
-        console.error('Sign in error:', error);
         let errorMessage = "Invalid email or password";
         
         if (error.message.includes("Email not confirmed")) {
@@ -75,39 +67,37 @@ export function SignInForm() {
         return;
       }
 
-      if (data?.user) {
-        console.log('Sign in successful:', data.user);
-        
-        // Verify session was created
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Error getting session:', sessionError);
+      if (user && session) {
+        // Get user profile to check role
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
           toast({
             variant: "destructive",
-            title: "Error verifying session",
-            description: "Please try signing in again.",
+            title: "Error fetching profile",
+            description: "Unable to verify user role. Please try again.",
           });
           return;
         }
 
-        if (session) {
-          toast({
-            title: "Welcome back!",
-            description: "Successfully signed in.",
-          });
-          navigate('/dashboard');
-        } else {
-          console.error('No session created after successful sign in');
-          toast({
-            variant: "destructive",
-            title: "Error signing in",
-            description: "No session created. Please try again.",
-          });
-        }
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in.",
+        });
+        
+        navigate('/dashboard');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error signing in",
+          description: "No session created. Please try again.",
+        });
       }
     } catch (error: any) {
-      console.error('Caught error:', error);
       toast({
         variant: "destructive",
         title: "Error signing in",

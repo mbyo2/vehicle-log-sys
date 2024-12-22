@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +33,7 @@ const signUpSchema = z.object({
   fullName: z.string()
     .min(2, "Full name must be at least 2 characters")
     .max(50, "Full name must not exceed 50 characters"),
-  role: z.enum(["driver", "supervisor", "admin"], {
+  role: z.enum(["driver"], {
     required_error: "Please select a role",
   }),
 });
@@ -42,7 +42,6 @@ type SignUpValues = z.infer<typeof signUpSchema>;
 
 export function SignUpForm() {
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -52,21 +51,31 @@ export function SignUpForm() {
       email: "",
       password: "",
       fullName: "",
-      role: undefined,
+      role: "driver",
     },
   });
 
   const onSubmit = async (values: SignUpValues) => {
     setLoading(true);
     try {
-      await signUp(values.email, values.password, values.role, values.fullName);
-      
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.fullName,
+          },
+        },
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Account created successfully!",
         description: "Please check your email to verify your account.",
       });
       
-      navigate("/signin");
+      navigate('/signin');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -161,8 +170,6 @@ export function SignUpForm() {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="driver">Driver</SelectItem>
-                        <SelectItem value="supervisor">Supervisor</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
