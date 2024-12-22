@@ -42,12 +42,17 @@ export function SignInForm() {
   const onSubmit = async (values: SignInValues) => {
     setLoading(true);
     try {
-      // Clear any existing sessions first
-      await supabase.auth.signOut();
+      console.log('Starting sign in process...');
+      
+      // First, check if there's an existing session and clear it
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) {
+        console.warn('Error clearing existing session:', signOutError);
+      }
       
       console.log('Attempting to sign in with email:', values.email);
       
-      const { data: { session }, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
@@ -70,19 +75,36 @@ export function SignInForm() {
         return;
       }
 
-      if (session) {
-        console.log('Sign in successful:', session.user);
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
-        });
-        navigate('/dashboard');
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error signing in",
-          description: "No session created. Please try again.",
-        });
+      if (data?.user) {
+        console.log('Sign in successful:', data.user);
+        
+        // Verify session was created
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Error getting session:', sessionError);
+          toast({
+            variant: "destructive",
+            title: "Error verifying session",
+            description: "Please try signing in again.",
+          });
+          return;
+        }
+
+        if (session) {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in.",
+          });
+          navigate('/dashboard');
+        } else {
+          console.error('No session created after successful sign in');
+          toast({
+            variant: "destructive",
+            title: "Error signing in",
+            description: "No session created. Please try again.",
+          });
+        }
       }
     } catch (error: any) {
       console.error('Caught error:', error);
