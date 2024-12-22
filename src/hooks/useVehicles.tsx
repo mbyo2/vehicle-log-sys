@@ -10,15 +10,11 @@ export function useVehicles() {
 
   const fetchVehicles = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('vehicles')
         .select(`
-          id,
-          plate_number,
-          make,
-          model,
-          year,
-          service_interval,
+          *,
           vehicle_services (
             id,
             kilometers,
