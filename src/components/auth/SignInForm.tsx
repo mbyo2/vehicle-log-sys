@@ -47,7 +47,7 @@ export function SignInForm() {
       
       console.log('Attempting to sign in with email:', values.email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: { session }, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
@@ -59,7 +59,7 @@ export function SignInForm() {
         if (error.message.includes("Email not confirmed")) {
           errorMessage = "Please confirm your email address before signing in";
         } else if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "The email or password you entered is incorrect";
+          errorMessage = "The email or password you entered is incorrect. Please try again.";
         }
         
         toast({
@@ -70,13 +70,19 @@ export function SignInForm() {
         return;
       }
 
-      if (data.user) {
-        console.log('Sign in successful:', data.user);
+      if (session) {
+        console.log('Sign in successful:', session.user);
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
         navigate('/dashboard');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error signing in",
+          description: "No session created. Please try again.",
+        });
       }
     } catch (error: any) {
       console.error('Caught error:', error);
