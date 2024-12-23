@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       advertisements: {
         Row: {
+          company_id: string | null
           content: string
           created_at: string
           end_date: string
@@ -21,6 +22,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           content: string
           created_at?: string
           end_date: string
@@ -31,6 +33,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           content?: string
           created_at?: string
           end_date?: string
@@ -40,10 +43,55 @@ export type Database = {
           title?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subscription_type: Database["public"]["Enums"]["subscription_type"]
+          trial_end_date: string | null
+          trial_start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subscription_type?: Database["public"]["Enums"]["subscription_type"]
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subscription_type?: Database["public"]["Enums"]["subscription_type"]
+          trial_end_date?: string | null
+          trial_start_date?: string | null
+          updated_at?: string
+        }
         Relationships: []
       }
       currency_settings: {
         Row: {
+          company_id: string | null
           created_at: string
           currency_code: string
           exchange_rate: number
@@ -53,6 +101,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           currency_code: string
           exchange_rate?: number
@@ -62,6 +111,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           currency_code?: string
           exchange_rate?: number
@@ -70,10 +120,19 @@ export type Database = {
           symbol?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "currency_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       drivers: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           license_expiry: string | null
@@ -83,6 +142,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           license_expiry?: string | null
@@ -92,6 +152,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           license_expiry?: string | null
@@ -102,16 +163,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "drivers_profile_id_fkey"
-            columns: ["profile_id"]
+            foreignKeyName: "drivers_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
       }
       fuel_logs: {
         Row: {
+          company_id: string | null
           cost_per_liter: number
           created_at: string
           id: string
@@ -122,6 +184,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          company_id?: string | null
           cost_per_liter: number
           created_at?: string
           id?: string
@@ -132,6 +195,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          company_id?: string | null
           cost_per_liter?: number
           created_at?: string
           id?: string
@@ -143,6 +207,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fuel_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fuel_logs_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -153,6 +224,7 @@ export type Database = {
       }
       fuel_prices: {
         Row: {
+          company_id: string | null
           created_at: string
           currency_id: string | null
           effective_date: string
@@ -162,6 +234,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           currency_id?: string | null
           effective_date: string
@@ -171,6 +244,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           currency_id?: string | null
           effective_date?: string
@@ -180,6 +254,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fuel_prices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "fuel_prices_currency_id_fkey"
             columns: ["currency_id"]
@@ -191,34 +272,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          company_id: string | null
           created_at: string
           email: string
           full_name: string | null
           id: string
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           email: string
           full_name?: string | null
           id: string
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
           id?: string
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicle_logs: {
         Row: {
           comments: string | null
+          company_id: string | null
           created_at: string
           driver_id: string
           end_kilometers: number
@@ -232,6 +325,7 @@ export type Database = {
         }
         Insert: {
           comments?: string | null
+          company_id?: string | null
           created_at?: string
           driver_id: string
           end_kilometers: number
@@ -245,6 +339,7 @@ export type Database = {
         }
         Update: {
           comments?: string | null
+          company_id?: string | null
           created_at?: string
           driver_id?: string
           end_kilometers?: number
@@ -257,6 +352,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_logs_driver_id_fkey"
             columns: ["driver_id"]
@@ -275,6 +377,7 @@ export type Database = {
       }
       vehicle_services: {
         Row: {
+          company_id: string | null
           cost: number | null
           created_at: string
           description: string | null
@@ -286,6 +389,7 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          company_id?: string | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -297,6 +401,7 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          company_id?: string | null
           cost?: number | null
           created_at?: string
           description?: string | null
@@ -309,6 +414,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "vehicle_services_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vehicle_services_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
@@ -319,6 +431,7 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          company_id: string | null
           created_at: string
           current_kilometers: number | null
           fitness_cert_expiry: string | null
@@ -333,6 +446,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           current_kilometers?: number | null
           fitness_cert_expiry?: string | null
@@ -347,6 +461,7 @@ export type Database = {
           year: number
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           current_kilometers?: number | null
           fitness_cert_expiry?: string | null
@@ -360,7 +475,15 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -370,7 +493,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_type: "trial" | "full"
+      user_role: "super_admin" | "company_admin" | "supervisor" | "driver"
     }
     CompositeTypes: {
       [_ in never]: never

@@ -68,10 +68,10 @@ export function SignInForm() {
       }
 
       if (user && session) {
-        // Get user profile to check role
+        // Get user profile to check role and company
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
-          .select('role')
+          .select('role, company_id')
           .eq('id', user.id)
           .single();
 
@@ -84,12 +84,28 @@ export function SignInForm() {
           return;
         }
 
+        // Redirect based on role
+        let redirectPath = '/dashboard';
+        
+        // Super admin sees all companies
+        if (profile.role === 'super_admin') {
+          redirectPath = '/companies';
+        }
+        // Company admin and supervisor see their company dashboard
+        else if (['company_admin', 'supervisor'].includes(profile.role)) {
+          redirectPath = '/dashboard';
+        }
+        // Drivers see their trips
+        else if (profile.role === 'driver') {
+          redirectPath = '/trips';
+        }
+
         toast({
           title: "Welcome back!",
           description: "Successfully signed in.",
         });
         
-        navigate('/dashboard');
+        navigate(redirectPath);
       } else {
         toast({
           variant: "destructive",
