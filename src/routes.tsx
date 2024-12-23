@@ -4,6 +4,7 @@ import { SignInForm } from "./components/auth/SignInForm";
 import { SignUpForm } from "./components/auth/SignUpForm";
 import { DashboardLayout } from "./components/layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
+import { Companies } from "./pages/Companies";
 import { Drivers } from "./pages/Drivers";
 import { Fleet } from "./pages/Fleet";
 import { Maintenance } from "./pages/Maintenance";
@@ -18,6 +19,18 @@ export const AppRoutes = () => (
   <Routes>
     <Route path="/signin" element={<SignInForm />} />
     <Route path="/signup" element={<SignUpForm />} />
+    
+    {/* Super Admin Routes */}
+    <Route
+      path="/companies"
+      element={
+        <ProtectedRoute allowedRoles={['super_admin']}>
+          <DashboardLayout>
+            <Companies />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
     
     {/* Dashboard Routes */}
     <Route
