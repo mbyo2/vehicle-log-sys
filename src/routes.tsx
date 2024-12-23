@@ -14,6 +14,7 @@ import { TripApprovals } from "./pages/TripApprovals";
 import { Trips } from "./pages/Trips";
 import { Users } from "./pages/Users";
 import { VehicleStatus } from "./pages/VehicleStatus";
+import { UserRole } from "./types/auth";
 
 export const AppRoutes = () => (
   <Routes>
@@ -80,7 +81,7 @@ export const AppRoutes = () => (
     <Route
       path="/drivers"
       element={
-        <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'company_admin']}>
           <DashboardLayout>
             <Drivers />
           </DashboardLayout>
@@ -90,7 +91,7 @@ export const AppRoutes = () => (
     <Route
       path="/trip-approvals"
       element={
-        <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'company_admin']}>
           <DashboardLayout>
             <TripApprovals />
           </DashboardLayout>
@@ -100,7 +101,7 @@ export const AppRoutes = () => (
     <Route
       path="/maintenance"
       element={
-        <ProtectedRoute allowedRoles={['supervisor', 'admin']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'company_admin']}>
           <DashboardLayout>
             <Maintenance />
           </DashboardLayout>
@@ -112,7 +113,7 @@ export const AppRoutes = () => (
     <Route
       path="/users"
       element={
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['company_admin']}>
           <DashboardLayout>
             <Users />
           </DashboardLayout>
@@ -122,7 +123,7 @@ export const AppRoutes = () => (
     <Route
       path="/fleet"
       element={
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['company_admin']}>
           <DashboardLayout>
             <Fleet />
           </DashboardLayout>
@@ -132,7 +133,7 @@ export const AppRoutes = () => (
     <Route
       path="/reports"
       element={
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['company_admin']}>
           <DashboardLayout>
             <Reports />
           </DashboardLayout>
@@ -142,7 +143,7 @@ export const AppRoutes = () => (
     <Route
       path="/settings"
       element={
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['company_admin']}>
           <DashboardLayout>
             <Settings />
           </DashboardLayout>
