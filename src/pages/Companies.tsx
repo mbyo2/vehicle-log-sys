@@ -15,6 +15,7 @@ import { Plus } from "lucide-react";
 import { format } from "date-fns";
 import { CompanyForm } from "@/components/company/CompanyForm";
 import { useModal } from "@/contexts/ModalContext";
+import { Company } from "@/types/auth";
 
 export function Companies() {
   const { toast } = useToast();
@@ -37,7 +38,7 @@ export function Companies() {
         throw error;
       }
 
-      return data;
+      return data as Company[];
     },
   });
 
