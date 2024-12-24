@@ -18,6 +18,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -74,7 +75,10 @@ export function SignInForm() {
 
   return (
     <ErrorBoundary>
-      <div className="container flex h-screen w-screen flex-col items-center justify-center">
+      <div className="container relative flex h-screen w-screen flex-col items-center justify-center">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <Card className="w-full max-w-[400px] transition-all duration-300">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
