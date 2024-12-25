@@ -47,7 +47,7 @@ export function Companies() {
   return (
     <div className="space-y-6">
       <CompanyActions onAddCompany={handleAddCompany} />
-      <CompanyTable companies={companies || []} />
+      <CompanyTable companies={companies || []} onCompanyUpdated={() => refetch()} />
     </div>
   );
 }

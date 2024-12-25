@@ -8,10 +8,9 @@ interface CompanyActionsProps {
 export function CompanyActions({ onAddCompany }: CompanyActionsProps) {
   return (
     <div className="flex justify-between items-center">
-      <h1 className="text-3xl font-bold">Companies</h1>
+      <h2 className="text-3xl font-bold tracking-tight">Companies</h2>
       <Button onClick={onAddCompany}>
-        <Plus className="h-4 w-4 mr-2" />
-        Add Company
+        <Plus className="mr-2 h-4 w-4" /> Add Company
       </Button>
     </div>
   );
