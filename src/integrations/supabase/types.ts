@@ -53,12 +53,57 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          company_id: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          performed_at: string
+          performed_by: string
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          company_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          performed_at?: string
+          performed_by: string
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          company_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          performed_at?: string
+          performed_by?: string
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
           created_by: string | null
           id: string
           is_active: boolean | null
+          logo_url: string | null
           name: string
           subscription_type: Database["public"]["Enums"]["subscription_type"]
           trial_end_date: string | null
@@ -70,6 +115,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name: string
           subscription_type?: Database["public"]["Enums"]["subscription_type"]
           trial_end_date?: string | null
@@ -81,6 +127,7 @@ export type Database = {
           created_by?: string | null
           id?: string
           is_active?: boolean | null
+          logo_url?: string | null
           name?: string
           subscription_type?: Database["public"]["Enums"]["subscription_type"]
           trial_end_date?: string | null
