@@ -18,4 +18,5 @@ export interface Company {
   created_at: string;
   updated_at: string;
   created_by?: string;
+  logo_url?: string;
 }
