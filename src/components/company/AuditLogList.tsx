@@ -62,8 +62,9 @@ export function AuditLogList({ companyId }: AuditLogListProps) {
                 {format(new Date(log.performed_at), "PPp")}
               </TableCell>
             </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
