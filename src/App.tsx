@@ -1,16 +1,13 @@
 import { AppRoutes } from './routes';
 import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from 'next-themes';
 import './App.css';
 
 function App() {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="min-h-screen transition-theme">
-        <AppRoutes />
-        <Toaster />
-      </div>
-    </ThemeProvider>
+    <div className="min-h-screen bg-background">
+      <AppRoutes />
+      <Toaster />
+    </div>
   );
 }
 
