@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Eye, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useModal } from "@/contexts/ModalContext";
 import { CompanyEditForm } from "./CompanyEditForm";
+import { CompanyDetails } from "./CompanyDetails";
 
 interface CompanyTableProps {
   companies: Company[];
@@ -34,6 +35,7 @@ interface CompanyTableProps {
 export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const { toast } = useToast();
   const { openModal } = useModal();
 
@@ -130,6 +132,13 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => setSelectedCompany(company.id)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleEdit(company)}
                   >
                     <Edit className="h-4 w-4" />
@@ -173,6 +182,13 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedCompany && (
+        <CompanyDetails
+          companyId={selectedCompany}
+          onClose={() => setSelectedCompany(null)}
+        />
+      )}
     </>
   );
 }
