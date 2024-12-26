@@ -1,7 +1,7 @@
-import { AppRoutes } from './routes'
-import { Toaster } from '@/components/ui/toaster'
-import { ThemeProvider } from 'next-themes'
-import './App.css'
+import { AppRoutes } from './routes';
+import { Toaster } from '@/components/ui/toaster';
+import { ThemeProvider } from 'next-themes';
+import './App.css';
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <Toaster />
       </div>
     </ThemeProvider>
-  )
+  );
 }
 
-export default App
+export default App;
