@@ -2,26 +2,21 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wrench, Calendar, Package, DollarSign } from "lucide-react";
+import { Wrench, Calendar, Package, DollarSign, Plus } from "lucide-react";
 import { useModal } from '@/contexts/ModalContext';
+import { PartsInventory } from '@/components/maintenance/PartsInventory';
+import { MaintenanceSchedules } from '@/components/maintenance/MaintenanceSchedules';
+import { ServiceHistory } from '@/components/maintenance/ServiceHistory';
+import { CostTracking } from '@/components/maintenance/CostTracking';
 
 export function Maintenance() {
   const { openModal } = useModal();
   const [activeTab, setActiveTab] = useState("scheduling");
 
-  const handleScheduleMaintenance = () => {
-    // Will implement in next iteration
-    console.log("Schedule maintenance clicked");
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Vehicle Maintenance</h1>
-        <Button onClick={handleScheduleMaintenance}>
-          <Calendar className="h-4 w-4 mr-2" />
-          Schedule Maintenance
-        </Button>
       </div>
 
       <Tabs defaultValue="scheduling" className="space-y-4" onValueChange={setActiveTab}>
@@ -44,48 +39,20 @@ export function Maintenance() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="scheduling" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Schedule</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Maintenance scheduling interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="scheduling">
+          <MaintenanceSchedules />
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Service History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Service history tracking interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="history">
+          <ServiceHistory />
         </TabsContent>
 
-        <TabsContent value="inventory" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Parts Inventory</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Parts inventory management interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="inventory">
+          <PartsInventory />
         </TabsContent>
 
-        <TabsContent value="costs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Costs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Maintenance cost tracking interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="costs">
+          <CostTracking />
         </TabsContent>
       </Tabs>
     </div>
