@@ -33,7 +33,9 @@ export function SignInForm() {
         email: values.email,
         password: values.password,
         options: {
-          redirectTo: window.location.origin // Add this line to specify the redirect URL
+          data: {
+            redirect_to: window.location.origin
+          }
         }
       });
 
@@ -57,7 +59,7 @@ export function SignInForm() {
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Sign in error:", error); // Add this for debugging
+      console.error("Sign in error:", error);
       toast({
         variant: "destructive",
         title: "Error signing in",
