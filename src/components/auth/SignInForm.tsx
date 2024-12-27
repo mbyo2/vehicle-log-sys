@@ -32,6 +32,9 @@ export function SignInForm() {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
+        options: {
+          redirectTo: window.location.origin // Add this line to specify the redirect URL
+        }
       });
 
       if (error) {
@@ -54,6 +57,7 @@ export function SignInForm() {
         navigate("/");
       }
     } catch (error: any) {
+      console.error("Sign in error:", error); // Add this for debugging
       toast({
         variant: "destructive",
         title: "Error signing in",
