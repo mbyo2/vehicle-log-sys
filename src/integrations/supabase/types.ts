@@ -317,6 +317,158 @@ export type Database = {
           },
         ]
       }
+      maintenance_parts: {
+        Row: {
+          created_at: string
+          id: string
+          maintenance_id: string | null
+          part_id: string | null
+          quantity_used: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          maintenance_id?: string | null
+          part_id?: string | null
+          quantity_used: number
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          maintenance_id?: string | null
+          part_id?: string | null
+          quantity_used?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_parts_maintenance_id_fkey"
+            columns: ["maintenance_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_parts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_schedules: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          kilometer_interval: number | null
+          scheduled_date: string
+          service_type: string
+          status: string
+          time_interval_days: number | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          kilometer_interval?: number | null
+          scheduled_date: string
+          service_type: string
+          status?: string
+          time_interval_days?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          kilometer_interval?: number | null
+          scheduled_date?: string
+          service_type?: string
+          status?: string
+          time_interval_days?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_schedules_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_schedules_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts_inventory: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          min_quantity: number
+          part_name: string
+          part_number: string | null
+          quantity: number
+          supplier: string | null
+          unit_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          min_quantity?: number
+          part_name: string
+          part_number?: string | null
+          quantity?: number
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          min_quantity?: number
+          part_name?: string
+          part_number?: string | null
+          quantity?: number
+          supplier?: string | null
+          unit_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_inventory_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           company_id: string | null
