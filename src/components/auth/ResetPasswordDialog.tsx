@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface ResetPasswordDialogProps {
   open: boolean;
@@ -19,9 +20,20 @@ interface ResetPasswordDialogProps {
 
 export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogProps) {
   const [resetEmail, setResetEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleResetPassword = async () => {
+    if (!resetEmail) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter your email address",
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
         redirectTo: `${window.location.origin}/reset-password`,
@@ -40,6 +52,8 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
         title: "Error",
         description: error.message,
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,12 +71,22 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
           placeholder="Enter your email"
           value={resetEmail}
           onChange={(e) => setResetEmail(e.target.value)}
+          disabled={loading}
         />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleResetPassword}>Send Reset Link</Button>
+          <Button onClick={handleResetPassword} disabled={loading}>
+            {loading ? (
+              <>
+                <LoadingSpinner className="mr-2" />
+                Sending...
+              </>
+            ) : (
+              "Send Reset Link"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
