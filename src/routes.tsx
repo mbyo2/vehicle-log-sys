@@ -21,6 +21,18 @@ export const AppRoutes = () => (
     <Route path="/signin" element={<SignInForm />} />
     <Route path="/signup" element={<SignUpForm />} />
     
+    {/* Root route redirects to dashboard */}
+    <Route
+      path="/"
+      element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <Dashboard />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+    
     {/* Super Admin Routes */}
     <Route
       path="/companies"
@@ -34,16 +46,6 @@ export const AppRoutes = () => (
     />
     
     {/* Dashboard Routes */}
-    <Route
-      path="/"
-      element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <Dashboard />
-          </DashboardLayout>
-        </ProtectedRoute>
-      }
-    />
     <Route
       path="/dashboard"
       element={

@@ -31,12 +31,7 @@ export function SignInForm() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            redirect_to: window.location.origin
-          }
-        }
+        password: values.password
       });
 
       if (error) {
@@ -56,7 +51,7 @@ export function SignInForm() {
           title: "Success",
           description: "Successfully signed in",
         });
-        navigate("/");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       console.error("Sign in error:", error);
