@@ -19,4 +19,6 @@ export interface Company {
   updated_at: string;
   created_by?: string;
   logo_url?: string;
+  branding_primary_color?: string;
+  branding_secondary_color?: string;
 }
