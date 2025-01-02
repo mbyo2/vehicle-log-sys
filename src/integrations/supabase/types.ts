@@ -99,6 +99,8 @@ export type Database = {
       }
       companies: {
         Row: {
+          branding_primary_color: string | null
+          branding_secondary_color: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -111,6 +113,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branding_primary_color?: string | null
+          branding_secondary_color?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -123,6 +127,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branding_primary_color?: string | null
+          branding_secondary_color?: string | null
           created_at?: string
           created_by?: string | null
           id?: string

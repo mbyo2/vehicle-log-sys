@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
-  signUp: (email: string, password: string, role: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
@@ -77,9 +77,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signUp = async (email: string, password: string, role: string, fullName: string) => {
+  const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
     try {
-      const { data: { user }, error } = await supabase.auth.signUp({
+      // Create auth user
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -89,7 +90,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      if (error) throw error;
+      if (signUpError) throw signUpError;
+
+      if (role === 'company_admin' && companyName) {
+        // Create company
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .insert({
+            name: companyName,
+            subscription_type: subscriptionType || 'trial',
+            trial_start_date: new Date().toISOString(),
+            trial_end_date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(), // 25 days trial
+            created_by: user?.id,
+          })
+          .select()
+          .single();
+
+        if (companyError) throw companyError;
+
+        // Update profile with company_id
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            company_id: company.id,
+            role: role as UserRole,
+          })
+          .eq('id', user?.id);
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: "Success!",
@@ -161,4 +190,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
