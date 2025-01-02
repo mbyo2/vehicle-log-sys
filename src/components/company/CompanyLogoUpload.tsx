@@ -1,96 +1,161 @@
 import { useState } from "react";
-import { Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Company } from "@/types/auth";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, X } from "lucide-react";
 
 interface CompanyLogoUploadProps {
-  company: Company;
-  onSuccess: () => void;
+  companyId: string;
+  currentLogoUrl?: string | null;
 }
 
-export function CompanyLogoUpload({ company, onSuccess }: CompanyLogoUploadProps) {
-  const [uploading, setUploading] = useState(false);
+export function CompanyLogoUpload({ companyId, currentLogoUrl }: CompanyLogoUploadProps) {
+  const [loading, setLoading] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
   const { toast } = useToast();
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
+      setLoading(true);
 
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${company.id}.${fileExt}`;
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('You must select an image to upload.');
+      }
 
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${companyId}-logo.${fileExt}`;
+
+      // Upload image to storage
       const { error: uploadError } = await supabase.storage
-        .from("company-logos")
+        .from('company-logos')
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      const { data: publicUrl } = supabase.storage
-        .from("company-logos")
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('company-logos')
         .getPublicUrl(filePath);
 
+      // Update company record with new logo URL
       const { error: updateError } = await supabase
-        .from("companies")
-        .update({ logo_url: publicUrl.publicUrl })
-        .eq("id", company.id);
+        .from('companies')
+        .update({ logo_url: publicUrl })
+        .eq('id', companyId);
 
       if (updateError) throw updateError;
 
+      setLogoUrl(publicUrl);
       toast({
-        title: "Success",
-        description: "Company logo updated successfully",
+        title: "Logo updated",
+        description: "Your company logo has been updated successfully.",
       });
-
-      onSuccess();
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error uploading logo",
+        title: "Error",
         description: error.message,
       });
     } finally {
-      setUploading(false);
+      setLoading(false);
+    }
+  };
+
+  const removeLogo = async () => {
+    try {
+      setLoading(true);
+
+      if (!logoUrl) return;
+
+      const fileName = logoUrl.split('/').pop();
+      if (!fileName) return;
+
+      // Remove file from storage
+      const { error: deleteError } = await supabase.storage
+        .from('company-logos')
+        .remove([fileName]);
+
+      if (deleteError) throw deleteError;
+
+      // Update company record
+      const { error: updateError } = await supabase
+        .from('companies')
+        .update({ logo_url: null })
+        .eq('id', companyId);
+
+      if (updateError) throw updateError;
+
+      setLogoUrl(null);
+      toast({
+        title: "Logo removed",
+        description: "Your company logo has been removed successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-      <div className="space-y-0.5">
-        <Label>Company Logo</Label>
-        <p className="text-sm text-muted-foreground">
-          Upload your company logo
-        </p>
-      </div>
-      <div className="flex items-center space-x-2">
-        {company.logo_url && (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4">
+        {logoUrl ? (
           <img
-            src={company.logo_url}
+            src={logoUrl}
             alt="Company logo"
-            className="h-10 w-10 rounded object-cover"
+            className="w-24 h-24 object-contain rounded-lg border bg-background"
           />
+        ) : (
+          <div className="w-24 h-24 flex items-center justify-center rounded-lg border bg-muted">
+            <Upload className="w-8 h-8 text-muted-foreground" />
+          </div>
         )}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading}
-          onClick={() => document.getElementById("logo-upload")?.click()}
-        >
-          <Upload className="mr-2 h-4 w-4" />
-          {uploading ? "Uploading..." : "Upload"}
-        </Button>
-        <input
-          id="logo-upload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleLogoUpload}
-        />
+        <div className="flex flex-col gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading}
+            className="relative"
+          >
+            {loading ? (
+              <>
+                <LoadingSpinner className="mr-2" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload Logo
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={uploadLogo}
+              disabled={loading}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </Button>
+          {logoUrl && (
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              disabled={loading}
+              onClick={removeLogo}
+            >
+              <X className="mr-2 h-4 w-4" />
+              Remove Logo
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
