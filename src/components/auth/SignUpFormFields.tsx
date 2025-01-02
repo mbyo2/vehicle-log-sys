@@ -33,8 +33,12 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
       password: "",
       fullName: "",
       role: "driver",
+      companyName: "",
+      subscriptionType: "trial",
     },
   });
+
+  const watchRole = form.watch("role");
 
   return (
     <Form {...form}>
@@ -109,6 +113,7 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
+                  <SelectItem value="company_admin">Company Admin</SelectItem>
                   <SelectItem value="driver">Driver</SelectItem>
                 </SelectContent>
               </Select>
@@ -116,6 +121,53 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
             </FormItem>
           )}
         />
+        
+        {watchRole === "company_admin" && (
+          <>
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter company name"
+                      disabled={loading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subscriptionType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Type</FormLabel>
+                  <Select
+                    disabled={loading}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select subscription type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="trial">Trial (25 days)</SelectItem>
+                      <SelectItem value="full">Full Access</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
         <Button
           type="submit"
           className="w-full"

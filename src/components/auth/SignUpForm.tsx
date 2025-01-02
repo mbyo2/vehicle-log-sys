@@ -16,7 +16,8 @@ export function SignUpForm() {
   const onSubmit = async (values: SignUpFormValues) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -26,7 +27,37 @@ export function SignUpForm() {
         },
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // 2. If user is company admin, create the company
+      if (values.role === "company_admin" && values.companyName && values.subscriptionType) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .insert({
+            name: values.companyName,
+            subscription_type: values.subscriptionType,
+            trial_start_date: values.subscriptionType === 'trial' ? new Date().toISOString() : null,
+            trial_end_date: values.subscriptionType === 'trial' 
+              ? new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString() 
+              : null,
+            created_by: authData.user?.id,
+          })
+          .select()
+          .single();
+
+        if (companyError) throw companyError;
+
+        // 3. Update the user's profile with company_id and role
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            role: values.role,
+            company_id: companyData.id,
+          })
+          .eq('id', authData.user?.id);
+
+        if (profileError) throw profileError;
+      }
 
       toast({
         title: "Account created successfully!",

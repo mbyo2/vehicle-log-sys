@@ -8,9 +8,15 @@ export const signUpSchema = z.object({
   fullName: z.string()
     .min(2, "Full name must be at least 2 characters")
     .max(50, "Full name must not exceed 50 characters"),
-  role: z.enum(["driver"], {
+  role: z.enum(["company_admin", "driver"], {
     required_error: "Please select a role",
   }),
+  companyName: z.string()
+    .min(2, "Company name must be at least 2 characters")
+    .max(100, "Company name must not exceed 100 characters")
+    .optional(),
+  subscriptionType: z.enum(["trial", "full"])
+    .optional(),
 });
 
 export type SignUpFormValues = z.infer<typeof signUpSchema>;
