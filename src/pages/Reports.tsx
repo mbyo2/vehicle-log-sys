@@ -1,74 +1,60 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Fuel, Gauge, DollarSign, CreditCard } from "lucide-react";
+import { BarChart, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
+import { FleetUtilization } from "@/components/reports/FleetUtilization";
+import { CostAnalysis } from "@/components/reports/CostAnalysis";
+import { MaintenanceCosts } from "@/components/reports/MaintenanceCosts";
+import { FuelAnalytics } from "@/components/reports/FuelAnalytics";
+import { CompanyMetrics } from "@/components/reports/CompanyMetrics";
 
 export function Reports() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Reports & Analytics</h1>
 
-      <Tabs defaultValue="consumption" className="space-y-4">
+      <Tabs defaultValue="company" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="consumption">
-            <Fuel className="h-4 w-4 mr-2" />
-            Fuel Consumption
+          <TabsTrigger value="company">
+            <PieChart className="h-4 w-4 mr-2" />
+            Company Metrics
           </TabsTrigger>
-          <TabsTrigger value="efficiency">
-            <Gauge className="h-4 w-4 mr-2" />
-            Efficiency Analysis
+          <TabsTrigger value="fleet">
+            <Activity className="h-4 w-4 mr-2" />
+            Fleet Utilization
           </TabsTrigger>
           <TabsTrigger value="costs">
             <DollarSign className="h-4 w-4 mr-2" />
-            Cost Reports
+            Cost Analysis
           </TabsTrigger>
-          <TabsTrigger value="cards">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Fuel Cards
+          <TabsTrigger value="maintenance">
+            <BarChart className="h-4 w-4 mr-2" />
+            Maintenance Costs
+          </TabsTrigger>
+          <TabsTrigger value="fuel">
+            <LineChart className="h-4 w-4 mr-2" />
+            Fuel Analytics
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="consumption" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuel Consumption Tracking</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Fuel consumption tracking interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="company">
+          <CompanyMetrics />
         </TabsContent>
 
-        <TabsContent value="efficiency" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuel Efficiency Analysis</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Fuel efficiency analysis interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="fleet">
+          <FleetUtilization />
         </TabsContent>
 
-        <TabsContent value="costs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuel Cost Reports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Fuel cost reporting interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="costs">
+          <CostAnalysis />
         </TabsContent>
 
-        <TabsContent value="cards" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fuel Card Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>Fuel card management interface coming soon...</p>
-            </CardContent>
-          </Card>
+        <TabsContent value="maintenance">
+          <MaintenanceCosts />
+        </TabsContent>
+
+        <TabsContent value="fuel">
+          <FuelAnalytics />
         </TabsContent>
       </Tabs>
     </div>
