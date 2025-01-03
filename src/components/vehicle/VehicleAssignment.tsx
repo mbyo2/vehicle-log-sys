@@ -22,7 +22,7 @@ interface Driver {
   };
 }
 
-interface DriverResponse {
+interface SupabaseDriverResponse {
   id: string;
   profile: {
     full_name: string;
@@ -47,7 +47,8 @@ export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
       
       if (error) throw error;
       
-      return (data as DriverResponse[]).map(driver => ({
+      // Transform the data to match our Driver interface
+      return (data as SupabaseDriverResponse[]).map(driver => ({
         id: driver.id,
         profile: {
           full_name: driver.profile.full_name
