@@ -679,6 +679,60 @@ export type Database = {
           },
         ]
       }
+      vehicle_notifications: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          message: string
+          priority: string
+          status: string
+          type: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          message: string
+          priority: string
+          status?: string
+          type: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          message?: string
+          priority?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_notifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_notifications_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_services: {
         Row: {
           company_id: string | null
@@ -735,6 +789,9 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          assigned_to: string | null
+          assignment_end_date: string | null
+          assignment_start_date: string | null
           company_id: string | null
           created_at: string
           current_kilometers: number | null
@@ -750,6 +807,9 @@ export type Database = {
           year: number
         }
         Insert: {
+          assigned_to?: string | null
+          assignment_end_date?: string | null
+          assignment_start_date?: string | null
           company_id?: string | null
           created_at?: string
           current_kilometers?: number | null
@@ -765,6 +825,9 @@ export type Database = {
           year: number
         }
         Update: {
+          assigned_to?: string | null
+          assignment_end_date?: string | null
+          assignment_start_date?: string | null
           company_id?: string | null
           created_at?: string
           current_kilometers?: number | null
@@ -780,6 +843,13 @@ export type Database = {
           year?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicles_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicles_company_id_fkey"
             columns: ["company_id"]

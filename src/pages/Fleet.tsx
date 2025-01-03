@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useVehicles } from '@/hooks/useVehicles';
 import { Button } from '@/components/ui/button';
 import { useModal } from '@/contexts/ModalContext';
-import { Plus, Pencil, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, AlertCircle, UserPlus } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -11,9 +11,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleForm } from '@/components/vehicle/VehicleForm';
 import { ServiceStatus } from '@/components/vehicle/ServiceStatus';
-import { format } from 'date-fns';
+import { BulkVehicleImport } from '@/components/vehicle/BulkVehicleImport';
+import { VehicleStatusDashboard } from '@/components/vehicle/VehicleStatusDashboard';
+import { VehicleAssignment } from '@/components/vehicle/VehicleAssignment';
 import { Vehicle } from '@/types/vehicle';
 
 export function Fleet() {
@@ -45,63 +48,92 @@ export function Fleet() {
     });
   };
 
+  const handleAssignVehicle = (vehicle: Vehicle) => {
+    openModal({
+      title: `Assign Vehicle - ${vehicle.plate_number}`,
+      content: <VehicleAssignment vehicleId={vehicle.id} />,
+      size: "lg"
+    });
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Vehicle Fleet</h1>
-        <Button onClick={handleAddVehicle}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Vehicle
-        </Button>
-      </div>
+      <Tabs defaultValue="list" className="space-y-6">
+        <div className="flex justify-between items-center">
+          <TabsList>
+            <TabsTrigger value="list">Vehicle List</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          </TabsList>
+          <div className="flex gap-2">
+            <BulkVehicleImport />
+            <Button onClick={handleAddVehicle}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Vehicle
+            </Button>
+          </div>
+        </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Plate Number</TableHead>
-            <TableHead>Make</TableHead>
-            <TableHead>Model</TableHead>
-            <TableHead>Year</TableHead>
-            <TableHead>Current KM</TableHead>
-            <TableHead>Service Interval</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {vehicles.map((vehicle) => (
-            <TableRow key={vehicle.id}>
-              <TableCell>{vehicle.plate_number}</TableCell>
-              <TableCell>{vehicle.make}</TableCell>
-              <TableCell>{vehicle.model}</TableCell>
-              <TableCell>{vehicle.year}</TableCell>
-              <TableCell>{vehicle.current_kilometers || 0} km</TableCell>
-              <TableCell>{vehicle.service_interval} km</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEditVehicle(vehicle)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleViewStatus(vehicle)}
-                  >
-                    <AlertCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        <TabsContent value="dashboard">
+          <VehicleStatusDashboard />
+        </TabsContent>
+
+        <TabsContent value="list">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Plate Number</TableHead>
+                <TableHead>Make</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Current KM</TableHead>
+                <TableHead>Service Interval</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {vehicles.map((vehicle) => (
+                <TableRow key={vehicle.id}>
+                  <TableCell>{vehicle.plate_number}</TableCell>
+                  <TableCell>{vehicle.make}</TableCell>
+                  <TableCell>{vehicle.model}</TableCell>
+                  <TableCell>{vehicle.year}</TableCell>
+                  <TableCell>{vehicle.current_kilometers || 0} km</TableCell>
+                  <TableCell>{vehicle.service_interval} km</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEditVehicle(vehicle)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleViewStatus(vehicle)}
+                      >
+                        <AlertCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleAssignVehicle(vehicle)}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
