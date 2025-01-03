@@ -37,8 +37,16 @@ export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
           id,
           profile:profiles(full_name)
         `);
+      
       if (error) throw error;
-      return data;
+      
+      // Transform the data to match the Driver interface
+      return data.map(driver => ({
+        id: driver.id,
+        profile: {
+          full_name: driver.profile.full_name
+        }
+      }));
     },
   });
 

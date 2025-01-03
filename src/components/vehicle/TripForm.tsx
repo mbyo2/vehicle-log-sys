@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGPSTracking, useOfflineSync, useIsMobile } from '@/hooks/use-mobile';
+import { MapPin, Wifi, WifiOff } from 'lucide-react';
 
 interface TripFormProps {
   tripLog: any;
@@ -19,10 +22,28 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
   const [driverId, setDriverId] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { location, isTracking, startTracking } = useGPSTracking();
+  const { isSyncing, syncOfflineData } = useOfflineSync();
+  const isMobile = useIsMobile();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const filteredPurposes = tripPurposes.filter(purpose =>
     purpose.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  useEffect(() => {
+    const handleOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    window.addEventListener('online', handleOnlineStatus);
+    window.addEventListener('offline', handleOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', handleOnlineStatus);
+      window.removeEventListener('offline', handleOnlineStatus);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchDriverId = async () => {
@@ -58,7 +79,26 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
 
   return (
     <div className="space-y-4">
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Trip Log</h2>
+        <div className="flex items-center gap-2">
+          {isOnline ? (
+            <Wifi className="h-5 w-5 text-green-500" />
+          ) : (
+            <WifiOff className="h-5 w-5 text-yellow-500" />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={syncOfflineData}
+            disabled={isSyncing || isOnline}
+          >
+            Sync Data
+          </Button>
+        </div>
+      </div>
+
+      <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-4`}>
         <Input 
           placeholder="Man Number" 
           value={manNumber}
@@ -72,16 +112,26 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
         />
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6`}>
         <div className="space-y-2">
           <h4 className="font-semibold">Start Point</h4>
-          <Input 
-            type="number"
-            placeholder="Start Kilometers" 
-            value={tripLog.startKilometers}
-            readOnly
-            className="bg-gray-100"
-          />
+          <div className="flex gap-2">
+            <Input 
+              type="number"
+              placeholder="Start Kilometers" 
+              value={tripLog.startKilometers}
+              readOnly
+              className="bg-gray-100"
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={startTracking}
+              className={isTracking ? 'bg-green-100' : ''}
+            >
+              <MapPin className="h-4 w-4" />
+            </Button>
+          </div>
           <Input 
             type="time"
             value={tripLog.startTime}
@@ -104,6 +154,14 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
           />
         </div>
       </div>
+
+      {location && (
+        <Card className="p-4 bg-primary/5">
+          <p className="text-sm">
+            Current Location: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+          </p>
+        </Card>
+      )}
 
       {tripLog.totalKilometers > 0 && (
         <div className="bg-primary/10 p-4 rounded-md">
@@ -147,6 +205,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
           placeholder="Additional Comments about the Vehicle" 
           value={tripLog.comment}
           onChange={(e) => onTripLogChange({ comment: e.target.value })}
+          className="min-h-[100px]"
         />
       </div>
     </div>
