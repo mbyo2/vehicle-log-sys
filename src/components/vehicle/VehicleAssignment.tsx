@@ -40,7 +40,6 @@ export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
       
       if (error) throw error;
       
-      // Transform the data to match the Driver interface
       return data.map(driver => ({
         id: driver.id,
         profile: {

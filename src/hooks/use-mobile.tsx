@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const MOBILE_BREAKPOINT = 768;
 
@@ -103,7 +103,7 @@ export function useOfflineSync() {
   const syncOfflineData = React.useCallback(async () => {
     if (!navigator.onLine) {
       toast({
-        variant: "warning",
+        variant: "destructive",
         title: "Offline",
         description: "Data will be synced when connection is restored",
       });
