@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle, Car, Calendar, FileText } from 'lucide-react';
+import { AlertTriangle, Car, Calendar, FileText, Bell } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Button } from '@/components/ui/button';
 
 export const VehicleStatusDashboard = () => {
-  const { data: vehicles, isLoading } = useQuery({
+  const { data: vehicles, isLoading: vehiclesLoading } = useQuery({
     queryKey: ['vehicles-status'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -22,20 +24,9 @@ export const VehicleStatusDashboard = () => {
     },
   });
 
-  const { data: notifications } = useQuery({
-    queryKey: ['vehicle-notifications'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vehicle_notifications')
-        .select('*')
-        .eq('status', 'unread')
-        .order('priority', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { notifications, isLoading: notificationsLoading, markAsRead } = useNotifications();
 
-  if (isLoading) return <div>Loading...</div>;
+  if (vehiclesLoading || notificationsLoading) return <div>Loading...</div>;
 
   const getExpiryStatus = (date: string | null) => {
     if (!date) return { status: 'none', days: 0 };
@@ -48,7 +39,7 @@ export const VehicleStatusDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Total Vehicles</CardTitle>
@@ -82,7 +73,30 @@ export const VehicleStatusDashboard = () => {
           <CardContent>
             <div className="flex items-center space-x-2">
               <AlertTriangle className="h-5 w-5 text-primary" />
-              <span className="text-2xl font-bold">{notifications?.length || 0}</span>
+              <span className="text-2xl font-bold">
+                {notifications?.filter(n => n.status === 'unread').length || 0}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Expiring Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <FileText className="h-5 w-5 text-primary" />
+              <span className="text-2xl font-bold">
+                {vehicles?.filter(v => {
+                  const fitnessStatus = getExpiryStatus(v.fitness_cert_expiry);
+                  const insuranceStatus = getExpiryStatus(v.insurance_expiry);
+                  const taxStatus = getExpiryStatus(v.road_tax_expiry);
+                  return fitnessStatus.status === 'warning' || 
+                         insuranceStatus.status === 'warning' || 
+                         taxStatus.status === 'warning';
+                }).length || 0}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -90,16 +104,26 @@ export const VehicleStatusDashboard = () => {
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Recent Alerts</h3>
-        {notifications?.map((notification) => (
-          <Alert key={notification.id} variant={
-            notification.priority === 'high' ? 'destructive' : 
-            notification.priority === 'medium' ? 'default' : 'default'
-          }>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{notification.type.replace('_', ' ').toUpperCase()}</AlertTitle>
-            <AlertDescription>{notification.message}</AlertDescription>
-          </Alert>
-        ))}
+        {notifications?.filter(n => n.status === 'unread')
+          .map((notification) => (
+            <Alert key={notification.id} variant={
+              notification.priority === 'high' ? 'destructive' : 
+              notification.priority === 'medium' ? 'default' : 'default'
+            }>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle className="flex justify-between items-center">
+                <span>{notification.type.replace('_', ' ').toUpperCase()}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => markAsRead.mutate(notification.id)}
+                >
+                  Mark as Read
+                </Button>
+              </AlertTitle>
+              <AlertDescription>{notification.message}</AlertDescription>
+            </Alert>
+          ))}
       </div>
 
       <div className="space-y-4">
