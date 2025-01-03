@@ -42,6 +42,12 @@ export function FuelAnalytics() {
       : 0,
   }));
 
+  const totalCost = fuelData?.reduce((sum, log) => sum + (log.total_cost || 0), 0) || 0;
+  const totalLiters = fuelData?.reduce((sum, log) => sum + (log.liters_added || 0), 0) || 0;
+  const averageCostPerLiter = fuelData && fuelData.length > 0
+    ? (fuelData.reduce((sum, log) => sum + (log.cost_per_liter || 0), 0) / fuelData.length).toFixed(2)
+    : "0.00";
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -51,7 +57,7 @@ export function FuelAnalytics() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ${fuelData?.reduce((sum, log) => sum + (log.total_cost || 0), 0).toFixed(2)}
+              ${totalCost.toFixed(2)}
             </p>
           </CardContent>
         </Card>
@@ -62,7 +68,7 @@ export function FuelAnalytics() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {fuelData?.reduce((sum, log) => sum + (log.liters_added || 0), 0).toFixed(2)} L
+              {totalLiters.toFixed(2)} L
             </p>
           </CardContent>
         </Card>
@@ -73,7 +79,7 @@ export function FuelAnalytics() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              ${fuelData?.reduce((sum, log) => sum + (log.cost_per_liter || 0), 0) / (fuelData?.length || 1).toFixed(2)}
+              ${averageCostPerLiter}
             </p>
           </CardContent>
         </Card>

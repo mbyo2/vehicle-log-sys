@@ -15,13 +15,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 
+interface Driver {
+  id: string;
+  profile: {
+    full_name: string;
+  };
+}
+
 export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
   const [selectedDriver, setSelectedDriver] = useState<string>('');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const { toast } = useToast();
 
-  const { data: drivers } = useQuery({
+  const { data: drivers } = useQuery<Driver[]>({
     queryKey: ['drivers'],
     queryFn: async () => {
       const { data, error } = await supabase

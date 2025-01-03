@@ -141,7 +141,7 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
           )}
         />
 
-        <CompanyLogoUpload company={company} onSuccess={onSuccess} />
+        <CompanyLogoUpload companyId={company.id} currentLogoUrl={company.logo_url} />
 
         <div className="flex space-x-2">
           <Button type="submit" className="flex-1" disabled={loading}>

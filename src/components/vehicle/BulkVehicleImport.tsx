@@ -5,6 +5,18 @@ import { Upload, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from 'xlsx';
 
+interface VehicleImportData {
+  plate_number: string;
+  make: string;
+  model: string;
+  year: number;
+  service_interval?: number;
+  current_kilometers?: number;
+  fitness_cert_expiry?: string;
+  road_tax_expiry?: string;
+  insurance_expiry?: string;
+}
+
 export const BulkVehicleImport = () => {
   const [importing, setImporting] = useState(false);
   const { toast } = useToast();
@@ -21,7 +33,7 @@ export const BulkVehicleImport = () => {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        const jsonData = XLSX.utils.sheet_to_json<VehicleImportData>(worksheet);
 
         for (const vehicle of jsonData) {
           const { error } = await supabase
