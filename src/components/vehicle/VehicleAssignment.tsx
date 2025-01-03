@@ -22,6 +22,13 @@ interface Driver {
   };
 }
 
+interface DriverResponse {
+  id: string;
+  profile: {
+    full_name: string;
+  };
+}
+
 export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
   const [selectedDriver, setSelectedDriver] = useState<string>('');
   const [startDate, setStartDate] = useState<Date>();
@@ -40,7 +47,7 @@ export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
       
       if (error) throw error;
       
-      return data.map(driver => ({
+      return (data as DriverResponse[]).map(driver => ({
         id: driver.id,
         profile: {
           full_name: driver.profile.full_name
