@@ -42,13 +42,12 @@ export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
         .from('drivers')
         .select(`
           id,
-          profile:profiles(full_name)
+          profile:profiles!inner(full_name)
         `);
       
       if (error) throw error;
       
-      // Transform the data to match our Driver interface
-      return (data as SupabaseDriverResponse[]).map(driver => ({
+      return (data as unknown as SupabaseDriverResponse[]).map(driver => ({
         id: driver.id,
         profile: {
           full_name: driver.profile.full_name
