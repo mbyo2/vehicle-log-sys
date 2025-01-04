@@ -1,159 +1,92 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { DriverSelector } from "./DriverSelector";
+import { AssignmentDatePicker } from "./AssignmentDatePicker";
 
-interface Driver {
-  id: string;
-  profile: {
-    full_name: string;
-  };
+interface VehicleAssignmentProps {
+  vehicleId: string;
+  onAssignmentComplete?: () => void;
 }
 
-interface SupabaseDriverResponse {
-  id: string;
-  profile: {
-    full_name: string;
-  };
-}
-
-export const VehicleAssignment = ({ vehicleId }: { vehicleId: string }) => {
-  const [selectedDriver, setSelectedDriver] = useState<string>('');
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
+export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAssignmentProps) {
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: drivers } = useQuery<Driver[]>({
-    queryKey: ['drivers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('drivers')
-        .select(`
-          id,
-          profile:profiles!inner(full_name)
-        `);
-      
-      if (error) throw error;
-      
-      return (data as unknown as SupabaseDriverResponse[]).map(driver => ({
-        id: driver.id,
-        profile: {
-          full_name: driver.profile.full_name
-        }
-      }));
-    },
-  });
+  const assignVehicleMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDriverId || !startDate) {
+        throw new Error("Please select a driver and start date");
+      }
 
-  const handleAssign = async () => {
-    if (!selectedDriver || !startDate) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a driver and start date",
-      });
-      return;
-    }
-
-    try {
       const { error } = await supabase
         .from('vehicles')
         .update({
-          assigned_to: selectedDriver,
+          assigned_to: selectedDriverId,
           assignment_start_date: startDate.toISOString(),
           assignment_end_date: endDate?.toISOString() || null,
         })
         .eq('id', vehicleId);
 
       if (error) throw error;
-
+    },
+    onSuccess: () => {
       toast({
         title: "Success",
         description: "Vehicle assigned successfully",
       });
-    } catch (error: any) {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      onAssignmentComplete?.();
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message,
       });
-    }
+    },
+  });
+
+  const handleAssign = () => {
+    assignVehicleMutation.mutate();
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Driver</label>
-        <Select onValueChange={setSelectedDriver} value={selectedDriver}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select driver" />
-          </SelectTrigger>
-          <SelectContent>
-            {drivers?.map((driver) => (
-              <SelectItem key={driver.id} value={driver.id}>
-                {driver.profile.full_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Assign Vehicle</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Start Date</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, 'PPP') : 'Pick a date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <label className="text-sm font-medium">Driver</label>
+          <DriverSelector
+            selectedDriverId={selectedDriverId}
+            onDriverSelect={setSelectedDriverId}
+          />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">End Date (Optional)</label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, 'PPP') : 'Pick a date'}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={setEndDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+        <AssignmentDatePicker
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+        />
 
-      <Button onClick={handleAssign} className="w-full">
-        Assign Vehicle
-      </Button>
-    </div>
+        <Button 
+          onClick={handleAssign}
+          disabled={!selectedDriverId || !startDate || assignVehicleMutation.isPending}
+          className="w-full"
+        >
+          {assignVehicleMutation.isPending ? "Assigning..." : "Assign Vehicle"}
+        </Button>
+      </CardContent>
+    </Card>
   );
-};
+}
