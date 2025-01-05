@@ -1,9 +1,11 @@
 import VehicleLogApp from "@/components/VehicleLogApp";
 
-export default function Index() {
+const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <VehicleLogApp />
     </div>
   );
-}
+};
+
+export default Index;

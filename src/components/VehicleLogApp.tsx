@@ -1,3 +1,4 @@
+import { BrowserRouter as Router } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -11,12 +12,14 @@ const VehicleLogApp = () => {
   return (
     <ThemeProvider defaultTheme="system" storageKey="ui-theme">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ModalProvider>
-            <AppRoutes />
-            <Toaster />
-          </ModalProvider>
-        </AuthProvider>
+        <Router>
+          <AuthProvider>
+            <ModalProvider>
+              <AppRoutes />
+              <Toaster />
+            </ModalProvider>
+          </AuthProvider>
+        </Router>
       </QueryClientProvider>
     </ThemeProvider>
   );

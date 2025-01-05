@@ -97,50 +97,6 @@ export type Database = {
           },
         ]
       }
-      backup_logs: {
-        Row: {
-          backup_type: string
-          company_id: string | null
-          completed_at: string | null
-          created_at: string | null
-          file_path: string | null
-          id: string
-          size_bytes: number | null
-          started_at: string | null
-          status: string
-        }
-        Insert: {
-          backup_type: string
-          company_id?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          file_path?: string | null
-          id?: string
-          size_bytes?: number | null
-          started_at?: string | null
-          status?: string
-        }
-        Update: {
-          backup_type?: string
-          company_id?: string | null
-          completed_at?: string | null
-          created_at?: string | null
-          file_path?: string | null
-          id?: string
-          size_bytes?: number | null
-          started_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "backup_logs_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       companies: {
         Row: {
           branding_primary_color: string | null
@@ -185,60 +141,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      compliance_reports: {
-        Row: {
-          company_id: string | null
-          created_at: string | null
-          generated_at: string | null
-          generated_by: string | null
-          id: string
-          report_data: Json
-          report_type: string
-          status: string
-          updated_at: string | null
-          valid_until: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string | null
-          generated_at?: string | null
-          generated_by?: string | null
-          id?: string
-          report_data?: Json
-          report_type: string
-          status?: string
-          updated_at?: string | null
-          valid_until?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string | null
-          generated_at?: string | null
-          generated_by?: string | null
-          id?: string
-          report_data?: Json
-          report_type?: string
-          status?: string
-          updated_at?: string | null
-          valid_until?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "compliance_reports_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "compliance_reports_generated_by_fkey"
-            columns: ["generated_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       currency_settings: {
         Row: {
@@ -292,10 +194,6 @@ export type Database = {
           storage_path: string
           type: string
           updated_at: string | null
-          verification_notes: string | null
-          verification_status: string
-          verified_at: string | null
-          verified_by: string | null
         }
         Insert: {
           company_id?: string | null
@@ -307,10 +205,6 @@ export type Database = {
           storage_path: string
           type: string
           updated_at?: string | null
-          verification_notes?: string | null
-          verification_status?: string
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Update: {
           company_id?: string | null
@@ -322,10 +216,6 @@ export type Database = {
           storage_path?: string
           type?: string
           updated_at?: string | null
-          verification_notes?: string | null
-          verification_status?: string
-          verified_at?: string | null
-          verified_by?: string | null
         }
         Relationships: [
           {
@@ -338,13 +228,6 @@ export type Database = {
           {
             foreignKeyName: "documents_created_by_fkey"
             columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_verified_by_fkey"
-            columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -385,53 +268,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "drivers_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      erp_integrations: {
-        Row: {
-          company_id: string | null
-          config: Json
-          created_at: string | null
-          credentials: Json
-          id: string
-          is_active: boolean | null
-          last_sync_at: string | null
-          sync_frequency: unknown | null
-          system_type: Database["public"]["Enums"]["erp_system_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          config?: Json
-          created_at?: string | null
-          credentials?: Json
-          id?: string
-          is_active?: boolean | null
-          last_sync_at?: string | null
-          sync_frequency?: unknown | null
-          system_type: Database["public"]["Enums"]["erp_system_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          config?: Json
-          created_at?: string | null
-          credentials?: Json
-          id?: string
-          is_active?: boolean | null
-          last_sync_at?: string | null
-          sync_frequency?: unknown | null
-          system_type?: Database["public"]["Enums"]["erp_system_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "erp_integrations_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1123,17 +959,6 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      erp_system_type:
-        | "netsuite"
-        | "odoo"
-        | "sap"
-        | "erpnext"
-        | "dynamics365"
-        | "acumatica"
-        | "katana"
-        | "sage"
-        | "infor"
-        | "sds4"
       subscription_type: "trial" | "full"
       user_role: "super_admin" | "company_admin" | "supervisor" | "driver"
     }
