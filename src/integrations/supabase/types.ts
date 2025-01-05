@@ -275,53 +275,6 @@ export type Database = {
           },
         ]
       }
-      erp_integrations: {
-        Row: {
-          company_id: string | null
-          config: Json
-          created_at: string | null
-          credentials: Json
-          id: string
-          is_active: boolean | null
-          last_sync_at: string | null
-          sync_frequency: unknown | null
-          system_type: Database["public"]["Enums"]["erp_system_type"]
-          updated_at: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          config?: Json
-          created_at?: string | null
-          credentials?: Json
-          id?: string
-          is_active?: boolean | null
-          last_sync_at?: string | null
-          sync_frequency?: unknown | null
-          system_type: Database["public"]["Enums"]["erp_system_type"]
-          updated_at?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          config?: Json
-          created_at?: string | null
-          credentials?: Json
-          id?: string
-          is_active?: boolean | null
-          last_sync_at?: string | null
-          sync_frequency?: unknown | null
-          system_type?: Database["public"]["Enums"]["erp_system_type"]
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "erp_integrations_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       external_integrations: {
         Row: {
           company_id: string | null
@@ -1006,17 +959,6 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      erp_system_type:
-        | "netsuite"
-        | "odoo"
-        | "sap"
-        | "erpnext"
-        | "dynamics365"
-        | "acumatica"
-        | "katana"
-        | "sage"
-        | "infor"
-        | "sds4"
       subscription_type: "trial" | "full"
       user_role: "super_admin" | "company_admin" | "supervisor" | "driver"
     }
