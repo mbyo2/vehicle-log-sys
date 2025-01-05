@@ -1,7 +1,7 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { Index } from "@/pages/Index";
-import { Dashboard } from "@/pages/Dashboard";
+import Index from "@/pages/Index";
+import Dashboard from "@/pages/Dashboard";
 import { Fleet } from "@/pages/Fleet";
 import { Drivers } from "@/pages/Drivers";
 import { Trips } from "@/pages/Trips";
@@ -9,7 +9,7 @@ import { TripApprovals } from "@/pages/TripApprovals";
 import { VehicleStatus } from "@/pages/VehicleStatus";
 import { Maintenance } from "@/pages/Maintenance";
 import { Reports } from "@/pages/Reports";
-import { Settings } from "@/pages/Settings";
+import Settings from "@/pages/Settings";
 import { Companies } from "@/pages/Companies";
 import { Users } from "@/pages/Users";
 import { Compliance } from "@/pages/Compliance";
@@ -35,3 +35,7 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
+export function AppRoutes() {
+  return <RouterProvider router={router} />;
+}
