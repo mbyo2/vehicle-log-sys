@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ERPIntegrationForm } from "@/components/integrations/ERPIntegrationForm";
 
-export default function ERPIntegration() {
+export function ERPIntegration() {
   return (
     <div className="container mx-auto py-6">
       <Card>
