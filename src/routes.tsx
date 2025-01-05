@@ -1,4 +1,3 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import Index from "@/pages/Index";
 import Dashboard from "@/pages/Dashboard";
@@ -14,66 +13,25 @@ import Settings from "@/pages/Settings";
 import Profile from "@/pages/Profile";
 import { Users } from "@/pages/Users";
 import { Compliance } from "@/pages/Compliance";
-
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <DashboardLayout><Index /></DashboardLayout>,
-  },
-  {
-    path: "/dashboard",
-    element: <DashboardLayout><Dashboard /></DashboardLayout>,
-  },
-  {
-    path: "/companies",
-    element: <DashboardLayout><Companies /></DashboardLayout>,
-  },
-  {
-    path: "/fleet",
-    element: <DashboardLayout><Fleet /></DashboardLayout>,
-  },
-  {
-    path: "/drivers",
-    element: <DashboardLayout><Drivers /></DashboardLayout>,
-  },
-  {
-    path: "/trips",
-    element: <DashboardLayout><Trips /></DashboardLayout>,
-  },
-  {
-    path: "/trip-approvals",
-    element: <DashboardLayout><TripApprovals /></DashboardLayout>,
-  },
-  {
-    path: "/reports",
-    element: <DashboardLayout><Reports /></DashboardLayout>,
-  },
-  {
-    path: "/maintenance",
-    element: <DashboardLayout><Maintenance /></DashboardLayout>,
-  },
-  {
-    path: "/vehicle-status",
-    element: <DashboardLayout><VehicleStatus /></DashboardLayout>,
-  },
-  {
-    path: "/settings",
-    element: <DashboardLayout><Settings /></DashboardLayout>,
-  },
-  {
-    path: "/profile",
-    element: <DashboardLayout><Profile /></DashboardLayout>,
-  },
-  {
-    path: "/users",
-    element: <DashboardLayout><Users /></DashboardLayout>,
-  },
-  {
-    path: "/compliance",
-    element: <DashboardLayout><Compliance /></DashboardLayout>,
-  },
-]);
+import { Routes, Route } from "react-router-dom";
 
 export function AppRoutes() {
-  return <RouterProvider router={router} />;
+  return (
+    <Routes>
+      <Route path="/" element={<DashboardLayout><Index /></DashboardLayout>} />
+      <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+      <Route path="/companies" element={<DashboardLayout><Companies /></DashboardLayout>} />
+      <Route path="/fleet" element={<DashboardLayout><Fleet /></DashboardLayout>} />
+      <Route path="/drivers" element={<DashboardLayout><Drivers /></DashboardLayout>} />
+      <Route path="/trips" element={<DashboardLayout><Trips /></DashboardLayout>} />
+      <Route path="/trip-approvals" element={<DashboardLayout><TripApprovals /></DashboardLayout>} />
+      <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
+      <Route path="/maintenance" element={<DashboardLayout><Maintenance /></DashboardLayout>} />
+      <Route path="/vehicle-status" element={<DashboardLayout><VehicleStatus /></DashboardLayout>} />
+      <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+      <Route path="/profile" element={<DashboardLayout><Profile /></DashboardLayout>} />
+      <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
+      <Route path="/compliance" element={<DashboardLayout><Compliance /></DashboardLayout>} />
+    </Routes>
+  );
 }
