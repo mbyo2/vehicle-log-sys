@@ -19,7 +19,11 @@ import {
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
-export function AuditLogList() {
+interface AuditLogListProps {
+  companyId?: string;
+}
+
+export function AuditLogList({ companyId }: AuditLogListProps) {
   const [filterTable, setFilterTable] = useState<string>("all");
 
   const { data: auditLogs, isLoading } = useQuery({
@@ -34,6 +38,10 @@ export function AuditLogList() {
         query = query.eq("table_name", filterTable);
       }
 
+      if (companyId) {
+        query = query.eq("company_id", companyId);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -45,11 +53,12 @@ export function AuditLogList() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_logs")
-        .select("table_name")
-        .distinct();
+        .select("table_name");
 
+      // Get unique table names
+      const uniqueTables = Array.from(new Set(data?.map(d => d.table_name) || []));
       if (error) throw error;
-      return data.map(t => t.table_name);
+      return uniqueTables;
     },
   });
 
