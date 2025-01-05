@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import Index from "@/pages/Index";
 import Dashboard from "@/pages/Dashboard";
@@ -11,11 +11,11 @@ import { Reports } from "@/pages/Reports";
 import { Maintenance } from "@/pages/Maintenance";
 import { VehicleStatus } from "@/pages/VehicleStatus";
 import Settings from "@/pages/Settings";
-import { Profile } from "@/pages/Profile";
+import Profile from "@/pages/Profile";
 import { Users } from "@/pages/Users";
 import { Compliance } from "@/pages/Compliance";
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: "/",
     element: <DashboardLayout><Index /></DashboardLayout>,
@@ -73,3 +73,7 @@ export const router = createBrowserRouter([
     element: <DashboardLayout><Compliance /></DashboardLayout>,
   },
 ]);
+
+export function AppRoutes() {
+  return <RouterProvider router={router} />;
+}
