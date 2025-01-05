@@ -1,17 +1,17 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
-import Fleet from "@/pages/Fleet";
-import Drivers from "@/pages/Drivers";
-import Trips from "@/pages/Trips";
-import TripApprovals from "@/pages/TripApprovals";
-import VehicleStatus from "@/pages/VehicleStatus";
-import Maintenance from "@/pages/Maintenance";
-import Reports from "@/pages/Reports";
-import Settings from "@/pages/Settings";
-import Companies from "@/pages/Companies";
+import { Fleet } from "@/pages/Fleet";
+import { Drivers } from "@/pages/Drivers";
+import { Trips } from "@/pages/Trips";
+import { TripApprovals } from "@/pages/TripApprovals";
+import { VehicleStatus } from "@/pages/VehicleStatus";
+import { Maintenance } from "@/pages/Maintenance";
+import { Reports } from "@/pages/Reports";
+import { Settings } from "@/pages/Settings";
+import { Companies } from "@/pages/Companies";
 import { Users } from "@/pages/Users";
-import ERPIntegration from "@/pages/ERPIntegration";
+import { ERPIntegration } from "@/pages/ERPIntegration";
 
 export const router = createBrowserRouter([
   {
@@ -107,3 +107,7 @@ export const router = createBrowserRouter([
     ),
   },
 ]);
+
+export function AppRoutes() {
+  return <RouterProvider router={router} />;
+}
