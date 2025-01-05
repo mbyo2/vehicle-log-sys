@@ -1,11 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { FileText, Download, History } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { Company } from "@/types/auth";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -13,185 +7,213 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Company } from "@/types/auth";
 import { AuditLogList } from "./AuditLogList";
 
-interface CompanyDetailsProps {
-  companyId: string;
-  onClose: () => void;
-}
-
-export function CompanyDetails({ companyId, onClose }: CompanyDetailsProps) {
-  const [showAuditLogs, setShowAuditLogs] = useState(false);
+export function CompanyDetails() {
+  const [company, setCompany] = useState<Company | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const { profile } = useAuth();
   const { toast } = useToast();
 
-  const { data: company, isLoading } = useQuery({
-    queryKey: ["company", companyId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("companies")
-        .select("*")
-        .eq("id", companyId)
-        .single();
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (!profile?.company_id) return;
 
-      if (error) throw error;
-      return data as Company;
-    },
-  });
+      try {
+        const { data, error } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", profile.company_id)
+          .single();
 
-  const handleExport = async () => {
+        if (error) throw error;
+        setCompany(data);
+      } catch (error: any) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompany();
+  }, [profile?.company_id]);
+
+  const handleUpdate = async (field: string, value: string) => {
     if (!company) return;
 
     try {
-      // Get company data including related audit logs
-      const { data: exportData, error } = await supabase
+      setUpdating(true);
+      const { error } = await supabase
         .from("companies")
-        .select(`
-          *,
-          audit_logs(*)
-        `)
-        .eq("id", companyId)
-        .single();
+        .update({ [field]: value })
+        .eq("id", company.id);
 
       if (error) throw error;
 
-      // Create and download CSV file
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: "application/json",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `company-${company.name}-export.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
+      setCompany({ ...company, [field]: value });
       toast({
-        title: "Export successful",
-        description: "Company data has been exported successfully",
+        title: "Success",
+        description: "Company details updated successfully",
       });
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Export failed",
+        title: "Error",
         description: error.message,
       });
+    } finally {
+      setUpdating(false);
     }
   };
 
-  if (isLoading || !company) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
-  return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Company Details</DialogTitle>
-        </DialogHeader>
+  if (!company) {
+    return <div>Company not found</div>;
+  }
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Basic Information
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAuditLogs(true)}
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    Audit Logs
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExport}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
+  return (
+    <Tabs defaultValue="details" className="w-full">
+      <TabsList>
+        <TabsTrigger value="details">Company Details</TabsTrigger>
+        <TabsTrigger value="settings">Settings</TabsTrigger>
+        <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="details">
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Information</CardTitle>
+            <CardDescription>View and update company details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Company Name</Label>
+              <Input
+                id="name"
+                defaultValue={company.name}
+                onBlur={(e) => handleUpdate("name", e.target.value)}
+                disabled={updating}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="logo">Logo URL</Label>
+              <Input
+                id="logo"
+                defaultValue={company.logo_url || ""}
+                onBlur={(e) => handleUpdate("logo_url", e.target.value)}
+                disabled={updating}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="primary-color">Primary Color</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="primary-color"
+                  type="color"
+                  defaultValue={company.branding_primary_color || "#000000"}
+                  className="w-20"
+                  onBlur={(e) =>
+                    handleUpdate("branding_primary_color", e.target.value)
+                  }
+                  disabled={updating}
+                />
+                <Input
+                  value={company.branding_primary_color || ""}
+                  onChange={(e) =>
+                    handleUpdate("branding_primary_color", e.target.value)
+                  }
+                  disabled={updating}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="secondary-color">Secondary Color</Label>
+              <div className="flex space-x-2">
+                <Input
+                  id="secondary-color"
+                  type="color"
+                  defaultValue={company.branding_secondary_color || "#000000"}
+                  className="w-20"
+                  onBlur={(e) =>
+                    handleUpdate("branding_secondary_color", e.target.value)
+                  }
+                  disabled={updating}
+                />
+                <Input
+                  value={company.branding_secondary_color || ""}
+                  onChange={(e) =>
+                    handleUpdate("branding_secondary_color", e.target.value)
+                  }
+                  disabled={updating}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="settings">
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Settings</CardTitle>
+            <CardDescription>Manage company settings and preferences</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium">Subscription Type</h3>
+                  <p className="text-sm text-gray-500">
+                    Current plan: {company.subscription_type}
+                  </p>
                 </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {company.logo_url && (
-                <div className="mb-4">
-                  <img
-                    src={company.logo_url}
-                    alt={`${company.name} logo`}
-                    className="h-20 w-20 object-cover rounded"
-                  />
+                <Button variant="outline">Upgrade Plan</Button>
+              </div>
+
+              {company.subscription_type === "trial" && (
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-yellow-800">Trial Period</h4>
+                  <p className="text-sm text-yellow-700">
+                    Started: {company.trial_start_date}
+                  </p>
+                  <p className="text-sm text-yellow-700">
+                    Ends: {company.trial_end_date}
+                  </p>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Name</p>
-                  <p className="text-lg">{company.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Status</p>
-                  <p className="text-lg">
-                    <span
-                      className={`inline-block px-2 py-1 rounded-full text-sm ${
-                        company.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {company.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Subscription Type
-                  </p>
-                  <p className="text-lg capitalize">{company.subscription_type}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Created At
-                  </p>
-                  <p className="text-lg">
-                    {format(new Date(company.created_at), "PPP")}
-                  </p>
-                </div>
-                {company.trial_start_date && company.trial_end_date && (
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Trial Period
-                    </p>
-                    <p className="text-lg">
-                      {format(new Date(company.trial_start_date), "PPP")} -{" "}
-                      {format(new Date(company.trial_end_date), "PPP")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DialogContent>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
 
-      <Dialog open={showAuditLogs} onOpenChange={setShowAuditLogs}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Audit Logs</DialogTitle>
-            <CardDescription>
-              View the history of changes made to this company
-            </CardDescription>
-          </DialogHeader>
-          <AuditLogList companyId={companyId} />
-        </DialogContent>
-      </Dialog>
-    </Dialog>
+      <TabsContent value="audit">
+        <Card>
+          <CardHeader>
+            <CardTitle>Audit Logs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {company && <AuditLogList companyId={company.id} />}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
