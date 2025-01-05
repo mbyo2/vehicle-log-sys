@@ -9,23 +9,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
-interface AuditLogListProps {
-  companyId: string;
-}
+export function AuditLogList() {
+  const [filterTable, setFilterTable] = useState<string>("all");
 
-export function AuditLogList({ companyId }: AuditLogListProps) {
   const { data: auditLogs, isLoading } = useQuery({
-    queryKey: ["audit-logs", companyId],
+    queryKey: ["audit-logs", filterTable],
+    queryFn: async () => {
+      let query = supabase
+        .from("audit_logs")
+        .select("*, profiles(full_name)")
+        .order("performed_at", { ascending: false });
+
+      if (filterTable !== "all") {
+        query = query.eq("table_name", filterTable);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: tables } = useQuery({
+    queryKey: ["audit-tables"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("audit_logs")
-        .select("*")
-        .eq("company_id", companyId)
-        .order("performed_at", { ascending: false });
+        .select("table_name")
+        .distinct();
 
       if (error) throw error;
-      return data;
+      return data.map(t => t.table_name);
     },
   });
 
@@ -34,37 +58,67 @@ export function AuditLogList({ companyId }: AuditLogListProps) {
   }
 
   if (!auditLogs?.length) {
-    return <div>No audit logs found</div>;
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">
+          No audit logs found
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="max-h-[400px] overflow-y-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Action</TableHead>
-            <TableHead>Changes</TableHead>
-            <TableHead>Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {auditLogs.map((log) => (
-            <TableRow key={log.id}>
-              <TableCell className="capitalize">{log.action}</TableCell>
-              <TableCell>
-                {log.new_data && (
-                  <pre className="text-xs whitespace-pre-wrap">
-                    {JSON.stringify(log.new_data, null, 2)}
-                  </pre>
-                )}
-              </TableCell>
-              <TableCell>
-                {format(new Date(log.performed_at), "PPp")}
-              </TableCell>
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Select value={filterTable} onValueChange={setFilterTable}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Filter by table" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tables</SelectItem>
+            {tables?.map((table) => (
+              <SelectItem key={table} value={table}>
+                {table.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Table</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Changes</TableHead>
+              <TableHead>Performed By</TableHead>
+              <TableHead>Date</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {auditLogs.map((log) => (
+              <TableRow key={log.id}>
+                <TableCell className="font-medium">
+                  {log.table_name.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                </TableCell>
+                <TableCell className="capitalize">{log.action}</TableCell>
+                <TableCell className="max-w-md">
+                  {log.new_data && (
+                    <pre className="text-xs whitespace-pre-wrap overflow-auto max-h-32">
+                      {JSON.stringify(log.new_data, null, 2)}
+                    </pre>
+                  )}
+                </TableCell>
+                <TableCell>{log.profiles?.full_name}</TableCell>
+                <TableCell>
+                  {format(new Date(log.performed_at), "PPp")}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
