@@ -14,16 +14,30 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Edit, Trash } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
+interface Vehicle {
+  plate_number: string;
+  make: string;
+  model: string;
+}
+
+interface ServiceCenter {
+  name: string;
+}
+
+interface ServiceBookingResponse {
+  id: string;
+  booking_date: string;
+  service_type: string;
+  status: string;
+  notes?: string;
+  vehicles: Vehicle[];
+  service_centers: ServiceCenter[];
+}
+
 interface ServiceBooking {
   id: string;
-  vehicle: {
-    plate_number: string;
-    make: string;
-    model: string;
-  };
-  service_center: {
-    name: string;
-  };
+  vehicle: Vehicle;
+  service_center: ServiceCenter;
   booking_date: string;
   service_type: string;
   status: string;
@@ -56,7 +70,17 @@ export function ServiceBookings() {
         .order("booking_date", { ascending: true });
 
       if (error) throw error;
-      return data as ServiceBooking[];
+
+      // Transform the response data to match our ServiceBooking interface
+      return (data as ServiceBookingResponse[]).map((booking) => ({
+        id: booking.id,
+        booking_date: booking.booking_date,
+        service_type: booking.service_type,
+        status: booking.status,
+        notes: booking.notes,
+        vehicle: booking.vehicles[0],
+        service_center: booking.service_centers[0],
+      })) as ServiceBooking[];
     },
   });
 
