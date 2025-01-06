@@ -769,6 +769,117 @@ export type Database = {
           },
         ]
       }
+      service_bookings: {
+        Row: {
+          booking_date: string
+          company_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          reminder_sent: boolean | null
+          service_center_id: string | null
+          service_type: string
+          status: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          booking_date: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reminder_sent?: boolean | null
+          service_center_id?: string | null
+          service_type: string
+          status?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          booking_date?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reminder_sent?: boolean | null
+          service_center_id?: string | null
+          service_type?: string
+          status?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_bookings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_bookings_service_center_id_fkey"
+            columns: ["service_center_id"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_centers: {
+        Row: {
+          address: string
+          company_id: string | null
+          contact_number: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          operating_hours: Json | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          company_id?: string | null
+          contact_number?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          operating_hours?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          company_id?: string | null
+          contact_number?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          operating_hours?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_centers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           action: string
