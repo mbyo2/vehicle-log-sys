@@ -14,6 +14,7 @@ import { TripApprovals } from "./pages/TripApprovals";
 import { Trips } from "./pages/Trips";
 import { Users } from "./pages/Users";
 import { VehicleStatus } from "./pages/VehicleStatus";
+import { ServiceBookings } from "./pages/ServiceBookings";
 import { UserRole } from "./types/auth";
 
 export const AppRoutes = () => (
@@ -52,6 +53,18 @@ export const AppRoutes = () => (
         <ProtectedRoute>
           <DashboardLayout>
             <Dashboard />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+    
+    {/* Service Bookings Route */}
+    <Route
+      path="/service-bookings"
+      element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <ServiceBookings />
           </DashboardLayout>
         </ProtectedRoute>
       }

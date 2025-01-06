@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
@@ -11,18 +11,21 @@ const navigation = {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'My Trips', href: '/trips', icon: Car },
     { name: 'Vehicle Status', href: '/vehicle-status', icon: Wrench },
+    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
   ],
   supervisor: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Driver Management', href: '/drivers', icon: Users },
     { name: 'Trip Approvals', href: '/trip-approvals', icon: FileText },
     { name: 'Vehicle Maintenance', href: '/maintenance', icon: Wrench },
+    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
   ],
   admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'User Management', href: '/users', icon: Users },
     { name: 'Vehicle Fleet', href: '/fleet', icon: Car },
     { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
     { name: 'Settings', href: '/settings', icon: Settings },
   ],
 };
