@@ -883,6 +883,48 @@ export type Database = {
           },
         ]
       }
+      trip_approvals: {
+        Row: {
+          approved_by: string
+          comment: string | null
+          created_at: string
+          id: string
+          status: string
+          trip_id: string
+        }
+        Insert: {
+          approved_by: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          status: string
+          trip_id: string
+        }
+        Update: {
+          approved_by?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_approvals_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_approvals_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_activity_logs: {
         Row: {
           action: string
@@ -984,6 +1026,10 @@ export type Database = {
       }
       vehicle_logs: {
         Row: {
+          approval_comment: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           comments: string | null
           company_id: string | null
           created_at: string
@@ -998,6 +1044,10 @@ export type Database = {
           vehicle_id: string
         }
         Insert: {
+          approval_comment?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           comments?: string | null
           company_id?: string | null
           created_at?: string
@@ -1012,6 +1062,10 @@ export type Database = {
           vehicle_id: string
         }
         Update: {
+          approval_comment?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           comments?: string | null
           company_id?: string | null
           created_at?: string
@@ -1026,6 +1080,13 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_logs_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_logs_company_id_fkey"
             columns: ["company_id"]
