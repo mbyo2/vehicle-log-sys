@@ -18,6 +18,7 @@ interface TripLog {
   end_kilometers: number;
   approval_status: string;
   approval_comment?: string;
+  vehicle_id: string;
   drivers: {
     id: string;
     profile_id: string;
@@ -29,6 +30,7 @@ interface TripLog {
     plate_number: string;
     make: string;
     model: string;
+    current_kilometers: number;
   };
 }
 
@@ -50,6 +52,7 @@ export function TripApprovals() {
           end_kilometers,
           approval_status,
           approval_comment,
+          vehicle_id,
           drivers!inner(
             id,
             profile_id,
@@ -58,18 +61,25 @@ export function TripApprovals() {
           vehicles!inner(
             plate_number,
             make,
-            model
+            model,
+            current_kilometers
           )
         `)
         .eq("approval_status", selectedTab);
 
       if (error) throw error;
-      return data as TripLog[];
+      return data as unknown as TripLog[];
     },
   });
 
   const handleApproval = async (tripId: string, status: "approved" | "rejected", comment?: string) => {
     try {
+      const trip = trips?.find(t => t.id === tripId);
+      if (!trip) {
+        throw new Error("Trip not found");
+      }
+
+      // First update the trip log status
       const { error: updateError } = await supabase
         .from("vehicle_logs")
         .update({
@@ -82,6 +92,7 @@ export function TripApprovals() {
 
       if (updateError) throw updateError;
 
+      // Create approval record
       const { error: approvalError } = await supabase
         .from("trip_approvals")
         .insert({
@@ -100,6 +111,7 @@ export function TripApprovals() {
 
       refetch();
     } catch (error) {
+      console.error('Error updating trip status:', error);
       toast({
         variant: "destructive",
         title: "Error",
