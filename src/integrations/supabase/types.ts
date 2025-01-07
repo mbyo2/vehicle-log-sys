@@ -777,6 +777,7 @@ export type Database = {
           id: string
           notes: string | null
           reminder_sent: boolean | null
+          reminder_settings: Json | null
           service_center_id: string | null
           service_type: string
           status: string | null
@@ -790,6 +791,7 @@ export type Database = {
           id?: string
           notes?: string | null
           reminder_sent?: boolean | null
+          reminder_settings?: Json | null
           service_center_id?: string | null
           service_type: string
           status?: string | null
@@ -803,6 +805,7 @@ export type Database = {
           id?: string
           notes?: string | null
           reminder_sent?: boolean | null
+          reminder_settings?: Json | null
           service_center_id?: string | null
           service_type?: string
           status?: string | null
@@ -1231,7 +1234,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_service_reminders: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       erp_system_type:
