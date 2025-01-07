@@ -9,11 +9,33 @@ import { useToast } from "@/components/ui/use-toast";
 import { Check, X, Calendar, User, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 
+interface TripLog {
+  id: string;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  start_kilometers: number;
+  end_kilometers: number;
+  approval_status: string;
+  approval_comment?: string;
+  drivers: {
+    id: string;
+    profile_id: string;
+    profiles: {
+      full_name: string;
+    };
+  };
+  vehicles: {
+    plate_number: string;
+    make: string;
+    model: string;
+  };
+}
+
 export function TripApprovals() {
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState("pending");
 
-  // Fetch trips that need approval
   const { data: trips, isLoading, refetch } = useQuery({
     queryKey: ["trips", selectedTab],
     queryFn: async () => {
@@ -42,7 +64,7 @@ export function TripApprovals() {
         .eq("approval_status", selectedTab);
 
       if (error) throw error;
-      return data;
+      return data as TripLog[];
     },
   });
 
@@ -60,13 +82,13 @@ export function TripApprovals() {
 
       if (updateError) throw updateError;
 
-      // Create approval record
       const { error: approvalError } = await supabase
         .from("trip_approvals")
         .insert({
           trip_id: tripId,
           status,
           comment,
+          approved_by: (await supabase.auth.getUser()).data.user?.id,
         });
 
       if (approvalError) throw approvalError;
