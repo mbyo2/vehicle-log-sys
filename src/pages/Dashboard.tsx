@@ -3,6 +3,7 @@ import { AdvertisementList } from "@/components/advertisements/AdvertisementList
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ComplianceStatusDashboard } from "@/components/compliance/ComplianceStatusDashboard";
 
 export default function Dashboard() {
   const { data: vehicleCount } = useQuery({
@@ -42,12 +43,7 @@ export default function Dashboard() {
     <div className="container mx-auto py-6">
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Announcements</h2>
-          <AdvertisementList />
-        </div>
-        
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <h2 className="text-xl font-semibold">Overview</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -76,6 +72,16 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           </div>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Announcements</h2>
+            <AdvertisementList />
+          </div>
+        </div>
+        
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Compliance Status</h2>
+          <ComplianceStatusDashboard />
         </div>
       </div>
     </div>
