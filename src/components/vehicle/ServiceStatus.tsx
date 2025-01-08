@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Calendar } from 'lucide-react';
 import { Vehicle } from '@/types/vehicle';
 import { format, differenceInDays } from 'date-fns';
+import { useNotifications } from '@/hooks/useNotifications';
+import { useToast } from '@/hooks/use-toast';
 
 interface ServiceStatusProps {
   vehicle: Vehicle;
 }
 
 export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
+  const { sendNotification } = useNotifications();
+  const { toast } = useToast();
+
   const calculateServiceStatus = (vehicle: Vehicle) => {
     const kilometersToNextService = vehicle.service_interval - 
       ((vehicle.current_kilometers || 0) - (vehicle.last_service_kilometers || 0));
@@ -22,19 +27,58 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
   };
 
   const getValidityStatus = (expiryDate: string | undefined) => {
-    if (!expiryDate) return { text: 'Not Set', color: 'text-gray-600' };
+    if (!expiryDate) return { text: 'Not Set', color: 'text-gray-600', urgent: false };
     
     const daysRemaining = differenceInDays(new Date(expiryDate), new Date());
     
     if (daysRemaining < 0) {
-      return { text: 'Expired', color: 'text-red-600' };
+      return { text: 'Expired', color: 'text-red-600', urgent: true };
     } else if (daysRemaining <= 30) {
-      return { text: `${daysRemaining} days left`, color: 'text-yellow-600' };
+      return { 
+        text: `${daysRemaining} days left`, 
+        color: 'text-yellow-600',
+        urgent: daysRemaining <= 7 
+      };
     }
-    return { text: `${daysRemaining} days left`, color: 'text-green-600' };
+    return { 
+      text: `${daysRemaining} days left`, 
+      color: 'text-green-600',
+      urgent: false 
+    };
   };
 
+  useEffect(() => {
+    const roadTaxStatus = getValidityStatus(vehicle.road_tax_expiry);
+    
+    if (roadTaxStatus.urgent) {
+      // Send notification to the system
+      sendNotification.mutate({
+        to: ['admin'],
+        type: 'document_expiry',
+        subject: 'Road Tax Expiry Alert',
+        details: {
+          title: `Road Tax Expiring Soon - ${vehicle.plate_number}`,
+          message: `Road tax for vehicle ${vehicle.plate_number} ${
+            roadTaxStatus.text === 'Expired' 
+              ? 'has expired' 
+              : `will expire in ${roadTaxStatus.text}`
+          }`
+        }
+      });
+
+      // Show toast notification
+      toast({
+        title: "Road Tax Alert",
+        description: `Vehicle ${vehicle.plate_number}: Road tax ${
+          roadTaxStatus.text === 'Expired' ? 'has expired' : `expires in ${roadTaxStatus.text}`
+        }`,
+        variant: roadTaxStatus.text === 'Expired' ? "destructive" : "warning",
+      });
+    }
+  }, [vehicle.road_tax_expiry, vehicle.plate_number, sendNotification, toast]);
+
   const status = calculateServiceStatus(vehicle);
+  const roadTaxStatus = getValidityStatus(vehicle.road_tax_expiry);
 
   return (
     <div className="space-y-4">
@@ -63,12 +107,27 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={roadTaxStatus.urgent ? 'border-red-500 shadow-red-100' : ''}>
           <CardContent className="p-4">
-            <h4 className="font-semibold">Road Tax</h4>
-            <p className={getValidityStatus(vehicle.road_tax_expiry).color}>
-              {getValidityStatus(vehicle.road_tax_expiry).text}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Road Tax
+                </h4>
+                <p className={roadTaxStatus.color}>
+                  {roadTaxStatus.text}
+                </p>
+              </div>
+              {roadTaxStatus.urgent && (
+                <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />
+              )}
+            </div>
+            {vehicle.road_tax_expiry && (
+              <p className="text-sm text-gray-500 mt-2">
+                Expires: {format(new Date(vehicle.road_tax_expiry), 'dd MMM yyyy')}
+              </p>
+            )}
           </CardContent>
         </Card>
 
