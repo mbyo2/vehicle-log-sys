@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Calendar } from 'lucide-react';
+import { AlertCircle, Calendar, Shield } from 'lucide-react';
 import { Vehicle } from '@/types/vehicle';
 import { format, differenceInDays } from 'date-fns';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -49,9 +49,10 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
 
   useEffect(() => {
     const roadTaxStatus = getValidityStatus(vehicle.road_tax_expiry);
+    const insuranceStatus = getValidityStatus(vehicle.insurance_expiry);
     
+    // Handle Road Tax notifications
     if (roadTaxStatus.urgent) {
-      // Send notification to the system
       sendNotification.mutate({
         to: ['admin'],
         type: 'document_expiry',
@@ -66,19 +67,50 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
         }
       });
 
-      // Show toast notification
       toast({
         title: "Road Tax Alert",
         description: `Vehicle ${vehicle.plate_number}: Road tax ${
           roadTaxStatus.text === 'Expired' ? 'has expired' : `expires in ${roadTaxStatus.text}`
         }`,
-        variant: roadTaxStatus.text === 'Expired' ? "destructive" : "warning",
+        variant: roadTaxStatus.text === 'Expired' ? "destructive" : "default",
       });
     }
-  }, [vehicle.road_tax_expiry, vehicle.plate_number, sendNotification, toast]);
+
+    // Handle Insurance notifications
+    if (insuranceStatus.urgent) {
+      sendNotification.mutate({
+        to: ['admin'],
+        type: 'document_expiry',
+        subject: 'Insurance Expiry Alert',
+        details: {
+          title: `Insurance Expiring Soon - ${vehicle.plate_number}`,
+          message: `Insurance for vehicle ${vehicle.plate_number} ${
+            insuranceStatus.text === 'Expired' 
+              ? 'has expired' 
+              : `will expire in ${insuranceStatus.text}`
+          }`
+        }
+      });
+
+      toast({
+        title: "Insurance Alert",
+        description: `Vehicle ${vehicle.plate_number}: Insurance ${
+          insuranceStatus.text === 'Expired' ? 'has expired' : `expires in ${insuranceStatus.text}`
+        }`,
+        variant: insuranceStatus.text === 'Expired' ? "destructive" : "default",
+      });
+    }
+  }, [
+    vehicle.road_tax_expiry, 
+    vehicle.insurance_expiry, 
+    vehicle.plate_number, 
+    sendNotification, 
+    toast
+  ]);
 
   const status = calculateServiceStatus(vehicle);
   const roadTaxStatus = getValidityStatus(vehicle.road_tax_expiry);
+  const insuranceStatus = getValidityStatus(vehicle.insurance_expiry);
 
   return (
     <div className="space-y-4">
@@ -131,12 +163,27 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={insuranceStatus.urgent ? 'border-red-500 shadow-red-100' : ''}>
           <CardContent className="p-4">
-            <h4 className="font-semibold">Insurance</h4>
-            <p className={getValidityStatus(vehicle.insurance_expiry).color}>
-              {getValidityStatus(vehicle.insurance_expiry).text}
-            </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Insurance
+                </h4>
+                <p className={insuranceStatus.color}>
+                  {insuranceStatus.text}
+                </p>
+              </div>
+              {insuranceStatus.urgent && (
+                <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />
+              )}
+            </div>
+            {vehicle.insurance_expiry && (
+              <p className="text-sm text-gray-500 mt-2">
+                Expires: {format(new Date(vehicle.insurance_expiry), 'dd MMM yyyy')}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
