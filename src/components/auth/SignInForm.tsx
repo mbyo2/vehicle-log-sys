@@ -22,14 +22,14 @@ export function SignInForm() {
       toast({
         variant: "destructive",
         title: "Too many attempts",
-        description: "Please try again later",
+        description: "Please try again later or reset your password",
       });
       return;
     }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password
       });
@@ -42,16 +42,33 @@ export function SignInForm() {
         throw error;
       }
 
-      if (data?.user) {
+      if (user) {
+        // Get user profile to determine role and redirect accordingly
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, company_id')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
         if (values.rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
         
         toast({
-          title: "Success",
+          title: "Welcome back!",
           description: "Successfully signed in",
         });
-        navigate("/dashboard");
+
+        // Redirect based on role
+        if (profile.role === 'super_admin') {
+          navigate("/admin/dashboard");
+        } else if (profile.role === 'company_admin') {
+          navigate("/company/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error: any) {
       console.error("Sign in error:", error);

@@ -9,41 +9,110 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ad_analytics: {
+        Row: {
+          ad_id: string | null
+          clicks: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string | null
+          id: string
+          updated_at: string | null
+          views: number | null
+        }
+        Insert: {
+          ad_id?: string | null
+          clicks?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Update: {
+          ad_id?: string | null
+          clicks?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          updated_at?: string | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_analytics_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advertisements: {
         Row: {
+          advertiser_id: string | null
+          clicks: number | null
           company_id: string | null
           content: string
+          cost_per_day: number | null
           created_at: string
           end_date: string
           id: string
           is_active: boolean | null
+          payment_status: string | null
+          placement_location: string | null
           start_date: string
           title: string
+          total_cost: number | null
           updated_at: string
+          views: number | null
         }
         Insert: {
+          advertiser_id?: string | null
+          clicks?: number | null
           company_id?: string | null
           content: string
+          cost_per_day?: number | null
           created_at?: string
           end_date: string
           id?: string
           is_active?: boolean | null
+          payment_status?: string | null
+          placement_location?: string | null
           start_date: string
           title: string
+          total_cost?: number | null
           updated_at?: string
+          views?: number | null
         }
         Update: {
+          advertiser_id?: string | null
+          clicks?: number | null
           company_id?: string | null
           content?: string
+          cost_per_day?: number | null
           created_at?: string
           end_date?: string
           id?: string
           is_active?: boolean | null
+          payment_status?: string | null
+          placement_location?: string | null
           start_date?: string
           title?: string
+          total_cost?: number | null
           updated_at?: string
+          views?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "advertisements_advertiser_id_fkey"
+            columns: ["advertiser_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "advertisements_company_id_fkey"
             columns: ["company_id"]

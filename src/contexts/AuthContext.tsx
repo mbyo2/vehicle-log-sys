@@ -39,7 +39,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         await getProfile(session.user.id);
-        navigate('/');
+        // Redirect based on role
+        if (profile?.role === 'super_admin') {
+          navigate('/admin/dashboard');
+        } else if (profile?.role === 'company_admin') {
+          navigate('/company/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
         setProfile(null);
         navigate('/signin');
@@ -62,13 +69,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error;
       
-      // Ensure the role is of type UserRole
       if (data) {
         const userProfile: UserProfile = {
           id: data.id,
           email: data.email,
-          role: data.role as UserRole, // Type assertion since we know the role is valid
-          full_name: data.full_name || undefined
+          role: data.role as UserRole,
+          full_name: data.full_name || undefined,
+          company_id: data.company_id || undefined
         };
         setProfile(userProfile);
       }
@@ -79,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
     try {
-      // Create auth user
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -100,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name: companyName,
             subscription_type: subscriptionType || 'trial',
             trial_start_date: new Date().toISOString(),
-            trial_end_date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(), // 25 days trial
+            trial_end_date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
             created_by: user?.id,
           })
           .select()
@@ -148,8 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
-      
-      navigate('/');
     } catch (error: any) {
       toast({
         variant: "destructive",

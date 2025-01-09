@@ -19,7 +19,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    return <Navigate to="/" />;
+    // Redirect based on role if access is denied
+    if (profile.role === 'super_admin') {
+      return <Navigate to="/admin/dashboard" />;
+    } else if (profile.role === 'company_admin') {
+      return <Navigate to="/company/dashboard" />;
+    } else {
+      return <Navigate to="/dashboard" />;
+    }
   }
 
   return <>{children}</>;
