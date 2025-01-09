@@ -40,7 +40,6 @@ export function SignInForm() {
       if (error) {
         setAttempts(prev => prev + 1);
         
-        // Handle IP whitelist error specifically
         if (error.message.includes("Access denied: IP address not whitelisted")) {
           throw new Error("Your IP address is not authorized to access this account. Please contact your administrator.");
         }
@@ -142,10 +141,13 @@ export function SignInForm() {
                 Forgot password?
               </Button>
               <div className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
+                Need a company account?{" "}
                 <Link to="/signup" className="text-primary hover:underline">
-                  Sign up
+                  Register here
                 </Link>
+              </div>
+              <div className="text-xs text-muted-foreground text-center">
+                Note: Drivers and supervisors can only be added by company administrators
               </div>
             </CardFooter>
           </Card>

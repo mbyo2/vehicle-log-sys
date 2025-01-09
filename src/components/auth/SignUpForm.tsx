@@ -14,6 +14,16 @@ export function SignUpForm() {
   const { toast } = useToast();
 
   const onSubmit = async (values: SignUpFormValues) => {
+    // Prevent direct signup for drivers and supervisors
+    if (values.role === "driver" || values.role === "supervisor") {
+      toast({
+        variant: "destructive",
+        title: "Registration not allowed",
+        description: "Drivers and supervisors can only be added by company administrators.",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // 1. Create the user account
@@ -89,9 +99,9 @@ export function SignUpForm() {
         </div>
         <Card className="w-full max-w-[400px]">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Create Account</CardTitle>
+            <CardTitle className="text-2xl text-center">Create Company Account</CardTitle>
             <CardDescription className="text-center">
-              Enter your details to create a new account
+              Register your company to start managing your fleet
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -104,6 +114,9 @@ export function SignUpForm() {
               >
                 Sign in
               </Link>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground text-center">
+              Note: Only company administrators can register directly. Drivers and supervisors must be invited by their company administrator.
             </div>
           </CardContent>
         </Card>
