@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignUpFormFields } from "./SignUpFormFields";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
+import { UserRole } from "@/types/auth";
 
 export function SignUpForm() {
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export function SignUpForm() {
 
   const onSubmit = async (values: SignUpFormValues) => {
     // Prevent direct signup for drivers and supervisors
-    if (values.role === "driver" || values.role === "supervisor") {
+    if (values.role === "driver" || values.role === "supervisor" as UserRole) {
       toast({
         variant: "destructive",
         title: "Registration not allowed",
