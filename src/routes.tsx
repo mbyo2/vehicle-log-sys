@@ -15,6 +15,7 @@ import { Trips } from "./pages/Trips";
 import { Users } from "./pages/Users";
 import { VehicleStatus } from "./pages/VehicleStatus";
 import { ServiceBookings } from "./pages/ServiceBookings";
+import { Advertisements } from "./pages/Advertisements";
 import { UserRole } from "./types/auth";
 
 export const AppRoutes = () => (
@@ -41,6 +42,17 @@ export const AppRoutes = () => (
         <ProtectedRoute allowedRoles={['super_admin']}>
           <DashboardLayout>
             <Companies />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+
+    <Route
+      path="/advertisements"
+      element={
+        <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
+          <DashboardLayout>
+            <Advertisements />
           </DashboardLayout>
         </ProtectedRoute>
       }

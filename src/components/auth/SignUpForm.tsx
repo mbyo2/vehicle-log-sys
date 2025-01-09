@@ -29,6 +29,10 @@ export function SignUpForm() {
 
       if (authError) throw authError;
 
+      if (!authData.user) {
+        throw new Error("Failed to create user account");
+      }
+
       // 2. If user is company admin, create the company
       if (values.role === "company_admin" && values.companyName && values.subscriptionType) {
         const { data: companyData, error: companyError } = await supabase
@@ -40,7 +44,7 @@ export function SignUpForm() {
             trial_end_date: values.subscriptionType === 'trial' 
               ? new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString() 
               : null,
-            created_by: authData.user?.id,
+            created_by: authData.user.id,
           })
           .select()
           .single();
@@ -54,7 +58,7 @@ export function SignUpForm() {
             role: values.role,
             company_id: companyData.id,
           })
-          .eq('id', authData.user?.id);
+          .eq('id', authData.user.id);
 
         if (profileError) throw profileError;
       }
@@ -66,6 +70,7 @@ export function SignUpForm() {
       
       navigate('/signin');
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         variant: "destructive",
         title: "Error creating account",
