@@ -11,12 +11,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface DocumentVersionHistory {
+  id: string;
+  name: string;
+  version: number;
+  version_notes: string | null;
+  created_at: string;
+  created_by: {
+    full_name: string | null;
+  } | null;
+}
+
 interface DocumentVersionHistoryProps {
   documentId: string;
 }
 
 export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryProps) {
-  const { data: versions, isLoading } = useQuery({
+  const { data: versions, isLoading } = useQuery<DocumentVersionHistory[]>({
     queryKey: ["document-versions", documentId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -65,7 +76,7 @@ export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryPro
             <TableRow key={version.id}>
               <TableCell>v{version.version}</TableCell>
               <TableCell>{version.version_notes || "No notes"}</TableCell>
-              <TableCell>{version.created_by?.full_name}</TableCell>
+              <TableCell>{version.created_by?.full_name || "Unknown"}</TableCell>
               <TableCell>
                 {new Date(version.created_at).toLocaleDateString()}
               </TableCell>
