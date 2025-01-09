@@ -142,12 +142,13 @@ export function SignInForm() {
               </Button>
               <div className="text-sm text-muted-foreground">
                 Need a company account?{" "}
-                <Link 
-                  to="/signup" 
-                  className="text-primary hover:underline"
+                <Button 
+                  variant="link" 
+                  className="p-0 text-primary hover:underline"
+                  onClick={() => navigate("/signup")}
                 >
                   Register here
-                </Link>
+                </Button>
               </div>
               <div className="text-xs text-muted-foreground text-center">
                 Note: Drivers and supervisors can only be added by company administrators

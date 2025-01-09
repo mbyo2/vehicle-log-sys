@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { SignInForm } from "./components/auth/SignInForm";
 import { SignUpForm } from "./components/auth/SignUpForm";
@@ -21,17 +21,16 @@ import { DocumentUpload } from "./components/documents/DocumentUpload";
 
 export const AppRoutes = () => (
   <Routes>
+    {/* Auth Routes */}
     <Route path="/signin" element={<SignInForm />} />
     <Route path="/signup" element={<SignUpForm />} />
     
-    {/* Root route redirects to dashboard */}
+    {/* Root route redirects to dashboard if authenticated, otherwise to signin */}
     <Route
       path="/"
       element={
         <ProtectedRoute>
-          <DashboardLayout>
-            <Dashboard />
-          </DashboardLayout>
+          <Navigate to="/dashboard" replace />
         </ProtectedRoute>
       }
     />
