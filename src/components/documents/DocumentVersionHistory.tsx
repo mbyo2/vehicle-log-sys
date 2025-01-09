@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface DocumentVersionHistory {
+interface DocumentVersion {
   id: string;
   name: string;
   version: number;
@@ -27,7 +27,7 @@ interface DocumentVersionHistoryProps {
 }
 
 export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryProps) {
-  const { data: versions, isLoading } = useQuery<DocumentVersionHistory[]>({
+  const { data: versions, isLoading } = useQuery<DocumentVersion[]>({
     queryKey: ["document-versions", documentId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +38,7 @@ export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryPro
           version,
           version_notes,
           created_at,
-          created_by (
+          created_by:created_by (
             full_name
           )
         `)
@@ -46,7 +46,7 @@ export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryPro
         .order("version", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data as DocumentVersion[];
     },
   });
 
