@@ -27,7 +27,7 @@ interface DocumentVersionHistoryProps {
 }
 
 export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryProps) {
-  const { data: versions, isLoading } = useQuery<DocumentVersion[]>({
+  const { data: versions, isLoading } = useQuery({
     queryKey: ["document-versions", documentId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,7 +46,18 @@ export function DocumentVersionHistory({ documentId }: DocumentVersionHistoryPro
         .order("version", { ascending: false });
 
       if (error) throw error;
-      return data as DocumentVersion[];
+      
+      // Ensure the response matches our interface
+      const typedData = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        version: item.version,
+        version_notes: item.version_notes,
+        created_at: item.created_at,
+        created_by: item.created_by
+      })) as DocumentVersion[];
+      
+      return typedData;
     },
   });
 
