@@ -648,6 +648,51 @@ export type Database = {
           },
         ]
       }
+      ip_whitelist: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          ip_address: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ip_address: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          ip_address?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ip_whitelist_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ip_whitelist_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_parts: {
         Row: {
           created_at: string
@@ -808,6 +853,9 @@ export type Database = {
           full_name: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          two_factor_enabled: boolean | null
+          two_factor_method: string | null
+          two_factor_secret: string | null
           updated_at: string
         }
         Insert: {
@@ -817,6 +865,9 @@ export type Database = {
           full_name?: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          two_factor_enabled?: boolean | null
+          two_factor_method?: string | null
+          two_factor_secret?: string | null
           updated_at?: string
         }
         Update: {
@@ -826,6 +877,9 @@ export type Database = {
           full_name?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+          two_factor_enabled?: boolean | null
+          two_factor_method?: string | null
+          two_factor_secret?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -990,6 +1044,41 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "vehicle_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      two_factor_backup_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "two_factor_backup_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
