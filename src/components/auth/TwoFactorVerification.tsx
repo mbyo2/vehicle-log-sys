@@ -81,7 +81,7 @@ export function TwoFactorVerification({ email, onVerificationComplete }: TwoFact
             render={({ slots }) => (
               <InputOTPGroup className="gap-2">
                 {slots.map((slot, index) => (
-                  <InputOTPSlot key={index} {...slot} />
+                  <InputOTPSlot key={index} {...slot} index={index} />
                 ))}
               </InputOTPGroup>
             )}
