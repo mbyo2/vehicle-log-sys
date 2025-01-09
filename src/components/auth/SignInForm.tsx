@@ -142,7 +142,10 @@ export function SignInForm() {
               </Button>
               <div className="text-sm text-muted-foreground">
                 Need a company account?{" "}
-                <Link to="/signup" className="text-primary hover:underline">
+                <Link 
+                  to="/signup" 
+                  className="text-primary hover:underline"
+                >
                   Register here
                 </Link>
               </div>
