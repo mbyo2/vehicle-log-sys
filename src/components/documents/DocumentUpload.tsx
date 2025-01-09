@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Upload, CheckCircle, XCircle, Clock, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -7,13 +7,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function DocumentUpload() {
   const [uploading, setUploading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [verificationNote, setVerificationNote] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [versionNotes, setVersionNotes] = useState("");
   const { toast } = useToast();
   const { profile } = useAuth();
+
+  const { data: categories } = useQuery({
+    queryKey: ["document-categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("document_categories")
+        .select("*")
+        .order("name");
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -38,6 +61,9 @@ export function DocumentUpload() {
         type: file.type,
         storage_path: filePath,
         verification_status: 'pending',
+        category_id: selectedCategory,
+        version: 1,
+        version_notes: versionNotes,
       });
 
       if (dbError) throw dbError;
@@ -103,17 +129,43 @@ export function DocumentUpload() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Input
-          type="file"
-          onChange={handleFileUpload}
-          disabled={uploading}
-          className="flex-1"
+      <div className="space-y-4">
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a category">
+              <div className="flex items-center">
+                <FolderOpen className="w-4 h-4 mr-2" />
+                Select Category
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {categories?.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Textarea
+          placeholder="Version notes (optional)"
+          value={versionNotes}
+          onChange={(e) => setVersionNotes(e.target.value)}
         />
-        <Button disabled={uploading}>
-          <Upload className="mr-2 h-4 w-4" />
-          {uploading ? "Uploading..." : "Upload"}
-        </Button>
+
+        <div className="flex items-center space-x-2">
+          <Input
+            type="file"
+            onChange={handleFileUpload}
+            disabled={uploading || !selectedCategory}
+            className="flex-1"
+          />
+          <Button disabled={uploading || !selectedCategory}>
+            <Upload className="mr-2 h-4 w-4" />
+            {uploading ? "Uploading..." : "Upload"}
+          </Button>
+        </div>
       </div>
 
       {/* Document List with Verification Status */}

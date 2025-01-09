@@ -350,14 +350,51 @@ export type Database = {
           },
         ]
       }
+      document_categories: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_categories_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
+          category_id: string | null
           company_id: string | null
           created_at: string | null
           created_by: string | null
           id: string
           metadata: Json | null
           name: string
+          parent_document_id: string | null
           storage_path: string
           type: string
           updated_at: string | null
@@ -365,14 +402,18 @@ export type Database = {
           verification_status: string
           verified_at: string | null
           verified_by: string | null
+          version: number | null
+          version_notes: string | null
         }
         Insert: {
+          category_id?: string | null
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           metadata?: Json | null
           name: string
+          parent_document_id?: string | null
           storage_path: string
           type: string
           updated_at?: string | null
@@ -380,14 +421,18 @@ export type Database = {
           verification_status?: string
           verified_at?: string | null
           verified_by?: string | null
+          version?: number | null
+          version_notes?: string | null
         }
         Update: {
+          category_id?: string | null
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           metadata?: Json | null
           name?: string
+          parent_document_id?: string | null
           storage_path?: string
           type?: string
           updated_at?: string | null
@@ -395,8 +440,17 @@ export type Database = {
           verification_status?: string
           verified_at?: string | null
           verified_by?: string | null
+          version?: number | null
+          version_notes?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "documents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "document_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documents_company_id_fkey"
             columns: ["company_id"]
@@ -409,6 +463,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_parent_document_id_fkey"
+            columns: ["parent_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
           {

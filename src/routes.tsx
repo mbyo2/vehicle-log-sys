@@ -16,7 +16,8 @@ import { Users } from "./pages/Users";
 import { VehicleStatus } from "./pages/VehicleStatus";
 import { ServiceBookings } from "./pages/ServiceBookings";
 import { Advertisements } from "./pages/Advertisements";
-import { UserRole } from "./types/auth";
+import { DocumentCategories } from "./components/documents/DocumentCategories";
+import { DocumentUpload } from "./components/documents/DocumentUpload";
 
 export const AppRoutes = () => (
   <Routes>
@@ -30,6 +31,28 @@ export const AppRoutes = () => (
         <ProtectedRoute>
           <DashboardLayout>
             <Dashboard />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+    
+    {/* Document Management Routes */}
+    <Route
+      path="/documents"
+      element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <DocumentUpload />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/document-categories"
+      element={
+        <ProtectedRoute allowedRoles={['company_admin']}>
+          <DashboardLayout>
+            <DocumentCategories />
           </DashboardLayout>
         </ProtectedRoute>
       }
