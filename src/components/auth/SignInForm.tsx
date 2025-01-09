@@ -39,6 +39,12 @@ export function SignInForm() {
 
       if (error) {
         setAttempts(prev => prev + 1);
+        
+        // Handle IP whitelist error specifically
+        if (error.message.includes("Access denied: IP address not whitelisted")) {
+          throw new Error("Your IP address is not authorized to access this account. Please contact your administrator.");
+        }
+        
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Invalid email or password. Please try again.");
         }
