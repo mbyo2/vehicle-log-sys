@@ -21,9 +21,9 @@ import { DocumentUpload } from "./components/documents/DocumentUpload";
 
 export const AppRoutes = () => (
   <Routes>
-    {/* Auth Routes */}
-    <Route path="/signin" element={<SignInForm />} />
+    {/* Public Auth Routes */}
     <Route path="/signup" element={<SignUpForm />} />
+    <Route path="/signin" element={<SignInForm />} />
     
     {/* Root route redirects to dashboard if authenticated, otherwise to signin */}
     <Route
@@ -35,6 +35,7 @@ export const AppRoutes = () => (
       }
     />
     
+    {/* Protected Routes */}
     {/* Document Management Routes */}
     <Route
       path="/documents"

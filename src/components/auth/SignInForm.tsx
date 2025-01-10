@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,6 @@ export function SignInForm() {
       }
 
       if (user) {
-        // Get user profile to check 2FA status
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('two_factor_enabled, role, company_id')
@@ -90,7 +89,6 @@ export function SignInForm() {
       description: "Successfully signed in",
     });
 
-    // Redirect based on role
     if (profile.role === 'super_admin') {
       navigate("/admin/dashboard");
     } else if (profile.role === 'company_admin') {
@@ -102,7 +100,6 @@ export function SignInForm() {
 
   const handleTwoFactorComplete = () => {
     setShowTwoFactor(false);
-    // Get profile again to redirect properly
     supabase
       .from('profiles')
       .select('role, company_id')
@@ -113,6 +110,10 @@ export function SignInForm() {
           handleSuccessfulLogin(profile, false);
         }
       });
+  };
+
+  const handleSignUpClick = () => {
+    navigate("/signup");
   };
 
   return (
@@ -145,7 +146,7 @@ export function SignInForm() {
                 <Button 
                   variant="link" 
                   className="p-0 text-primary hover:underline"
-                  onClick={() => navigate("/signup")}
+                  onClick={handleSignUpClick}
                 >
                   Register here
                 </Button>
