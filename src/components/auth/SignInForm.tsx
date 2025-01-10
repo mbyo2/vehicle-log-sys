@@ -112,7 +112,8 @@ export function SignInForm() {
       });
   };
 
-  const handleSignUpClick = () => {
+  const handleSignUpClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     navigate("/signup");
   };
 

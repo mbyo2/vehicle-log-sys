@@ -25,7 +25,7 @@ export const AppRoutes = () => (
     <Route path="/signup" element={<SignUpForm />} />
     <Route path="/signin" element={<SignInForm />} />
     
-    {/* Root route redirects to dashboard if authenticated, otherwise to signin */}
+    {/* Root route redirects to signin */}
     <Route
       path="/"
       element={
