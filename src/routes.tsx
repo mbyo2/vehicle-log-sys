@@ -21,7 +21,7 @@ import { DocumentUpload } from "./components/documents/DocumentUpload";
 
 export const AppRoutes = () => (
   <Routes>
-    {/* Public Auth Routes */}
+    {/* Public Routes */}
     <Route path="/signup" element={<SignUpForm />} />
     <Route path="/signin" element={<SignInForm />} />
     
@@ -29,12 +29,10 @@ export const AppRoutes = () => (
     <Route
       path="/"
       element={
-        <ProtectedRoute>
-          <Navigate to="/dashboard" replace />
-        </ProtectedRoute>
+        <Navigate to="/signin" replace />
       }
     />
-    
+
     {/* Protected Routes */}
     {/* Document Management Routes */}
     <Route
