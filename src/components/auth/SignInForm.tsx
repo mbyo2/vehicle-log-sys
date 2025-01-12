@@ -114,6 +114,8 @@ export function SignInForm() {
 
   const handleSignUpClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Remove any auth session data before navigating to signup
+    localStorage.removeItem("rememberMe");
     navigate("/signup");
   };
 
