@@ -27,9 +27,6 @@ export function SignUpForm() {
 
     setLoading(true);
     try {
-      // Clear any existing auth session
-      await supabase.auth.signOut();
-      
       // 1. Create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
@@ -81,10 +78,9 @@ export function SignUpForm() {
         title: "Account created successfully!",
         description: "Please check your email to verify your account.",
       });
-      
-      // Ensure we're signed out before redirecting to signin
-      await supabase.auth.signOut();
-      navigate('/signin');
+
+      // Navigate to signin without signing out - let the user verify their email first
+      navigate('/signin', { replace: true });
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({

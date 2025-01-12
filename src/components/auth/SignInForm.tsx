@@ -90,11 +90,11 @@ export function SignInForm() {
     });
 
     if (profile.role === 'super_admin') {
-      navigate("/admin/dashboard");
+      navigate("/companies", { replace: true });
     } else if (profile.role === 'company_admin') {
-      navigate("/company/dashboard");
+      navigate("/fleet", { replace: true });
     } else {
-      navigate("/dashboard");
+      navigate("/documents", { replace: true });
     }
   };
 
@@ -114,9 +114,7 @@ export function SignInForm() {
 
   const handleSignUpClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Remove any auth session data before navigating to signup
-    localStorage.removeItem("rememberMe");
-    navigate("/signup");
+    navigate("/signup", { replace: true });
   };
 
   return (
