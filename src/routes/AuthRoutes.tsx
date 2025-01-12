@@ -1,6 +1,7 @@
-import { Route, Navigate } from "react-router-dom";
+import { Route } from "react-router-dom";
 import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
+import { Navigate } from "react-router-dom";
 
 export const AuthRoutes = () => (
   <>

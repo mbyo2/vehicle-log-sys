@@ -6,12 +6,19 @@ import { OperationalRoutes } from "./routes/OperationalRoutes";
 
 export const AppRoutes = () => (
   <Routes>
-    {/* Use fragments to group routes from different modules */}
-    <>
-      <AuthRoutes />
-      <DocumentRoutes />
-      <AdminRoutes />
-      <OperationalRoutes />
-    </>
+    <Route>
+      <Route>
+        <AuthRoutes />
+      </Route>
+      <Route>
+        <DocumentRoutes />
+      </Route>
+      <Route>
+        <AdminRoutes />
+      </Route>
+      <Route>
+        <OperationalRoutes />
+      </Route>
+    </Route>
   </Routes>
 );
