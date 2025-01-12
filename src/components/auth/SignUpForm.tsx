@@ -27,13 +27,14 @@ export function SignUpForm() {
 
     setLoading(true);
     try {
-      // 1. Create the user account
+      // 1. Create the user account with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
             full_name: values.fullName,
+            role: values.role, // Include role in metadata
           },
         },
       });
@@ -62,11 +63,10 @@ export function SignUpForm() {
 
         if (companyError) throw companyError;
 
-        // 3. Update the user's profile with company_id and role
+        // 3. Update the user's profile with company_id
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
-            role: values.role,
             company_id: companyData.id,
           })
           .eq('id', authData.user.id);
@@ -79,7 +79,7 @@ export function SignUpForm() {
         description: "Please check your email to verify your account.",
       });
 
-      // Navigate to signin without signing out - let the user verify their email first
+      // Navigate to signin
       navigate('/signin', { replace: true });
     } catch (error: any) {
       console.error('Signup error:', error);
