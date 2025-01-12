@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { Company } from "@/types/auth";
 
-export default function Settings() {
+export function Settings() {
   const { profile } = useAuth();
 
   const { data: company, isLoading } = useQuery({
