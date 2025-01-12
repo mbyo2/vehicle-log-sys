@@ -6,9 +6,11 @@ import { OperationalRoutes } from "./routes/OperationalRoutes";
 
 export const AppRoutes = () => (
   <Routes>
-    <AuthRoutes />
-    <DocumentRoutes />
-    <AdminRoutes />
-    <OperationalRoutes />
+    <Route>
+      <AuthRoutes />
+      <DocumentRoutes />
+      <AdminRoutes />
+      <OperationalRoutes />
+    </Route>
   </Routes>
 );
