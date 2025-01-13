@@ -39,7 +39,10 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
         redirectTo: `${window.location.origin}/reset-password`,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Reset password error:", error);
+        throw error;
+      }
       
       toast({
         title: "Password reset email sent",
@@ -47,10 +50,11 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
       });
       onOpenChange(false);
     } catch (error: any) {
+      console.error("Reset password error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to send reset password email. Please try again.",
       });
     } finally {
       setLoading(false);
