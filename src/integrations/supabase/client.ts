@@ -4,6 +4,7 @@ export const supabase = createClient('https://yyeypbfdtitxqssvnagy.supabase.co',
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   }
 });
