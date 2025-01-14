@@ -1,60 +1,70 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
+const resetPasswordSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 interface ResetPasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectTo?: string;
 }
 
-export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogProps) {
-  const [resetEmail, setResetEmail] = useState("");
+export function ResetPasswordDialog({ open, onOpenChange, redirectTo }: ResetPasswordDialogProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  const form = useForm<ResetPasswordValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
-  const handleResetPassword = async () => {
-    if (!resetEmail) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please enter your email address",
-      });
-      return;
-    }
-
+  const onSubmit = async (values: ResetPasswordValues) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: redirectTo || `${window.location.origin}/reset-password`,
       });
-      
-      if (error) {
-        console.error("Reset password error:", error);
-        throw error;
-      }
-      
+
+      if (error) throw error;
+
       toast({
-        title: "Password reset email sent",
-        description: "Check your email for the reset link",
+        title: "Check your email",
+        description: "We've sent you a password reset link",
       });
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Reset password error:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send reset password email. Please try again.",
+        description: error.message,
       });
     } finally {
       setLoading(false);
@@ -70,28 +80,38 @@ export function ResetPasswordDialog({ open, onOpenChange }: ResetPasswordDialogP
             Enter your email address and we'll send you a link to reset your password.
           </DialogDescription>
         </DialogHeader>
-        <Input
-          type="email"
-          placeholder="Enter your email"
-          value={resetEmail}
-          onChange={(e) => setResetEmail(e.target.value)}
-          disabled={loading}
-        />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancel
-          </Button>
-          <Button onClick={handleResetPassword} disabled={loading}>
-            {loading ? (
-              <>
-                <LoadingSpinner className="mr-2" />
-                Sending...
-              </>
-            ) : (
-              "Send Reset Link"
-            )}
-          </Button>
-        </DialogFooter>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="Enter your email"
+                      disabled={loading}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <>
+                  <LoadingSpinner className="mr-2" />
+                  Sending reset link...
+                </>
+              ) : (
+                "Send reset link"
+              )}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

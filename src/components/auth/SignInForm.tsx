@@ -167,6 +167,7 @@ export function SignInForm() {
         <ResetPasswordDialog 
           open={resetPasswordOpen} 
           onOpenChange={setResetPasswordOpen}
+          redirectTo={`${window.location.origin}/reset-password`}
         />
       </div>
     </ErrorBoundary>
