@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    strictPort: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    }
   },
   plugins: [
     react(),
@@ -19,5 +23,5 @@ export default defineConfig(({ mode }) => ({
     },
   },
   envPrefix: ['VITE_'],
-  base: '/',
+  base: '',
 }));
