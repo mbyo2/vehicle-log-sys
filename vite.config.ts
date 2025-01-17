@@ -24,4 +24,9 @@ export default defineConfig(({ mode }) => ({
   },
   envPrefix: ['VITE_'],
   base: '',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: true
+  }
 }));
