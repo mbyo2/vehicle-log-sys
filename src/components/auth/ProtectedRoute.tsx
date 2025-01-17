@@ -20,8 +20,12 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // Exclude /signup from the authentication check
-  if (!user && location.pathname !== '/signup') {
+  // Debugging: Log current path and user status
+  console.log("Current Path:", location.pathname);
+  console.log("User:", user);
+
+  // Exclude /signup and /signin from the authentication check
+  if (!user && location.pathname !== '/signup' && location.pathname !== '/signin') {
     return <Navigate to="/signin" replace />;
   }
 
