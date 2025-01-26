@@ -12,13 +12,14 @@ import { Settings } from "@/pages/Settings";
 import { Advertisements } from "@/pages/Advertisements";
 import { DocumentCategories } from "@/components/documents/DocumentCategories";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
+import Index from "@/pages/Index";
 
 export const AppRoutes = () => (
   <Routes>
     {/* Auth Routes */}
     <Route path="/signup" element={<SignUpForm />} />
     <Route path="/signin" element={<SignInForm />} />
-    <Route path="/" element={<Navigate to="/signin" replace />} />
+    <Route path="/" element={<Index />} />
 
     {/* Document Routes */}
     <Route
