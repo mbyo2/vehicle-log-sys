@@ -10,10 +10,10 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
-// Create observable for route state
+// Create observable for route state with explicit types
 const routeState = observable({
-  isVerifying: true as boolean,
-  attempts: 0 as number
+  isVerifying: true,
+  attempts: 0
 });
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
