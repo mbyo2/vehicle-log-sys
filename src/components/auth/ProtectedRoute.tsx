@@ -12,6 +12,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
+  // Show loading spinner while checking authentication
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -20,23 +21,27 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // Debugging: Log current path and user status
-  console.log("Current Path:", location.pathname);
-  console.log("User:", user);
+  // If not authenticated and not on auth pages, redirect to signin
+  if (!user && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {
+    // Save the attempted URL to redirect back after login
+    return <Navigate to="/signin" state={{ from: location }} replace />;
+  }
 
-  // Exclude /signup and /signin from the authentication check
-  if (!user && location.pathname !== '/signup' && location.pathname !== '/signin') {
+  // If authenticated but no profile, something went wrong
+  if (user && !profile && !location.pathname.startsWith('/signin')) {
+    console.error('User authenticated but no profile found');
     return <Navigate to="/signin" replace />;
   }
 
+  // Check role-based access
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    // Redirect based on role if access is denied
+    // Redirect based on role
     if (profile.role === 'super_admin') {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/companies" replace />;
     } else if (profile.role === 'company_admin') {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/fleet" replace />;
     } else {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/documents" replace />;
     }
   }
 
