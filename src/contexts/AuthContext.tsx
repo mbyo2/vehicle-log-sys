@@ -1,9 +1,24 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserProfile, UserRole } from '@/types/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { observable } from '@legendapp/state';
+import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
+
+// Enable React tracking for Legend State
+enableReactTracking({
+  auto: true
+});
+
+// Create observable state
+const authState = observable({
+  user: null as User | null,
+  profile: null as UserProfile | null,
+  loading: true,
+  initialized: false
+});
 
 interface AuthContextType {
   user: User | null;
@@ -17,41 +32,51 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check active sessions and get user profile
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        getProfile(session.user.id);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        authState.user.set(session?.user ?? null);
+        
+        if (session?.user) {
+          await getProfile(session.user.id);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        authState.loading.set(false);
+        authState.initialized.set(true);
       }
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session);
-      setUser(session?.user ?? null);
+      
+      authState.loading.set(true);
+      authState.user.set(session?.user ?? null);
+
       if (session?.user) {
         await getProfile(session.user.id);
         // Redirect based on role
-        if (profile?.role === 'super_admin') {
-          navigate('/admin/dashboard');
-        } else if (profile?.role === 'company_admin') {
-          navigate('/company/dashboard');
+        if (authState.profile.get()?.role === 'super_admin') {
+          navigate('/companies');
+        } else if (authState.profile.get()?.role === 'company_admin') {
+          navigate('/fleet');
         } else {
-          navigate('/dashboard');
+          navigate('/documents');
         }
       } else {
-        setProfile(null);
+        authState.profile.set(null);
         navigate('/signin');
       }
-      setLoading(false);
+      authState.loading.set(false);
     });
 
     return () => {
@@ -77,15 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           full_name: data.full_name || undefined,
           company_id: data.company_id || undefined
         };
-        setProfile(userProfile);
+        authState.profile.set(userProfile);
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
+      authState.loading.set(false);
     }
   }
 
   const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
     try {
+      authState.loading.set(true);
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -98,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (signUpError) throw signUpError;
 
-      if (role === 'company_admin' && companyName) {
+      if (role === 'company_admin' && companyName && user) {
         // Create company
         const { data: company, error: companyError } = await supabase
           .from('companies')
@@ -107,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             subscription_type: subscriptionType || 'trial',
             trial_start_date: new Date().toISOString(),
             trial_end_date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-            created_by: user?.id,
+            created_by: user.id,
           })
           .select()
           .single();
@@ -121,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             company_id: company.id,
             role: role as UserRole,
           })
-          .eq('id', user?.id);
+          .eq('id', user.id);
 
         if (profileError) throw profileError;
       }
@@ -138,11 +165,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Error",
         description: error.message,
       });
+    } finally {
+      authState.loading.set(false);
     }
   };
 
   const signIn = async (email: string, password: string) => {
     try {
+      authState.loading.set(true);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -160,13 +190,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Error",
         description: error.message,
       });
+    } finally {
+      authState.loading.set(false);
     }
   };
 
   const signOut = async () => {
     try {
+      authState.loading.set(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
       toast({
         title: "Signed out",
         description: "Successfully signed out.",
@@ -178,11 +212,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Error",
         description: error.message,
       });
+    } finally {
+      authState.loading.set(false);
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, signUp, signIn, signOut, loading }}>
+    <AuthContext.Provider 
+      value={{ 
+        user: authState.user.get(), 
+        profile: authState.profile.get(), 
+        signUp, 
+        signIn, 
+        signOut, 
+        loading: authState.loading.get() 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -2,21 +2,33 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useEffect } from 'react';
+import { observable } from '@legendapp/state';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRoles?: UserRole[];
 }
 
+// Create observable for route state
+const routeState = observable({
+  isVerifying: true
+});
+
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
-  if (loading) {
+  useEffect(() => {
+    // Set verification state based on auth loading
+    routeState.isVerifying.set(loading);
+  }, [loading]);
+
+  // Show loading spinner while verifying authentication
+  if (routeState.isVerifying.get()) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
