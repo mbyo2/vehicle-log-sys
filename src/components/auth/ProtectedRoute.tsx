@@ -12,7 +12,8 @@ interface ProtectedRouteProps {
 
 // Create observable for route state
 const routeState = observable({
-  isVerifying: true as boolean
+  isVerifying: true as boolean,
+  attempts: 0 as number
 });
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -22,10 +23,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     // Set verification state based on auth loading
     routeState.isVerifying.set(loading);
+    routeState.attempts.set(prev => prev + 1);
   }, [loading]);
 
   // Show loading spinner while verifying authentication
-  if (routeState.isVerifying.get()) {
+  if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" />

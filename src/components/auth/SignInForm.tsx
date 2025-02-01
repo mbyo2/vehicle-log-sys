@@ -18,13 +18,34 @@ const signInState = observable({
   resetPasswordOpen: false,
   attempts: 0,
   showTwoFactor: false,
-  tempEmail: ""
+  tempEmail: "",
+  isFirstUser: false
 });
 
 export function SignInForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if this is the first user
+  const checkFirstUser = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+      
+      if (error) throw error;
+      signInState.isFirstUser.set(!data || data.length === 0);
+    } catch (error) {
+      console.error("Error checking first user:", error);
+    }
+  };
+
+  // Call checkFirstUser when component mounts
+  useState(() => {
+    checkFirstUser();
+  });
 
   const handleSubmit = async (values: SignInFormValues) => {
     if (signInState.attempts.get() >= 5) {
@@ -38,10 +59,28 @@ export function SignInForm() {
 
     signInState.loading.set(true);
     try {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password
-      });
+      let authResponse;
+      
+      if (signInState.isFirstUser.get()) {
+        // For first user, create account and set as super_admin
+        authResponse = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            data: {
+              role: 'super_admin'
+            }
+          }
+        });
+      } else {
+        // Regular sign in for existing users
+        authResponse = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password
+        });
+      }
+
+      const { data: { user }, error } = authResponse;
 
       if (error) {
         signInState.attempts.set(prev => prev + 1);
@@ -57,6 +96,14 @@ export function SignInForm() {
       }
 
       if (user) {
+        if (signInState.isFirstUser.get()) {
+          toast({
+            title: "Welcome!",
+            description: "Your super admin account has been created. Please sign in.",
+          });
+          return;
+        }
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('two_factor_enabled, role, company_id')
@@ -65,7 +112,7 @@ export function SignInForm() {
 
         if (profileError) throw profileError;
 
-        if (profile.two_factor_enabled) {
+        if (profile?.two_factor_enabled) {
           signInState.tempEmail.set(values.email);
           signInState.showTwoFactor.set(true);
           return;
@@ -125,11 +172,6 @@ export function SignInForm() {
       });
   };
 
-  const handleSignUpClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    navigate("/signup", { replace: true });
-  };
-
   return (
     <ErrorBoundary>
       <div className="container relative flex h-screen w-screen flex-col items-center justify-center">
@@ -139,36 +181,42 @@ export function SignInForm() {
         {!signInState.showTwoFactor.get() ? (
           <Card className="w-full max-w-[400px] transition-all duration-300">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+              <CardTitle className="text-2xl text-center">
+                {signInState.isFirstUser.get() ? 'Create Super Admin Account' : 'Sign In'}
+              </CardTitle>
               <CardDescription className="text-center">
-                Enter your credentials to access your account
+                {signInState.isFirstUser.get() 
+                  ? 'Set up your super admin account to get started'
+                  : 'Enter your credentials to access your account'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <SignInFormFields onSubmit={handleSubmit} loading={signInState.loading.get()} />
             </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-              <Button
-                variant="link"
-                className="px-0 text-sm"
-                onClick={() => signInState.resetPasswordOpen.set(true)}
-              >
-                Forgot password?
-              </Button>
-              <div className="text-sm text-muted-foreground">
-                Need a company account?{" "}
-                <Button 
-                  variant="link" 
-                  className="p-0 text-primary hover:underline"
-                  onClick={handleSignUpClick}
+            {!signInState.isFirstUser.get() && (
+              <CardFooter className="flex flex-col space-y-2">
+                <Button
+                  variant="link"
+                  className="px-0 text-sm"
+                  onClick={() => signInState.resetPasswordOpen.set(true)}
                 >
-                  Register here
+                  Forgot password?
                 </Button>
-              </div>
-              <div className="text-xs text-muted-foreground text-center">
-                Note: Drivers and supervisors can only be added by company administrators
-              </div>
-            </CardFooter>
+                <div className="text-sm text-muted-foreground">
+                  Need a company account?{" "}
+                  <Button 
+                    variant="link" 
+                    className="p-0 text-primary hover:underline"
+                    onClick={() => navigate("/signup", { replace: true })}
+                  >
+                    Register here
+                  </Button>
+                </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  Note: Drivers and supervisors can only be added by company administrators
+                </div>
+              </CardFooter>
+            )}
           </Card>
         ) : (
           <TwoFactorVerification 
