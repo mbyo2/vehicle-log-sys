@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 
 // Create observable for route state
 const routeState = observable({
-  isVerifying: true
+  isVerifying: true as boolean
 });
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
