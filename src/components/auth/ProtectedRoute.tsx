@@ -28,7 +28,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     // Set verification state based on auth loading
     routeState.isVerifying.set(loading);
-    routeState.attempts.set(prev => Number(prev) + 1);
+    routeState.attempts.set((prev: number) => prev + 1);
   }, [loading]);
 
   // Show loading spinner while verifying authentication
