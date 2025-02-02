@@ -26,7 +26,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     routeState.isVerifying.set(loading);
-    routeState.attempts.set(routeState.attempts.get() + 1);
+    routeState.attempts.set(prev => prev + 1);
   }, [loading]);
 
   if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {
@@ -46,8 +46,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     return <Navigate to="/signin" replace />;
   }
 
-  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    const defaultRoute = getDefaultRoute(profile.role);
+  const userProfile = profile?.get();
+  if (allowedRoles && userProfile && !allowedRoles.includes(userProfile.role)) {
+    const defaultRoute = getDefaultRoute(userProfile.role);
     return <Navigate to={defaultRoute} replace />;
   }
 

@@ -8,14 +8,15 @@ import { ResetPasswordDialog } from "./ResetPasswordDialog";
 import { SignInFormFields } from "./SignInFormFields";
 import { TwoFactorVerification } from "./TwoFactorVerification";
 import { useSignIn } from "./hooks/useSignIn";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SignInForm() {
   const navigate = useNavigate();
-  const { state, handleSubmit, checkFirstUser } = useSignIn();
+  const { state, handleSubmit, checkFirstUser, handleSuccessfulLogin } = useSignIn();
 
   useEffect(() => {
     checkFirstUser();
-  }, []);
+  }, [checkFirstUser]);
 
   const handleTwoFactorComplete = () => {
     state.showTwoFactor.set(false);

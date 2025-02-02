@@ -2,36 +2,58 @@ import { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
-import { authState } from './auth/AuthState';
-import { useAuthActions } from './auth/useAuthActions';
+import { observable } from '@legendapp/state';
+import type { User } from '@supabase/supabase-js';
+import type { UserProfile } from '@/types/auth';
 
 // Enable React tracking for Legend State
 enableReactTracking({
   auto: true
 });
 
+export const authState = observable({
+  user: null as User | null,
+  profile: null as UserProfile | null,
+  loading: true,
+  initialized: false
+});
+
 interface AuthContextType {
-  user: typeof authState.user.get;
-  profile: typeof authState.profile.get;
-  signUp: ReturnType<typeof useAuthActions>['signUp'];
-  signOut: ReturnType<typeof useAuthActions>['signOut'];
-  loading: typeof authState.loading.get;
+  user: typeof authState.user;
+  profile: typeof authState.profile;
+  loading: typeof authState.loading;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { getProfile, signUp, signOut } = useAuthActions();
+
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/signin');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        authState.user.set(session?.user ?? null);
-        
         if (session?.user) {
-          await getProfile(session.user.id);
+          authState.user.set(session.user);
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profileData) {
+            authState.profile.set(profileData);
+          }
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -50,17 +72,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authState.user.set(session?.user ?? null);
 
       if (session?.user) {
-        await getProfile(session.user.id);
-        if (authState.profile.get()?.role === 'super_admin') {
-          navigate('/companies');
-        } else if (authState.profile.get()?.role === 'company_admin') {
-          navigate('/fleet');
-        } else {
-          navigate('/documents');
-        }
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        authState.profile.set(profileData ?? null);
       } else {
         authState.profile.set(null);
-        navigate('/signin');
       }
       authState.loading.set(false);
     });
@@ -68,16 +88,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, getProfile]);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider 
-      value={{ 
-        user: authState.user.get(), 
-        profile: authState.profile.get(), 
-        signUp, 
-        signOut, 
-        loading: authState.loading.get() 
+      value={{
+        user: authState.user,
+        profile: authState.profile,
+        loading: authState.loading,
+        signOut
       }}
     >
       {children}
