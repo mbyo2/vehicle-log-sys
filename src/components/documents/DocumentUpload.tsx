@@ -180,7 +180,7 @@ export function DocumentUpload() {
                 <h4 className="font-medium">document.name</h4>
                 {getStatusBadge('pending')}
               </div>
-              {profile?.role === 'company_admin' && (
+              {profile.get()?.role === 'company_admin' && (
                 <div className="flex items-center space-x-2">
                   <Textarea
                     placeholder="Verification notes..."

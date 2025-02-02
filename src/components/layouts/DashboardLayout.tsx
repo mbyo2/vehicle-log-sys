@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { UserRole } from "@/types/auth";
 
 const navigation = {
   driver: [
@@ -35,7 +36,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const userNavigation = profile ? navigation[profile.role] : [];
+  const currentProfile = profile.get();
+  const userNavigation = currentProfile ? navigation[currentProfile.role as keyof typeof navigation] : [];
 
   const NavLinks = () => (
     <>
