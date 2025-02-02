@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const location = useLocation();
 
   useEffect(() => {
-    const isVerifying = loading;
+    const isVerifying = loading.get();
     const currentAttempts = routeState.attempts.get();
     
     routeState.isVerifying.set(isVerifying);
@@ -40,16 +40,16 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  if (!user && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {
+  if (!user.get() && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  if (user && !profile && !location.pathname.startsWith('/signin')) {
+  if (user.get() && !profile.get() && !location.pathname.startsWith('/signin')) {
     console.error('User authenticated but no profile found');
     return <Navigate to="/signin" replace />;
   }
 
-  const userProfile = profile?.get();
+  const userProfile = profile.get();
   if (allowedRoles && userProfile && !allowedRoles.includes(userProfile.role)) {
     const defaultRoute = getDefaultRoute(userProfile.role);
     return <Navigate to={defaultRoute} replace />;

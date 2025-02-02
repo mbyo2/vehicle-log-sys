@@ -9,7 +9,8 @@ export function Advertisements() {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("view");
 
-  const isAdvertiser = profile?.role === 'super_admin' || profile?.role === 'company_admin';
+  const currentProfile = profile.get();
+  const isAdvertiser = currentProfile?.role === 'super_admin' || currentProfile?.role === 'company_admin';
 
   return (
     <div className="container mx-auto py-6">

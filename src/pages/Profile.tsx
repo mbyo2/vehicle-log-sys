@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { profile, user } = useAuth();
-  const [fullName, setFullName] = useState(profile?.full_name || "");
+  const [fullName, setFullName] = useState(profile.get()?.full_name || "");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    const currentUser = user.get();
+    if (!currentUser) return;
 
     try {
       setLoading(true);
@@ -25,7 +26,7 @@ const Profile = () => {
           full_name: fullName,
           updated_at: new Date().toISOString()
         })
-        .eq('id', user.id);
+        .eq('id', currentUser.id);
 
       if (error) throw error;
 
@@ -44,6 +45,8 @@ const Profile = () => {
     }
   };
 
+  const currentProfile = profile.get();
+
   return (
     <div className="container max-w-2xl py-8">
       <Card>
@@ -60,7 +63,7 @@ const Profile = () => {
               <Input
                 id="email"
                 type="email"
-                value={profile?.email || ""}
+                value={currentProfile?.email || ""}
                 disabled
                 className="bg-muted"
               />
@@ -84,7 +87,7 @@ const Profile = () => {
               <Input
                 id="role"
                 type="text"
-                value={profile?.role || ""}
+                value={currentProfile?.role || ""}
                 disabled
                 className="bg-muted capitalize"
               />
