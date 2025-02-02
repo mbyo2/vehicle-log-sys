@@ -104,6 +104,7 @@ export function SignInForm() {
           return;
         }
 
+        // Get user profile with role information
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('two_factor_enabled, role, company_id')
@@ -153,6 +154,10 @@ export function SignInForm() {
         return '/companies';
       case 'company_admin':
         return '/fleet';
+      case 'supervisor':
+        return '/fleet';
+      case 'driver':
+        return '/documents';
       default:
         return '/documents';
     }

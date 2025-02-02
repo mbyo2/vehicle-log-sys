@@ -15,7 +15,6 @@ interface RouteState {
   attempts: number;
 }
 
-// Create observable state with explicit types
 const routeState = observable<RouteState>({
   isVerifying: true,
   attempts: 0
@@ -30,7 +29,6 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     routeState.attempts.set(routeState.attempts.get() + 1);
   }, [loading]);
 
-  // Show loading spinner while verifying authentication
   if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -39,29 +37,34 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // If not authenticated and not on auth pages, redirect to signin
   if (!user && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {
-    // Save the attempted URL to redirect back after login
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // If authenticated but no profile, something went wrong
   if (user && !profile && !location.pathname.startsWith('/signin')) {
     console.error('User authenticated but no profile found');
     return <Navigate to="/signin" replace />;
   }
 
-  // Check role-based access
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
-    // Redirect based on role
-    if (profile.role === 'super_admin') {
-      return <Navigate to="/companies" replace />;
-    } else if (profile.role === 'company_admin') {
-      return <Navigate to="/fleet" replace />;
-    } else {
-      return <Navigate to="/documents" replace />;
-    }
+    const defaultRoute = getDefaultRoute(profile.role);
+    return <Navigate to={defaultRoute} replace />;
   }
 
   return <>{children}</>;
+}
+
+function getDefaultRoute(role: UserRole): string {
+  switch (role) {
+    case 'super_admin':
+      return '/companies';
+    case 'company_admin':
+      return '/fleet';
+    case 'supervisor':
+      return '/fleet';
+    case 'driver':
+      return '/documents';
+    default:
+      return '/documents';
+  }
 }
