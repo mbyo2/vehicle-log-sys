@@ -9,6 +9,14 @@ import { SignInFormFields } from "./SignInFormFields";
 import { TwoFactorVerification } from "./TwoFactorVerification";
 import { useSignIn } from "./hooks/useSignIn";
 import { supabase } from "@/integrations/supabase/client";
+import { observable } from '@legendapp/state';
+
+const signInState = observable({
+  showTwoFactor: false,
+  tempEmail: "",
+  resetPasswordOpen: false,
+  isFirstUser: false
+});
 
 export function SignInForm() {
   const navigate = useNavigate();
@@ -19,11 +27,11 @@ export function SignInForm() {
   }, [checkFirstUser]);
 
   const handleTwoFactorComplete = () => {
-    state.showTwoFactor.set(false);
+    signInState.showTwoFactor.set(false);
     supabase
       .from('profiles')
       .select('role, company_id')
-      .eq('email', state.tempEmail.get())
+      .eq('email', signInState.tempEmail.get())
       .single()
       .then(({ data: profile, error }) => {
         if (!error && profile) {
@@ -38,14 +46,14 @@ export function SignInForm() {
         <div className="absolute right-4 top-4">
           <ThemeToggle />
         </div>
-        {!state.showTwoFactor.get() ? (
+        {!signInState.showTwoFactor.get() ? (
           <Card className="w-full max-w-[400px] transition-all duration-300">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl text-center">
-                {state.isFirstUser.get() ? 'Create Super Admin Account' : 'Sign In'}
+                {signInState.isFirstUser.get() ? 'Create Super Admin Account' : 'Sign In'}
               </CardTitle>
               <CardDescription className="text-center">
-                {state.isFirstUser.get() 
+                {signInState.isFirstUser.get() 
                   ? 'Set up your super admin account to get started'
                   : 'Enter your credentials to access your account'}
               </CardDescription>
@@ -53,12 +61,12 @@ export function SignInForm() {
             <CardContent>
               <SignInFormFields onSubmit={handleSubmit} loading={state.loading.get()} />
             </CardContent>
-            {!state.isFirstUser.get() && (
+            {!signInState.isFirstUser.get() && (
               <CardFooter className="flex flex-col space-y-2">
                 <Button
                   variant="link"
                   className="px-0 text-sm"
-                  onClick={() => state.resetPasswordOpen.set(true)}
+                  onClick={() => signInState.resetPasswordOpen.set(true)}
                 >
                   Forgot password?
                 </Button>
@@ -80,14 +88,14 @@ export function SignInForm() {
           </Card>
         ) : (
           <TwoFactorVerification 
-            email={state.tempEmail.get()}
+            email={signInState.tempEmail.get()}
             onVerificationComplete={handleTwoFactorComplete}
           />
         )}
 
         <ResetPasswordDialog 
-          open={state.resetPasswordOpen.get()} 
-          onOpenChange={(open) => state.resetPasswordOpen.set(open)}
+          open={signInState.resetPasswordOpen.get()} 
+          onOpenChange={(open) => signInState.resetPasswordOpen.set(open)}
           redirectTo={`${window.location.origin}/reset-password`}
         />
       </div>

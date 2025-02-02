@@ -25,8 +25,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const location = useLocation();
 
   useEffect(() => {
-    routeState.isVerifying.set(loading);
-    routeState.attempts.set(prev => prev + 1);
+    const isVerifying = loading;
+    const currentAttempts = routeState.attempts.get();
+    
+    routeState.isVerifying.set(isVerifying);
+    routeState.attempts.set(currentAttempts + 1);
   }, [loading]);
 
   if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {

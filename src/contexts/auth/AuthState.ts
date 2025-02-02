@@ -1,6 +1,6 @@
 import { observable } from '@legendapp/state';
-import { User } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/auth';
+import type { User } from '@supabase/supabase-js';
+import type { UserProfile } from '@/types/auth';
 
 interface AuthState {
   user: User | null;
@@ -15,3 +15,9 @@ export const authState = observable<AuthState>({
   loading: true,
   initialized: false
 });
+
+// Helper functions to safely access state values
+export const getUser = () => authState.user.get();
+export const getProfile = () => authState.profile.get();
+export const getLoading = () => authState.loading.get();
+export const getInitialized = () => authState.initialized.get();

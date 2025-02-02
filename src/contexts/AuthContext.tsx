@@ -2,20 +2,13 @@ import { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
-import { observable } from '@legendapp/state';
+import { authState } from './auth/AuthState';
 import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '@/types/auth';
 
 // Enable React tracking for Legend State
 enableReactTracking({
   auto: true
-});
-
-export const authState = observable({
-  user: null as User | null,
-  profile: null as UserProfile | null,
-  loading: true,
-  initialized: false
 });
 
 interface AuthContextType {
