@@ -27,14 +27,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     routeState.isVerifying.set(loading);
-    
-    // Ensure we're working with numbers
-    const currentAttempts = Number(routeState.attempts.get());
-    if (!isNaN(currentAttempts)) {
-      routeState.attempts.set(currentAttempts + 1);
-    } else {
-      routeState.attempts.set(1); // Reset to 1 if current value is invalid
-    }
+    routeState.attempts.set(routeState.attempts.get() + 1);
   }, [loading]);
 
   // Show loading spinner while verifying authentication
