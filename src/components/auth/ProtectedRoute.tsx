@@ -26,11 +26,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const location = useLocation();
 
   useEffect(() => {
-    // Set verification state based on auth loading
     routeState.isVerifying.set(loading);
     
-    // Explicitly type the previous value as number and increment it
-    routeState.attempts.set((prev: number) => prev + 1);
+    // Ensure we're working with numbers by using a type assertion
+    const currentAttempts = routeState.attempts.get();
+    routeState.attempts.set(Number(currentAttempts) + 1);
   }, [loading]);
 
   // Show loading spinner while verifying authentication
