@@ -2,7 +2,7 @@ import * as z from "zod";
 import { UserRole } from "@/types/auth";
 
 export const signUpSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   role: z.enum(["company_admin", "driver", "supervisor"] as const),
