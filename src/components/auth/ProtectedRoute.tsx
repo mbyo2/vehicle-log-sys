@@ -15,7 +15,7 @@ interface RouteState {
   attempts: number;
 }
 
-// Create observable for route state with explicit types
+// Create observable state with explicit types
 const routeState = observable<RouteState>({
   isVerifying: true,
   attempts: 0
@@ -28,6 +28,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     // Set verification state based on auth loading
     routeState.isVerifying.set(loading);
+    
+    // Explicitly type the previous value as number and increment it
     routeState.attempts.set((prev: number) => prev + 1);
   }, [loading]);
 
