@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,11 +12,12 @@ import { UserRole } from "@/types/auth";
 export function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const isFirstUser = location.state?.isFirstUser;
 
   const onSubmit = async (values: SignUpFormValues) => {
-    // Prevent direct signup for drivers and supervisors
-    if (values.role === "driver" || values.role === "supervisor" as UserRole) {
+    if (!isFirstUser && (values.role === "driver" || values.role === "supervisor" as UserRole)) {
       toast({
         variant: "destructive",
         title: "Registration not allowed",
@@ -27,14 +28,13 @@ export function SignUpForm() {
 
     setLoading(true);
     try {
-      // 1. Create the user account with metadata
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
             full_name: values.fullName,
-            role: values.role, // Include role in metadata
+            role: isFirstUser ? 'super_admin' : values.role,
           },
         },
       });
@@ -45,8 +45,7 @@ export function SignUpForm() {
         throw new Error("Failed to create user account");
       }
 
-      // 2. If user is company admin, create the company
-      if (values.role === "company_admin" && values.companyName && values.subscriptionType) {
+      if (!isFirstUser && values.role === "company_admin" && values.companyName && values.subscriptionType) {
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .insert({
@@ -63,7 +62,6 @@ export function SignUpForm() {
 
         if (companyError) throw companyError;
 
-        // 3. Update the user's profile with company_id
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -79,7 +77,6 @@ export function SignUpForm() {
         description: "Please check your email to verify your account.",
       });
 
-      // Navigate to signin
       navigate('/signin', { replace: true });
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -101,25 +98,28 @@ export function SignUpForm() {
         </div>
         <Card className="w-full max-w-[400px]">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Create Company Account</CardTitle>
+            <CardTitle className="text-2xl text-center">
+              {isFirstUser ? 'Create Super Admin Account' : 'Create Company Account'}
+            </CardTitle>
             <CardDescription className="text-center">
-              Register your company to start managing your fleet
+              {isFirstUser 
+                ? 'Set up your super admin account to get started'
+                : 'Register your company to start managing your fleet'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignUpFormFields onSubmit={onSubmit} loading={loading} />
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
-              <Link
-                to="/signin"
-                className="text-primary hover:underline"
-              >
-                Sign in
-              </Link>
-            </div>
-            <div className="mt-2 text-xs text-muted-foreground text-center">
-              Note: Only company administrators can register directly. Drivers and supervisors must be invited by their company administrator.
-            </div>
+            <SignUpFormFields onSubmit={onSubmit} loading={loading} isFirstUser={isFirstUser} />
+            {!isFirstUser && (
+              <div className="mt-4 text-center text-sm">
+                Already have an account?{" "}
+                <Link
+                  to="/signin"
+                  className="text-primary hover:underline"
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -32,7 +32,8 @@ const Index = () => {
           } else {
             const { count, error } = await supabase
               .from('profiles')
-              .select('*', { count: 'exact', head: true });
+              .select('*', { count: 'exact', head: true })
+              .eq('role', 'super_admin');
 
             if (error) {
               console.error('Error checking for first user:', error);
@@ -40,14 +41,13 @@ const Index = () => {
               return;
             }
 
-            // If no users exist, redirect to signup for super admin creation
             if (count === 0) {
-              navigate('/signup');
+              navigate('/signup', { state: { isFirstUser: true } });
             } else {
               navigate('/signin');
             }
           }
-        } else {
+        } else if (currentAttempts < 3) {
           indexState.attempts.set(currentAttempts + 1);
         }
       } catch (error) {
@@ -59,23 +59,9 @@ const Index = () => {
     checkFirstUser();
   }, [navigate, user, loading]);
 
-  const attempts = indexState.attempts.get();
-  if (loading.get() && attempts < 3) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold">Welcome to Vehicle Log</h1>
-        <p className="text-muted-foreground">
-          Please wait while we redirect you...
-        </p>
-      </div>
+      <LoadingSpinner size="lg" />
     </div>
   );
 };

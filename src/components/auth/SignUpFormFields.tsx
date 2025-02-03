@@ -23,16 +23,17 @@ import { signUpSchema, type SignUpFormValues } from "./schemas/signUpSchema";
 interface SignUpFormFieldsProps {
   onSubmit: (values: SignUpFormValues) => Promise<void>;
   loading: boolean;
+  isFirstUser?: boolean;
 }
 
-export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
+export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormFieldsProps) {
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       email: "",
       password: "",
       fullName: "",
-      role: "driver",
+      role: isFirstUser ? "super_admin" : "company_admin",
       companyName: "",
       subscriptionType: "trial",
     },
@@ -43,23 +44,6 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="John Doe"
-                  disabled={loading}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="email"
@@ -96,43 +80,17 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <Select
-                disabled={loading}
-                onValueChange={field.onChange}
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="company_admin">Company Admin</SelectItem>
-                  <SelectItem value="driver">Driver</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {watchRole === "company_admin" && (
+        {!isFirstUser && (
           <>
             <FormField
               control={form.control}
-              name="companyName"
+              name="fullName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Name</FormLabel>
+                  <FormLabel>Full Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter company name"
+                      placeholder="John Doe"
                       disabled={loading}
                       {...field}
                     />
@@ -143,10 +101,10 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
             />
             <FormField
               control={form.control}
-              name="subscriptionType"
+              name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subscription Type</FormLabel>
+                  <FormLabel>Role</FormLabel>
                   <Select
                     disabled={loading}
                     onValueChange={field.onChange}
@@ -154,18 +112,65 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select subscription type" />
+                        <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="trial">Trial (25 days)</SelectItem>
-                      <SelectItem value="full">Full Access</SelectItem>
+                      <SelectItem value="company_admin">Company Admin</SelectItem>
+                      <SelectItem value="driver">Driver</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            
+            {watchRole === "company_admin" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="companyName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter company name"
+                          disabled={loading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="subscriptionType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subscription Type</FormLabel>
+                      <Select
+                        disabled={loading}
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select subscription type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="trial">Trial (25 days)</SelectItem>
+                          <SelectItem value="full">Full Access</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
           </>
         )}
         <Button
@@ -176,7 +181,7 @@ export function SignUpFormFields({ onSubmit, loading }: SignUpFormFieldsProps) {
           {loading && (
             <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
           )}
-          Sign Up
+          {isFirstUser ? 'Create Super Admin Account' : 'Sign Up'}
         </Button>
       </form>
     </Form>
