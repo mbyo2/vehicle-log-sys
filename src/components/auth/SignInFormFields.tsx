@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import { Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
 import {
   Form,
   FormControl,
@@ -21,6 +23,8 @@ interface SignInFormFieldsProps {
 }
 
 export function SignInFormFields({ onSubmit, loading }: SignInFormFieldsProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -59,12 +63,27 @@ export function SignInFormFields({ onSubmit, loading }: SignInFormFieldsProps) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="Enter your password"
-                  type="password"
-                  disabled={loading}
-                  {...field}
-                />
+                <div className="relative">
+                  <Input
+                    placeholder="Enter your password"
+                    type={showPassword ? "text" : "password"}
+                    disabled={loading}
+                    {...field}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
               <PasswordStrengthMeter password={field.value} />

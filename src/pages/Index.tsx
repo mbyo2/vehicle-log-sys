@@ -28,10 +28,8 @@ const Index = () => {
 
         if (!loadingState) {
           if (userState) {
-            // If user is logged in, redirect to dashboard
             navigate('/fleet');
           } else {
-            // Check if there are any users in the system
             const { count, error } = await supabase
               .from('profiles')
               .select('*', { count: 'exact', head: true });
@@ -42,11 +40,10 @@ const Index = () => {
               return;
             }
 
+            // If no users exist, redirect to signup for super admin creation
             if (count === 0) {
-              // No users exist, redirect to signup to create super admin
               navigate('/signup');
             } else {
-              // Users exist, redirect to signin
               navigate('/signin');
             }
           }
