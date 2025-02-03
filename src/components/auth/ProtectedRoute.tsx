@@ -26,7 +26,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   useEffect(() => {
     const isVerifying = loading.get();
-    const currentAttempts = routeState.attempts.get();
+    const currentAttempts = Number(routeState.attempts.get());
     
     routeState.isVerifying.set(isVerifying);
     if (isVerifying) {
@@ -35,7 +35,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }, [loading]);
 
   const isVerifying = routeState.isVerifying.get();
-  const attempts = routeState.attempts.get();
+  const attempts = Number(routeState.attempts.get());
 
   if (isVerifying && attempts < 3) {
     return (
