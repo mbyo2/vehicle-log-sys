@@ -29,7 +29,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     const currentAttempts = routeState.attempts.get();
     
     routeState.isVerifying.set(isVerifying);
-    routeState.attempts.set(currentAttempts + 1);
+    if (isVerifying) {
+      routeState.attempts.set(currentAttempts + 1);
+    }
   }, [loading]);
 
   if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {
