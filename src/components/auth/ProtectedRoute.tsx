@@ -34,7 +34,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     }
   }, [loading]);
 
-  if (routeState.isVerifying.get() && routeState.attempts.get() < 3) {
+  const isVerifying = routeState.isVerifying.get();
+  const attempts = routeState.attempts.get();
+
+  if (isVerifying && attempts < 3) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" />

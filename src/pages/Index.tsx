@@ -11,10 +11,13 @@ const Index = () => {
   useEffect(() => {
     const checkFirstUser = async () => {
       try {
-        if (!loading.get()) {
-          if (user.get()) {
+        const loadingState = loading.get();
+        const userState = user.get();
+
+        if (!loadingState) {
+          if (userState) {
             // If user is logged in, redirect to dashboard
-            navigate('/dashboard');
+            navigate('/fleet');
           } else {
             // Check if there are any users in the system
             const { count, error } = await supabase
@@ -45,7 +48,6 @@ const Index = () => {
     checkFirstUser();
   }, [navigate, user, loading]);
 
-  // Show loading spinner while checking auth state
   if (loading.get()) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
