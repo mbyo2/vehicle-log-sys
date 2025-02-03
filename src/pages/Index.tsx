@@ -3,6 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { observable } from '@legendapp/state';
+
+interface IndexState {
+  checkingFirstUser: boolean;
+  attempts: number;
+}
+
+const indexState = observable<IndexState>({
+  checkingFirstUser: true,
+  attempts: 0
+});
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,6 +24,7 @@ const Index = () => {
       try {
         const loadingState = loading.get();
         const userState = user.get();
+        const currentAttempts = indexState.attempts.get();
 
         if (!loadingState) {
           if (userState) {
@@ -38,6 +50,8 @@ const Index = () => {
               navigate('/signin');
             }
           }
+        } else {
+          indexState.attempts.set(currentAttempts + 1);
         }
       } catch (error) {
         console.error('Error in checkFirstUser:', error);
@@ -48,7 +62,8 @@ const Index = () => {
     checkFirstUser();
   }, [navigate, user, loading]);
 
-  if (loading.get()) {
+  const attempts = indexState.attempts.get();
+  if (loading.get() && attempts < 3) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner size="lg" />
