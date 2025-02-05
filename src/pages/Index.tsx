@@ -24,11 +24,13 @@ const Index = observer(() => {
   useEffect(() => {
     const checkFirstUser = async () => {
       try {
+        // Get all state values at the start to ensure consistent access
         const loadingState = loading.get();
         const userState = user.get();
         const profileState = profile.get();
         const currentAttempts = indexState.attempts.get();
 
+        // Debug logging
         console.log('Index state:', {
           loadingState,
           userState,
@@ -36,31 +38,42 @@ const Index = observer(() => {
           currentAttempts
         });
 
-        if (!loadingState) {
-          if (userState && profileState) {
-            const defaultRoute = getDefaultRoute(profileState.role);
-            console.log('Redirecting to default route:', defaultRoute);
-            navigate(defaultRoute, { replace: true });
-          } else if (userState && !profileState) {
-            console.log('User exists but no profile, redirecting to signin');
-            navigate('/signin', { replace: true });
-          } else {
-            const { count, error } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true });
-
-            if (error) throw error;
-
-            if (count === 0) {
-              console.log('No users exist, redirecting to first user signup');
-              navigate('/signup', { state: { isFirstUser: true }, replace: true });
-            } else {
-              console.log('Users exist but not logged in, redirecting to signin');
-              navigate('/signin', { replace: true });
-            }
+        // Only proceed if not loading
+        if (loadingState) {
+          if (currentAttempts < 2) {
+            indexState.attempts.set(currentAttempts + 1);
           }
-        } else if (currentAttempts < 2) {
-          indexState.attempts.set(currentAttempts + 1);
+          return;
+        }
+
+        // Handle authenticated user with profile
+        if (userState && profileState) {
+          const defaultRoute = getDefaultRoute(profileState.role);
+          console.log('Redirecting to default route:', defaultRoute);
+          navigate(defaultRoute, { replace: true });
+          return;
+        }
+
+        // Handle authenticated user without profile
+        if (userState && !profileState) {
+          console.log('User exists but no profile, redirecting to signin');
+          navigate('/signin', { replace: true });
+          return;
+        }
+
+        // Check for first user scenario
+        const { count, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+
+        if (error) throw error;
+
+        if (count === 0) {
+          console.log('No users exist, redirecting to first user signup');
+          navigate('/signup', { state: { isFirstUser: true }, replace: true });
+        } else {
+          console.log('Users exist but not logged in, redirecting to signin');
+          navigate('/signin', { replace: true });
         }
       } catch (error: any) {
         console.error('Error in checkFirstUser:', error);
@@ -76,15 +89,12 @@ const Index = observer(() => {
     checkFirstUser();
   }, [navigate, user, loading, profile]);
 
-  if (loading.get()) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  return null;
+  // Render loading spinner while authentication is being checked
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  );
 });
 
 function getDefaultRoute(role: string): string {
