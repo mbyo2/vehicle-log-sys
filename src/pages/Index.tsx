@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { observable } from '@legendapp/state';
 
 interface IndexState {
@@ -47,7 +46,7 @@ const Index = () => {
               navigate('/signin');
             }
           }
-        } else if (currentAttempts < 3) {
+        } else if (currentAttempts < 2) {
           indexState.attempts.set(currentAttempts + 1);
         }
       } catch (error) {
@@ -56,14 +55,12 @@ const Index = () => {
       }
     };
 
+    // Execute immediately
     checkFirstUser();
   }, [navigate, user, loading]);
 
-  return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <LoadingSpinner size="lg" />
-    </div>
-  );
+  // Return null to avoid any flash of content
+  return null;
 };
 
 export default Index;
