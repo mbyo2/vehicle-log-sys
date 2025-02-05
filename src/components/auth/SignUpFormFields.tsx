@@ -33,7 +33,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
       email: "",
       password: "",
       fullName: "",
-      role: isFirstUser ? "super_admin" : "company_admin",
+      role: isFirstUser ? "company_admin" : "company_admin",
       companyName: "",
       subscriptionType: "trial",
     },
@@ -118,6 +118,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                     <SelectContent>
                       <SelectItem value="company_admin">Company Admin</SelectItem>
                       <SelectItem value="driver">Driver</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
