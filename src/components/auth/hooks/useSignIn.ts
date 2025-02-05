@@ -39,7 +39,7 @@ export function useSignIn() {
     }
     
     toast({
-      title: "Welcome back!",
+      title: "Welcome!",
       description: "Successfully signed in",
     });
 
@@ -74,64 +74,62 @@ export function useSignIn() {
 
     signInState.loading.set(true);
     try {
-      let authResponse;
-      
       if (signInState.isFirstUser.get()) {
-        authResponse = await supabase.auth.signUp({
+        // Handle first user signup (super admin)
+        const { data: { user }, error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
           options: {
             data: {
-              role: 'super_admin'
+              role: 'super_admin',
+              full_name: 'Super Admin'
             }
           }
         });
-      } else {
-        authResponse = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password
-        });
-      }
 
-      const { data: { user }, error } = authResponse;
+        if (error) throw error;
 
-      if (error) {
-        signInState.attempts.set(prev => prev + 1);
-        
-        if (error.message.includes("Access denied: IP address not whitelisted")) {
-          throw new Error("Your IP address is not authorized to access this account. Please contact your administrator.");
-        }
-        
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid email or password. Please try again.");
-        }
-        throw error;
-      }
-
-      if (user) {
-        if (signInState.isFirstUser.get()) {
+        if (user) {
           toast({
-            title: "Welcome!",
-            description: "Your super admin account has been created. Please sign in.",
+            title: "Super Admin Account Created",
+            description: "Please check your email to verify your account.",
           });
+          navigate('/signin');
           return;
         }
+      } else {
+        // Handle regular sign in
+        const { data: { user }, error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('two_factor_enabled, role, company_id')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        if (profile?.two_factor_enabled) {
-          signInState.tempEmail.set(values.email);
-          signInState.showTwoFactor.set(true);
-          return;
+        if (error) {
+          signInState.attempts.set(prev => prev + 1);
+          
+          if (error.message.includes("Invalid login credentials")) {
+            throw new Error("Invalid email or password. Please try again.");
+          }
+          throw error;
         }
 
-        handleSuccessfulLogin(profile, values.rememberMe);
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('two_factor_enabled, role, company_id')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) throw profileError;
+
+          if (profile?.two_factor_enabled) {
+            signInState.tempEmail.set(values.email);
+            signInState.showTwoFactor.set(true);
+            return;
+          }
+
+          handleSuccessfulLogin(profile, values.rememberMe);
+        }
       }
     } catch (error: any) {
       console.error("Sign in error:", error);
