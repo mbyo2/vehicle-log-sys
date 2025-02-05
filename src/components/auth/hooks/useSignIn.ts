@@ -39,7 +39,7 @@ export function useSignIn() {
     }
     
     toast({
-      title: "Welcome!",
+      title: "Welcome back!",
       description: "Successfully signed in",
     });
 
@@ -64,16 +64,16 @@ export function useSignIn() {
 
   const handleSignIn = async (values: SignInFormValues) => {
     try {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid email or password. Please try again.");
+      if (signInError) {
+        if (signInError.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password");
         }
-        throw error;
+        throw signInError;
       }
 
       if (!user) {
@@ -82,7 +82,7 @@ export function useSignIn() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('two_factor_enabled, role, company_id')
+        .select('role, company_id, two_factor_enabled')
         .eq('id', user.id)
         .single();
 
@@ -90,7 +90,11 @@ export function useSignIn() {
         throw new Error("Error fetching user profile");
       }
 
-      if (profile?.two_factor_enabled) {
+      if (!profile) {
+        throw new Error("No profile found for user");
+      }
+
+      if (profile.two_factor_enabled) {
         signInState.tempEmail.set(values.email);
         signInState.showTwoFactor.set(true);
         return;
@@ -116,49 +120,43 @@ export function useSignIn() {
     signInState.loading.set(true);
     try {
       if (signInState.isFirstUser.get()) {
-        // Try to sign in first in case user exists
-        try {
-          await handleSignIn(values);
-          return;
-        } catch (error: any) {
-          // If user doesn't exist, proceed with signup
-          if (!error.message.includes("Invalid login credentials")) {
-            throw error;
-          }
-        }
-
-        // Handle first user signup (super admin)
-        const { data: { user }, error } = await supabase.auth.signUp({
+        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
           options: {
             data: {
-              role: 'super_admin',
-              full_name: 'Super Admin'
+              role: 'super_admin'
             }
           }
         });
 
-        if (error) throw error;
+        if (signUpError) throw signUpError;
 
         if (user) {
           toast({
-            title: "Super Admin Account Created",
+            title: "Account Created",
             description: "Please check your email to verify your account.",
           });
           navigate('/signin');
         }
       } else {
-        // For regular users, always try sign in first
         await handleSignIn(values);
       }
     } catch (error: any) {
       console.error("Authentication error:", error);
       signInState.attempts.set(prev => prev + 1);
+      
+      let errorMessage = "An error occurred during authentication";
+      if (error.message === "Invalid email or password") {
+        errorMessage = error.message;
+      } else if (error.message.includes("User already registered")) {
+        errorMessage = "This email is already registered. Please sign in instead.";
+      }
+
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: error.message || "An error occurred during authentication",
+        description: errorMessage,
       });
     } finally {
       signInState.loading.set(false);
