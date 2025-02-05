@@ -87,7 +87,13 @@ export function useSignIn() {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes("already registered")) {
+            // If user exists, try to sign in instead
+            return await handleSignIn(values);
+          }
+          throw error;
+        }
 
         if (user) {
           toast({
@@ -99,37 +105,7 @@ export function useSignIn() {
         }
       } else {
         // Handle regular sign in
-        const { data: { user }, error } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password,
-        });
-
-        if (error) {
-          signInState.attempts.set(prev => prev + 1);
-          
-          if (error.message.includes("Invalid login credentials")) {
-            throw new Error("Invalid email or password. Please try again.");
-          }
-          throw error;
-        }
-
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('two_factor_enabled, role, company_id')
-            .eq('id', user.id)
-            .single();
-
-          if (profileError) throw profileError;
-
-          if (profile?.two_factor_enabled) {
-            signInState.tempEmail.set(values.email);
-            signInState.showTwoFactor.set(true);
-            return;
-          }
-
-          handleSuccessfulLogin(profile, values.rememberMe);
-        }
+        await handleSignIn(values);
       }
     } catch (error: any) {
       console.error("Sign in error:", error);
@@ -138,8 +114,36 @@ export function useSignIn() {
         title: "Error signing in",
         description: error.message,
       });
+      signInState.attempts.set(prev => prev + 1);
     } finally {
       signInState.loading.set(false);
+    }
+  };
+
+  const handleSignIn = async (values: SignInFormValues) => {
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+
+    if (error) throw error;
+
+    if (user) {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('two_factor_enabled, role, company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      if (profile?.two_factor_enabled) {
+        signInState.tempEmail.set(values.email);
+        signInState.showTwoFactor.set(true);
+        return;
+      }
+
+      handleSuccessfulLogin(profile, values.rememberMe);
     }
   };
 
