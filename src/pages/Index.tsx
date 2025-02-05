@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { observable } from '@legendapp/state';
 import { toast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface IndexState {
   checkingFirstUser: boolean;
@@ -17,27 +18,24 @@ const indexState = observable<IndexState>({
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
 
   useEffect(() => {
     const checkFirstUser = async () => {
       try {
         const loadingState = loading.get();
         const userState = user.get();
+        const profileState = profile.get();
         const currentAttempts = indexState.attempts.get();
 
         if (!loadingState) {
-          if (userState) {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', userState.id)
-              .single();
-
-            if (profileError) throw profileError;
-
-            const defaultRoute = getDefaultRoute(profile.role);
-            navigate(defaultRoute);
+          if (userState && profileState) {
+            const defaultRoute = getDefaultRoute(profileState.role);
+            console.log('Redirecting to default route:', defaultRoute);
+            navigate(defaultRoute, { replace: true });
+          } else if (userState && !profileState) {
+            console.log('User exists but no profile, redirecting to signin');
+            navigate('/signin', { replace: true });
           } else {
             const { count, error } = await supabase
               .from('profiles')
@@ -46,9 +44,11 @@ const Index = () => {
             if (error) throw error;
 
             if (count === 0) {
-              navigate('/signup', { state: { isFirstUser: true } });
+              console.log('No users exist, redirecting to first user signup');
+              navigate('/signup', { state: { isFirstUser: true }, replace: true });
             } else {
-              navigate('/signin');
+              console.log('Users exist but not logged in, redirecting to signin');
+              navigate('/signin', { replace: true });
             }
           }
         } else if (currentAttempts < 2) {
@@ -59,14 +59,23 @@ const Index = () => {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to initialize application"
+          description: "Failed to initialize application. Please try again."
         });
-        navigate('/signin');
+        navigate('/signin', { replace: true });
       }
     };
 
     checkFirstUser();
-  }, [navigate, user, loading]);
+  }, [navigate, user, loading, profile]);
+
+  // Show loading spinner while checking
+  if (loading.get() || indexState.checkingFirstUser.get()) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return null;
 };

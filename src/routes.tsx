@@ -16,12 +16,12 @@ import Index from "@/pages/Index";
 
 export const AppRoutes = () => (
   <Routes>
-    {/* Auth Routes */}
+    {/* Public Routes */}
+    <Route path="/" element={<Index />} />
     <Route path="/signup" element={<SignUpForm />} />
     <Route path="/signin" element={<SignInForm />} />
-    <Route path="/" element={<Index />} />
 
-    {/* Document Routes */}
+    {/* Protected Document Routes */}
     <Route
       path="/documents"
       element={
@@ -43,7 +43,7 @@ export const AppRoutes = () => (
       }
     />
 
-    {/* Admin Routes */}
+    {/* Protected Admin Routes */}
     <Route
       path="/companies"
       element={
@@ -104,5 +104,8 @@ export const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+
+    {/* Catch all route - redirect to default route based on role or signin */}
+    <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );

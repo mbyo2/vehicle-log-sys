@@ -32,27 +32,42 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (isVerifying) {
       routeState.attempts.set(currentAttempts + 1);
     }
-  }, [loading]);
+
+    // Log the current state for debugging
+    console.log('Protected Route State:', {
+      isVerifying,
+      user: user.get(),
+      profile: profile.get(),
+      location: location.pathname,
+      allowedRoles
+    });
+  }, [loading, user, profile, location.pathname, allowedRoles]);
 
   const isVerifying = routeState.isVerifying.get();
   const attempts = routeState.attempts.get();
 
-  // Only show loading for a very brief moment
+  // Only show loading for a brief moment
   if (isVerifying && attempts < 2) {
-    return <LoadingSpinner />;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
-  if (!user.get() && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {
+  if (!user.get()) {
+    console.log('No user found, redirecting to signin');
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  if (user.get() && !profile.get() && !location.pathname.startsWith('/signin')) {
+  if (!profile.get()) {
     console.error('User authenticated but no profile found');
     return <Navigate to="/signin" replace />;
   }
 
   const userProfile = profile.get();
   if (allowedRoles && userProfile && !allowedRoles.includes(userProfile.role)) {
+    console.log('User does not have required role, redirecting to default route');
     const defaultRoute = getDefaultRoute(userProfile.role);
     return <Navigate to={defaultRoute} replace />;
   }
