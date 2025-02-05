@@ -39,7 +39,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   // Only show loading for a very brief moment
   if (isVerifying && attempts < 2) {
-    return null; // Return nothing during the initial quick check
+    return <LoadingSpinner />;
   }
 
   if (!user.get() && !location.pathname.startsWith('/signin') && !location.pathname.startsWith('/signup')) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { observable } from '@legendapp/state';
+import { toast } from '@/hooks/use-toast';
 
 interface IndexState {
   checkingFirstUser: boolean;
@@ -27,18 +28,22 @@ const Index = () => {
 
         if (!loadingState) {
           if (userState) {
-            navigate('/fleet');
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', userState.id)
+              .single();
+
+            if (profileError) throw profileError;
+
+            const defaultRoute = getDefaultRoute(profile.role);
+            navigate(defaultRoute);
           } else {
             const { count, error } = await supabase
               .from('profiles')
-              .select('*', { count: 'exact', head: true })
-              .eq('role', 'super_admin');
+              .select('*', { count: 'exact', head: true });
 
-            if (error) {
-              console.error('Error checking for first user:', error);
-              navigate('/signin');
-              return;
-            }
+            if (error) throw error;
 
             if (count === 0) {
               navigate('/signup', { state: { isFirstUser: true } });
@@ -49,18 +54,36 @@ const Index = () => {
         } else if (currentAttempts < 2) {
           indexState.attempts.set(currentAttempts + 1);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error in checkFirstUser:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to initialize application"
+        });
         navigate('/signin');
       }
     };
 
-    // Execute immediately
     checkFirstUser();
   }, [navigate, user, loading]);
 
-  // Return null to avoid any flash of content
   return null;
 };
+
+function getDefaultRoute(role: string): string {
+  switch (role) {
+    case 'super_admin':
+      return '/companies';
+    case 'company_admin':
+      return '/fleet';
+    case 'supervisor':
+      return '/fleet';
+    case 'driver':
+      return '/documents';
+    default:
+      return '/documents';
+  }
+}
 
 export default Index;

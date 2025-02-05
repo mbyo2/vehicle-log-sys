@@ -21,15 +21,25 @@ export function useSignIn() {
 
   const checkFirstUser = async () => {
     try {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('profiles')
-        .select('id')
-        .limit(1);
+        .select('id', { count: 'exact', head: true });
       
       if (error) throw error;
-      signInState.isFirstUser.set(!data || data.length === 0);
-    } catch (error) {
+      
+      const isFirst = count === 0;
+      signInState.isFirstUser.set(isFirst);
+      
+      if (isFirst) {
+        navigate('/signup', { state: { isFirstUser: true }, replace: true });
+      }
+    } catch (error: any) {
       console.error("Error checking first user:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to check system status"
+      });
     }
   };
 
@@ -119,47 +129,7 @@ export function useSignIn() {
 
     signInState.loading.set(true);
     try {
-      // Always try to sign in first
-      try {
-        await handleSignIn(values);
-        return;
-      } catch (error: any) {
-        // If it's not an invalid credentials error, throw it
-        if (!error.message.includes("Invalid email or password")) {
-          throw error;
-        }
-        
-        // Only proceed with signup if we're handling the first user
-        if (!signInState.isFirstUser.get()) {
-          throw error;
-        }
-      }
-
-      // First user signup (super admin)
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            role: 'super_admin'
-          }
-        }
-      });
-
-      if (signUpError) {
-        if (signUpError.message.includes("User already registered")) {
-          throw new Error("This email is already registered. Please sign in instead.");
-        }
-        throw signUpError;
-      }
-
-      if (user) {
-        toast({
-          title: "Account Created",
-          description: "Please check your email to verify your account.",
-        });
-        navigate('/signin');
-      }
+      await handleSignIn(values);
     } catch (error: any) {
       console.error("Authentication error:", error);
       signInState.attempts.set(prev => prev + 1);
