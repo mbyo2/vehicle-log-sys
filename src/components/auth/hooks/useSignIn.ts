@@ -119,28 +119,46 @@ export function useSignIn() {
 
     signInState.loading.set(true);
     try {
-      if (signInState.isFirstUser.get()) {
-        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            data: {
-              role: 'super_admin'
-            }
-          }
-        });
-
-        if (signUpError) throw signUpError;
-
-        if (user) {
-          toast({
-            title: "Account Created",
-            description: "Please check your email to verify your account.",
-          });
-          navigate('/signin');
-        }
-      } else {
+      // Always try to sign in first
+      try {
         await handleSignIn(values);
+        return;
+      } catch (error: any) {
+        // If it's not an invalid credentials error, throw it
+        if (!error.message.includes("Invalid email or password")) {
+          throw error;
+        }
+        
+        // Only proceed with signup if we're handling the first user
+        if (!signInState.isFirstUser.get()) {
+          throw error;
+        }
+      }
+
+      // First user signup (super admin)
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            role: 'super_admin'
+          }
+        }
+      });
+
+      if (signUpError) {
+        if (signUpError.message.includes("User already registered")) {
+          throw new Error("This email is already registered. Please sign in instead.");
+        }
+        throw signUpError;
+      }
+
+      if (user) {
+        toast({
+          title: "Account Created",
+          description: "Please check your email to verify your account.",
+        });
+        navigate('/signin');
       }
     } catch (error: any) {
       console.error("Authentication error:", error);
