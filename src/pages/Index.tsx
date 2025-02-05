@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { observable } from '@legendapp/state';
+import { observer } from '@legendapp/state/react';
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
@@ -16,7 +17,7 @@ const indexState = observable<IndexState>({
   attempts: 0
 });
 
-const Index = () => {
+const Index = observer(() => {
   const navigate = useNavigate();
   const { user, loading, profile } = useAuth();
 
@@ -27,6 +28,13 @@ const Index = () => {
         const userState = user.get();
         const profileState = profile.get();
         const currentAttempts = indexState.attempts.get();
+
+        console.log('Index state:', {
+          loadingState,
+          userState,
+          profileState,
+          currentAttempts
+        });
 
         if (!loadingState) {
           if (userState && profileState) {
@@ -68,8 +76,7 @@ const Index = () => {
     checkFirstUser();
   }, [navigate, user, loading, profile]);
 
-  // Show loading spinner while checking
-  if (loading.get() || indexState.checkingFirstUser.get()) {
+  if (loading.get()) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />
@@ -78,7 +85,7 @@ const Index = () => {
   }
 
   return null;
-};
+});
 
 function getDefaultRoute(role: string): string {
   switch (role) {
