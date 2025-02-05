@@ -62,6 +62,47 @@ export function useSignIn() {
     }
   };
 
+  const handleSignIn = async (values: SignInFormValues) => {
+    try {
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please try again.");
+        }
+        throw error;
+      }
+
+      if (!user) {
+        throw new Error("No user returned after sign in");
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('two_factor_enabled, role, company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error("Error fetching user profile");
+      }
+
+      if (profile?.two_factor_enabled) {
+        signInState.tempEmail.set(values.email);
+        signInState.showTwoFactor.set(true);
+        return;
+      }
+
+      handleSuccessfulLogin(profile, values.rememberMe);
+    } catch (error: any) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (values: SignInFormValues) => {
     if (signInState.attempts.get() >= 5) {
       toast({
@@ -75,6 +116,17 @@ export function useSignIn() {
     signInState.loading.set(true);
     try {
       if (signInState.isFirstUser.get()) {
+        // Try to sign in first in case user exists
+        try {
+          await handleSignIn(values);
+          return;
+        } catch (error: any) {
+          // If user doesn't exist, proceed with signup
+          if (!error.message.includes("Invalid login credentials")) {
+            throw error;
+          }
+        }
+
         // Handle first user signup (super admin)
         const { data: { user }, error } = await supabase.auth.signUp({
           email: values.email,
@@ -87,13 +139,7 @@ export function useSignIn() {
           }
         });
 
-        if (error) {
-          if (error.message.includes("already registered")) {
-            // If user exists, try to sign in instead
-            return await handleSignIn(values);
-          }
-          throw error;
-        }
+        if (error) throw error;
 
         if (user) {
           toast({
@@ -101,49 +147,21 @@ export function useSignIn() {
             description: "Please check your email to verify your account.",
           });
           navigate('/signin');
-          return;
         }
       } else {
-        // Handle regular sign in
+        // For regular users, always try sign in first
         await handleSignIn(values);
       }
     } catch (error: any) {
-      console.error("Sign in error:", error);
+      console.error("Authentication error:", error);
+      signInState.attempts.set(prev => prev + 1);
       toast({
         variant: "destructive",
-        title: "Error signing in",
-        description: error.message,
+        title: "Authentication Error",
+        description: error.message || "An error occurred during authentication",
       });
-      signInState.attempts.set(prev => prev + 1);
     } finally {
       signInState.loading.set(false);
-    }
-  };
-
-  const handleSignIn = async (values: SignInFormValues) => {
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({
-      email: values.email,
-      password: values.password,
-    });
-
-    if (error) throw error;
-
-    if (user) {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('two_factor_enabled, role, company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile?.two_factor_enabled) {
-        signInState.tempEmail.set(values.email);
-        signInState.showTwoFactor.set(true);
-        return;
-      }
-
-      handleSuccessfulLogin(profile, values.rememberMe);
     }
   };
 
