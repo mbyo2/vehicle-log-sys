@@ -98,9 +98,9 @@ const Index = observer(() => {
           .from('profiles')
           .select('*')
           .eq('role', 'super_admin')
-          .single();
+          .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+        if (error) {
           throw error;
         }
 
