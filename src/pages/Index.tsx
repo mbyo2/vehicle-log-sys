@@ -7,6 +7,7 @@ import { observable } from '@legendapp/state';
 import { observer } from '@legendapp/state/react';
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { PostgrestResponse } from '@supabase/supabase-js';
 
 interface IndexState {
   checkingFirstUser: boolean;
@@ -92,11 +93,14 @@ const Index = observer(() => {
           .from('profiles')
           .select('*', { count: 'exact', head: true });
 
-        const { count, error } = await Promise.race([queryPromise, timeoutPromise]);
+        const response = await Promise.race([
+          queryPromise,
+          timeoutPromise
+        ]) as PostgrestResponse<any>;
 
-        if (error) throw error;
+        if (response.error) throw response.error;
 
-        if (count === 0) {
+        if (response.count === 0) {
           console.log('No users exist, redirecting to first user signup');
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
         } else {
