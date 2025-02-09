@@ -41,6 +41,7 @@ const Index = observer(() => {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
 
     const checkFirstUser = async () => {
       try {
@@ -55,17 +56,25 @@ const Index = observer(() => {
           loadingState,
           userState,
           profileState,
-          currentAttempts
+          currentAttempts,
+          mounted
         });
 
         // Only proceed if component is still mounted
         if (!mounted) return;
 
+        // If we've tried too many times, redirect to signin
+        if (currentAttempts >= 3) {
+          console.log('Maximum attempts reached, redirecting to signin');
+          navigate('/signin', { replace: true });
+          return;
+        }
+
+        // Increment attempts counter
+        indexState.attempts.set(currentAttempts + 1);
+
         // Only proceed if not loading
         if (loadingState) {
-          if (currentAttempts < 2) {
-            indexState.attempts.set(currentAttempts + 1);
-          }
           return;
         }
 
@@ -84,23 +93,14 @@ const Index = observer(() => {
           return;
         }
 
-        // Check for first user scenario using Promise.race for timeout
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Query timeout')), 5000)
-        );
-        
-        const queryPromise = supabase
+        // Check for first user scenario
+        const { data, error, count } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
 
-        const response = await Promise.race([
-          queryPromise,
-          timeoutPromise
-        ]) as PostgrestResponse<any>;
+        if (error) throw error;
 
-        if (response.error) throw response.error;
-
-        if (response.count === 0) {
+        if (count === 0) {
           console.log('No users exist, redirecting to first user signup');
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
         } else {
@@ -118,11 +118,20 @@ const Index = observer(() => {
       }
     };
 
+    // Set a timeout to ensure we don't get stuck
+    timeoutId = setTimeout(() => {
+      if (mounted && indexState.attempts.get() < 3) {
+        checkFirstUser();
+      }
+    }, 1000);
+
+    // Run initial check
     checkFirstUser();
 
     // Cleanup function to prevent state updates after unmount
     return () => {
       mounted = false;
+      clearTimeout(timeoutId);
     };
   }, [navigate, user, loading, profile, getDefaultRoute]);
 
