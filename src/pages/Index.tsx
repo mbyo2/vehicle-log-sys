@@ -93,18 +93,22 @@ const Index = observer(() => {
           return;
         }
 
-        // Check for first user scenario
-        const { data, error, count } = await supabase
+        // Check specifically for super admin existence
+        const { data, error } = await supabase
           .from('profiles')
-          .select('*', { count: 'exact', head: true });
+          .select('*')
+          .eq('role', 'super_admin')
+          .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') { // PGRST116 is the "no rows returned" error
+          throw error;
+        }
 
-        if (count === 0) {
-          console.log('No users exist, redirecting to first user signup');
+        if (!data) {
+          console.log('No super admin exists, redirecting to first user signup');
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
         } else {
-          console.log('Users exist but not logged in, redirecting to signin');
+          console.log('Super admin exists but not logged in, redirecting to signin');
           navigate('/signin', { replace: true });
         }
       } catch (error: any) {
