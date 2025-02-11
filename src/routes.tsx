@@ -13,6 +13,8 @@ import { Settings } from "@/pages/Settings";
 import { Advertisements } from "@/pages/Advertisements";
 import { DocumentCategories } from "@/components/documents/DocumentCategories";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
+import { Trips } from "@/pages/Trips";
+import { VehicleStatus } from "@/pages/VehicleStatus";
 import Index from "@/pages/Index";
 
 export const AppRoutes = () => (
@@ -39,6 +41,28 @@ export const AppRoutes = () => (
         <ProtectedRoute allowedRoles={['company_admin']}>
           <DashboardLayout>
             <DocumentCategories />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+
+    {/* Driver Routes */}
+    <Route
+      path="/trips"
+      element={
+        <ProtectedRoute allowedRoles={['driver']}>
+          <DashboardLayout>
+            <Trips />
+          </DashboardLayout>
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/vehicle-status"
+      element={
+        <ProtectedRoute allowedRoles={['driver']}>
+          <DashboardLayout>
+            <VehicleStatus />
           </DashboardLayout>
         </ProtectedRoute>
       }

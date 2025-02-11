@@ -1109,6 +1109,75 @@ export type Database = {
           },
         ]
       }
+      trip_logs: {
+        Row: {
+          approval_comment: string | null
+          approval_status: string | null
+          comments: string | null
+          created_at: string | null
+          driver_id: string | null
+          end_kilometers: number | null
+          end_location: Json | null
+          end_time: string | null
+          id: string
+          purpose: string
+          start_kilometers: number
+          start_location: Json | null
+          start_time: string
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          approval_comment?: string | null
+          approval_status?: string | null
+          comments?: string | null
+          created_at?: string | null
+          driver_id?: string | null
+          end_kilometers?: number | null
+          end_location?: Json | null
+          end_time?: string | null
+          id?: string
+          purpose: string
+          start_kilometers: number
+          start_location?: Json | null
+          start_time: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          approval_comment?: string | null
+          approval_status?: string | null
+          comments?: string | null
+          created_at?: string | null
+          driver_id?: string | null
+          end_kilometers?: number | null
+          end_location?: Json | null
+          end_time?: string | null
+          id?: string
+          purpose?: string
+          start_kilometers?: number
+          start_location?: Json | null
+          start_time?: string
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       two_factor_backup_codes: {
         Row: {
           code: string
@@ -1239,6 +1308,57 @@ export type Database = {
             columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_inspections: {
+        Row: {
+          checklist: Json
+          comments: string | null
+          created_at: string | null
+          driver_id: string | null
+          id: string
+          inspection_date: string | null
+          status: string | null
+          updated_at: string | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          checklist: Json
+          comments?: string | null
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          inspection_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          checklist?: Json
+          comments?: string | null
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          inspection_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
         ]
@@ -1520,6 +1640,13 @@ export type Database = {
       }
     }
     Enums: {
+      common_trip_purpose:
+        | "Delivery"
+        | "Pickup"
+        | "Maintenance"
+        | "Client Visit"
+        | "Administrative"
+        | "Other"
       erp_system_type:
         | "netsuite"
         | "odoo"
@@ -1531,6 +1658,17 @@ export type Database = {
         | "sage"
         | "infor"
         | "sds4"
+      inspection_item:
+        | "Brakes"
+        | "Lights"
+        | "Tires"
+        | "Oil Level"
+        | "Windshield"
+        | "Mirrors"
+        | "Horn"
+        | "Seatbelts"
+        | "Emergency Kit"
+        | "Fuel Level"
       subscription_type: "trial" | "full"
       user_role: "super_admin" | "company_admin" | "supervisor" | "driver"
     }
