@@ -8,17 +8,18 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignUpFormFields } from "./SignUpFormFields";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
-import { UserRole } from "@/types/auth";
 
-export function SignUpForm() {
+interface SignUpFormProps {
+  isFirstUser?: boolean;
+}
+
+export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
-  const isFirstUser = location.state?.isFirstUser;
 
   const onSubmit = async (values: SignUpFormValues) => {
-    if (!isFirstUser && (values.role === "driver" || values.role === "supervisor" as UserRole)) {
+    if (!isFirstUser && (values.role === "driver" || values.role === "supervisor")) {
       toast({
         variant: "destructive",
         title: "Registration not allowed",

@@ -34,7 +34,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
       email: "",
       password: "",
       fullName: "",
-      role: isFirstUser ? "company_admin" : "company_admin",
+      role: isFirstUser ? "super_admin" : "company_admin",
       companyName: "",
       subscriptionType: "trial",
     },
@@ -81,25 +81,26 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
             </FormItem>
           )}
         />
+        <FormField
+          control={form.control}
+          name="fullName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="John Doe"
+                  disabled={loading}
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         {!isFirstUser && (
           <>
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="John Doe"
-                      disabled={loading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="role"
