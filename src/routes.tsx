@@ -4,8 +4,8 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import SignUp from '@/pages/SignUp';
 import SignIn from '@/pages/SignIn';
 import Dashboard from '@/pages/Dashboard';
-import Fleet from '@/pages/Fleet';
-import Trips from '@/pages/Trips';
+import { Fleet } from '@/pages/Fleet';
+import { Trips } from '@/pages/Trips';
 
 export function AppRoutes() {
   return (
