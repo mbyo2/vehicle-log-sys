@@ -1,28 +1,35 @@
+
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { supabase } from './integrations/supabase/client';
 import { AppRoutes } from './routes';
 import { Toaster } from '@/components/ui/toaster';
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ModalProvider } from "@/contexts/ModalContext";
-import { QueryClient } from "@tanstack/react-query";
-import './App.css';
-
-const queryClient = new QueryClient();
 
 function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check auth state on app load
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN') {
+          navigate('/dashboard');
+        } else if (event === 'SIGNED_OUT') {
+          navigate('/signin');
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
+
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ModalProvider>
-            <div className="min-h-screen bg-background">
-              <AppRoutes />
-              <Toaster />
-            </div>
-          </ModalProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <div className="min-h-screen bg-background">
+      <AppRoutes />
+      <Toaster />
+    </div>
   );
 }
 

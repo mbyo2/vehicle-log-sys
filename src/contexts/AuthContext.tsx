@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +7,6 @@ import { authState } from './auth/AuthState';
 import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '@/types/auth';
 
-// Enable React tracking for Legend State
 enableReactTracking({
   auto: true
 });
