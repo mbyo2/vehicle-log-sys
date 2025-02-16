@@ -1,33 +1,37 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { UserRole } from "@/types/auth";
 
 const navigation = {
-  driver: [
+  super_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Trips', href: '/trips', icon: Car },
-    { name: 'Vehicle Status', href: '/vehicle-status', icon: Wrench },
-    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
+    { name: 'Companies', href: '/companies', icon: Building2 },
   ],
-  supervisor: [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Driver Management', href: '/drivers', icon: Users },
-    { name: 'Trip Approvals', href: '/trip-approvals', icon: FileText },
-    { name: 'Vehicle Maintenance', href: '/maintenance', icon: Wrench },
-    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
-  ],
-  admin: [
+  company_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'User Management', href: '/users', icon: Users },
     { name: 'Vehicle Fleet', href: '/fleet', icon: Car },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
     { name: 'Settings', href: '/settings', icon: Settings },
+  ],
+  supervisor: [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Vehicle Fleet', href: '/fleet', icon: Car },
+    { name: 'Trip Approvals', href: '/trip-approvals', icon: FileText },
+    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
+  ],
+  driver: [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Trips', href: '/trips', icon: Car },
+    { name: 'Vehicle Status', href: '/vehicle-status', icon: Wrench },
+    { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
   ],
 };
 
@@ -37,7 +41,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   const currentProfile = profile.get();
-  const userNavigation = currentProfile ? navigation[currentProfile.role as keyof typeof navigation] : [];
+  const userNavigation = currentProfile ? navigation[currentProfile.role as UserRole] : [];
 
   const NavLinks = () => (
     <>
@@ -52,6 +56,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               location.pathname === item.href &&
                 "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
             )}
+            onClick={() => setIsMobileMenuOpen(false)}
           >
             <Icon className="h-4 w-4" />
             {item.name}

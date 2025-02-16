@@ -1,16 +1,15 @@
 
-import { useLocation, Navigate } from 'react-router-dom';
 import { SignUpForm } from '@/components/auth/SignUpForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function SignUp() {
-  const location = useLocation();
   const { user, loading } = useAuth();
+  const location = useLocation();
   const isFirstUser = location.state?.isFirstUser;
 
-  // If user is already logged in, redirect to default route
-  if (!loading && user) {
-    return <Navigate to="/" replace />;
+  if (!loading && user && !isFirstUser) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (
