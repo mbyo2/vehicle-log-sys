@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -7,11 +8,7 @@ import type { SignInFormValues } from '../schemas/signInSchema';
 
 const signInState = observable({
   loading: false,
-  resetPasswordOpen: false,
   attempts: 0,
-  showTwoFactor: false,
-  tempEmail: "",
-  isFirstUser: false
 });
 
 export function useSignIn() {
@@ -27,10 +24,7 @@ export function useSignIn() {
       
       if (error) throw error;
       
-      const isFirst = count === 0;
-      signInState.isFirstUser.set(isFirst);
-      
-      if (isFirst) {
+      if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
       }
     } catch (error: any) {
@@ -43,35 +37,6 @@ export function useSignIn() {
     }
   };
 
-  const handleSuccessfulLogin = (profile: any, rememberMe: boolean) => {
-    if (rememberMe) {
-      localStorage.setItem("rememberMe", "true");
-    }
-    
-    toast({
-      title: "Welcome back!",
-      description: "Successfully signed in",
-    });
-
-    const from = location.state?.from?.pathname || getDefaultRoute(profile.role);
-    navigate(from, { replace: true });
-  };
-
-  const getDefaultRoute = (role: string) => {
-    switch (role) {
-      case 'super_admin':
-        return '/companies';
-      case 'company_admin':
-        return '/fleet';
-      case 'supervisor':
-        return '/fleet';
-      case 'driver':
-        return '/documents';
-      default:
-        return '/documents';
-    }
-  };
-
   const handleSignIn = async (values: SignInFormValues) => {
     try {
       const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
@@ -79,12 +44,7 @@ export function useSignIn() {
         password: values.password,
       });
 
-      if (signInError) {
-        if (signInError.message.includes("Invalid login credentials")) {
-          throw new Error("Invalid email or password");
-        }
-        throw signInError;
-      }
+      if (signInError) throw signInError;
 
       if (!user) {
         throw new Error("No user returned after sign in");
@@ -92,25 +52,20 @@ export function useSignIn() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, company_id, two_factor_enabled')
+        .select('*')
         .eq('id', user.id)
         .single();
 
       if (profileError) {
-        throw new Error("Error fetching user profile");
+        throw profileError;
       }
 
-      if (!profile) {
-        throw new Error("No profile found for user");
-      }
+      toast({
+        title: "Welcome back!",
+        description: "Successfully signed in",
+      });
 
-      if (profile.two_factor_enabled) {
-        signInState.tempEmail.set(values.email);
-        signInState.showTwoFactor.set(true);
-        return;
-      }
-
-      handleSuccessfulLogin(profile, values.rememberMe);
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
       console.error("Sign in error:", error);
       throw error;
@@ -122,7 +77,7 @@ export function useSignIn() {
       toast({
         variant: "destructive",
         title: "Too many attempts",
-        description: "Please try again later or reset your password",
+        description: "Please try again later",
       });
       return;
     }
@@ -134,17 +89,10 @@ export function useSignIn() {
       console.error("Authentication error:", error);
       signInState.attempts.set(prev => prev + 1);
       
-      let errorMessage = "An error occurred during authentication";
-      if (error.message === "Invalid email or password") {
-        errorMessage = error.message;
-      } else if (error.message.includes("User already registered")) {
-        errorMessage = "This email is already registered. Please sign in instead.";
-      }
-
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: errorMessage,
+        description: error.message,
       });
     } finally {
       signInState.loading.set(false);
@@ -155,6 +103,5 @@ export function useSignIn() {
     state: signInState,
     handleSubmit,
     checkFirstUser,
-    handleSuccessfulLogin
   };
 }

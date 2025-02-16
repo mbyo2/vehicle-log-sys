@@ -1,3 +1,4 @@
+
 import { observable } from '@legendapp/state';
 import type { User } from '@supabase/supabase-js';
 import type { UserProfile } from '@/types/auth';

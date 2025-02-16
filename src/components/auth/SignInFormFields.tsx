@@ -1,20 +1,10 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { signInSchema, type SignInFormValues } from "./schemas/signInSchema";
 
 interface SignInFormFieldsProps {
@@ -23,8 +13,6 @@ interface SignInFormFieldsProps {
 }
 
 export function SignInFormFields({ onSubmit, loading }: SignInFormFieldsProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  
   const form = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
@@ -45,8 +33,8 @@ export function SignInFormFields({ onSubmit, loading }: SignInFormFieldsProps) {
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter your email"
                   type="email"
+                  placeholder="m@example.com"
                   disabled={loading}
                   {...field}
                 />
@@ -63,48 +51,14 @@ export function SignInFormFields({ onSubmit, loading }: SignInFormFieldsProps) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <div className="relative">
-                  <Input
-                    placeholder="Enter your password"
-                    type={showPassword ? "text" : "password"}
-                    disabled={loading}
-                    {...field}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-              </FormControl>
-              <FormMessage />
-              <PasswordStrengthMeter password={field.value} />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="rememberMe"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-2">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  disabled={loading}
+                  {...field}
                 />
               </FormControl>
-              <FormLabel className="text-sm font-medium leading-none">
-                Remember me
-              </FormLabel>
+              <FormMessage />
             </FormItem>
           )}
         />
