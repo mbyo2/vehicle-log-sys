@@ -10,6 +10,7 @@ import { CompanyActions } from "@/components/company/CompanyActions";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function Companies() {
   const { toast } = useToast();

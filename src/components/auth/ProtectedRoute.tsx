@@ -49,21 +49,15 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     if (isVerifying && currentAttempts < 2) {
       routeState.attempts.set(currentAttempts + 1);
     }
+  }, [loading]);
 
-    // Log the current state for debugging
-    console.log('Protected Route State:', {
-      isVerifying,
-      user: user.get(),
-      profile: profile.get(),
-      location: location.pathname,
-      allowedRoles
-    });
-  }, [loading, user, profile, location.pathname, allowedRoles]);
-
+  // Move these outside of any conditions
   const isVerifying = routeState.isVerifying.get();
   const attempts = routeState.attempts.get();
+  const currentUser = user.get();
+  const currentProfile = profile.get();
 
-  // Only show loading for a brief moment
+  // Show loading spinner for a brief moment
   if (isVerifying && attempts < 2) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -72,23 +66,18 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  // Fast path for unauthenticated users
-  const currentUser = user.get();
+  // Handle unauthenticated users
   if (!currentUser) {
-    console.log('No user found, redirecting to signin');
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  // Fast path for missing profile
-  const currentProfile = profile.get();
+  // Handle missing profile
   if (!currentProfile) {
-    console.error('User authenticated but no profile found');
     return <Navigate to="/signin" replace />;
   }
 
   // Check role access
   if (allowedRoles && !allowedRoles.includes(currentProfile.role)) {
-    console.log('User does not have required role, redirecting to default route');
     return <Navigate to={getDefaultRoute(currentProfile.role)} replace />;
   }
 
