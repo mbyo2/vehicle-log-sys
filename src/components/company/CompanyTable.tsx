@@ -26,6 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useModal } from "@/contexts/ModalContext";
 import { CompanyEditForm } from "./CompanyEditForm";
 import { CompanyDetails } from "./CompanyDetails";
+import { Badge } from "@/components/ui/badge";
+import { Building2 } from "lucide-react";
 
 interface CompanyTableProps {
   companies: Company[];
@@ -74,7 +76,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
   };
 
   return (
-    <>
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -84,7 +86,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
             <TableHead>Trial Period</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Created At</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -95,57 +97,57 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                   <img
                     src={company.logo_url}
                     alt={`${company.name} logo`}
-                    className="h-8 w-8 rounded object-cover"
+                    className="h-8 w-8 rounded object-contain bg-white"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded bg-gray-200" />
+                  <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
+                    <Building2 className="h-4 w-4 text-primary" />
+                  </div>
                 )}
               </TableCell>
-              <TableCell>{company.name}</TableCell>
-              <TableCell className="capitalize">
-                {company.subscription_type}
+              <TableCell className="font-medium">{company.name}</TableCell>
+              <TableCell>
+                <Badge variant={company.subscription_type === 'trial' ? 'secondary' : 'default'}>
+                  {company.subscription_type}
+                </Badge>
               </TableCell>
               <TableCell>
                 {company.trial_start_date && company.trial_end_date ? (
-                  `${format(new Date(company.trial_start_date), "PP")} - ${format(
-                    new Date(company.trial_end_date),
-                    "PP"
-                  )}`
+                  <span className="text-sm">
+                    {format(new Date(company.trial_start_date), "MMM d, yyyy")} -{" "}
+                    {format(new Date(company.trial_end_date), "MMM d, yyyy")}
+                  </span>
                 ) : (
                   "N/A"
                 )}
               </TableCell>
               <TableCell>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs ${
-                    company.is_active
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
+                <Badge variant={company.is_active ? "success" : "destructive"}>
                   {company.is_active ? "Active" : "Inactive"}
-                </span>
+                </Badge>
               </TableCell>
-              <TableCell>{format(new Date(company.created_at), "PP")}</TableCell>
               <TableCell>
-                <div className="flex space-x-2">
+                {format(new Date(company.created_at), "MMM d, yyyy")}
+              </TableCell>
+              <TableCell>
+                <div className="flex justify-end space-x-2">
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setSelectedCompany(company.id)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleEdit(company)}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => {
                       setCompanyToDelete(company);
                       setDeleteDialogOpen(true);
@@ -189,6 +191,6 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
           onClose={() => setSelectedCompany(null)}
         />
       )}
-    </>
+    </div>
   );
 }

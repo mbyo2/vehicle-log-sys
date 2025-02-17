@@ -7,12 +7,15 @@ import { useModal } from "@/contexts/ModalContext";
 import { Company } from "@/types/auth";
 import { CompanyTable } from "@/components/company/CompanyTable";
 import { CompanyActions } from "@/components/company/CompanyActions";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function Companies() {
   const { toast } = useToast();
   const { openModal } = useModal();
 
-  const { data: companies, isLoading, refetch } = useQuery({
+  const { data: companies, isLoading, error, refetch } = useQuery({
     queryKey: ["companies"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -42,13 +45,41 @@ export function Companies() {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner className="w-8 h-8" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Failed to load companies. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       <CompanyActions onAddCompany={handleAddCompany} />
-      <CompanyTable companies={companies || []} onCompanyUpdated={() => refetch()} />
+      {companies?.length === 0 ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium mb-2">No companies yet</h3>
+          <p className="text-muted-foreground mb-4">
+            Get started by adding your first company
+          </p>
+          <Button variant="default" onClick={handleAddCompany}>
+            Add Company
+          </Button>
+        </div>
+      ) : (
+        <CompanyTable companies={companies || []} onCompanyUpdated={() => refetch()} />
+      )}
     </div>
   );
 }
