@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +25,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Updated interface to match Supabase's return format
 interface TripData {
   id: string;
   start_time: string;
@@ -117,20 +115,25 @@ export function TripList({ filterType }: TripListProps) {
       
       if (error) throw error;
       
-      // Process the data to handle nested objects correctly
       const transformedData = data?.map(trip => {
-        // Check if drivers and vehicles are arrays and extract the first item
         const driversData = Array.isArray(trip.drivers) ? trip.drivers[0] : trip.drivers;
+        const driverProfiles = Array.isArray(driversData?.profiles) 
+          ? driversData.profiles[0] 
+          : driversData?.profiles;
+        
         const vehiclesData = Array.isArray(trip.vehicles) ? trip.vehicles[0] : trip.vehicles;
         
         return {
           ...trip,
-          drivers: driversData,
+          drivers: {
+            ...driversData,
+            profiles: driverProfiles
+          },
           vehicles: vehiclesData
-        };
+        } as TripData;
       });
       
-      return transformedData as TripData[];
+      return transformedData || [];
     },
     enabled: !!user,
   });
