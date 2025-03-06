@@ -17,23 +17,24 @@ export function useSignIn() {
   const location = useLocation();
 
   const checkFirstUser = async () => {
+    // Skip the check if we're having database issues
     try {
       const { count, error } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error checking first user:", error);
+        return; // Just return without redirecting on error
+      }
       
       if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
       }
     } catch (error: any) {
       console.error("Error checking first user:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to check system status"
-      });
+      // Don't show error toast for this operation, just log it
+      // The user can still try to sign in
     }
   };
 
