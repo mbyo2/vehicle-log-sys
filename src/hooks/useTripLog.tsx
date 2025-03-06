@@ -11,7 +11,8 @@ export function useTripLog() {
     vehicleId: '',
     plateNumber: '',
     driver: '',
-    date: '',
+    driverId: '',
+    date: new Date().toISOString().split('T')[0],
     startTime: '',
     endTime: '',
     startKilometers: 0,
@@ -36,8 +37,8 @@ export function useTripLog() {
       return;
     }
 
-    if (!tripLog.vehicleId || !tripLog.date || !tripLog.startTime || !tripLog.endTime || 
-        !tripLog.endKilometers || !tripLog.purpose) {
+    if (!tripLog.vehicleId || !tripLog.date || !tripLog.startTime || 
+        !tripLog.startKilometers || !tripLog.purpose || !tripLog.driverId) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -47,52 +48,45 @@ export function useTripLog() {
     }
 
     try {
-      // First get the driver ID
-      const { data: driverData, error: driverError } = await supabase
-        .from('drivers')
-        .select('id')
-        .eq('profile_id', user.id)
-        .single();
-
-      if (driverError) throw driverError;
-
       const { error } = await supabase
         .from('vehicle_logs')
         .insert({
           vehicle_id: tripLog.vehicleId,
-          driver_id: driverData.id,
+          driver_id: tripLog.driverId,
           start_kilometers: tripLog.startKilometers,
-          end_kilometers: tripLog.endKilometers,
+          end_kilometers: tripLog.endKilometers || null,
           start_time: new Date(`${tripLog.date}T${tripLog.startTime}`).toISOString(),
-          end_time: new Date(`${tripLog.date}T${tripLog.endTime}`).toISOString(),
+          end_time: tripLog.endTime ? new Date(`${tripLog.date}T${tripLog.endTime}`).toISOString() : null,
           purpose: tripLog.purpose,
-          comments: tripLog.comment || null
+          comments: tripLog.comment || null,
+          approval_status: 'pending'
         });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Vehicle log saved successfully",
+        description: "Trip log saved successfully",
       });
 
-      // Reset form
+      // Reset form but keep vehicle and driver info
       setTripLog(prev => ({
         ...prev,
-        date: '',
+        date: new Date().toISOString().split('T')[0],
         startTime: '',
         endTime: '',
         endKilometers: 0,
         purpose: '',
-        comment: ''
+        comment: '',
+        totalKilometers: 0
       }));
 
     } catch (error: any) {
-      console.error('Error saving vehicle log:', error);
+      console.error('Error saving trip log:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Could not save vehicle log",
+        description: error.message || "Could not save trip log",
       });
     }
   };

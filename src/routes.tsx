@@ -11,6 +11,7 @@ import { Users } from '@/pages/Users';
 import { Settings } from '@/pages/Settings';
 import { TripApprovals } from '@/pages/TripApprovals';
 import { VehicleStatus } from '@/pages/VehicleStatus';
+import { TripManagement } from '@/pages/TripManagement';
 
 export function AppRoutes() {
   return (
@@ -66,6 +67,13 @@ export function AppRoutes() {
       <Route path="/vehicle-status" element={
         <ProtectedRoute allowedRoles={['driver']}>
           <VehicleStatus />
+        </ProtectedRoute>
+      } />
+
+      {/* New Trip Management Route */}
+      <Route path="/trip-management" element={
+        <ProtectedRoute allowedRoles={['company_admin', 'supervisor', 'driver']}>
+          <TripManagement />
         </ProtectedRoute>
       } />
     </Routes>
