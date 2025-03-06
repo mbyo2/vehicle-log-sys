@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +64,6 @@ export function TripList({ filterType }: TripListProps) {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   
-  // Fetch trips based on filter type
   const { data: trips, isLoading } = useQuery({
     queryKey: ["trips", filterType],
     queryFn: async () => {
@@ -83,23 +81,21 @@ export function TripList({ filterType }: TripListProps) {
           comments,
           driver_id,
           vehicle_id,
-          drivers:drivers(
+          drivers:driver_id(
             id,
             man_number,
             profiles(
               full_name
             )
           ),
-          vehicles:vehicles(
+          vehicles:vehicle_id(
             plate_number,
             make,
             model
           )
         `);
       
-      // Apply filters based on the selected type
       if (filterType === "my-trips" && user) {
-        // First get the driver ID for the current user
         const { data: driverData } = await supabase
           .from("drivers")
           .select("id")
@@ -118,12 +114,18 @@ export function TripList({ filterType }: TripListProps) {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as TripData[];
+      
+      const transformedData = data?.map(trip => ({
+        ...trip,
+        drivers: trip.drivers as TripData['drivers'],
+        vehicles: trip.vehicles as TripData['vehicles']
+      }));
+      
+      return transformedData as TripData[];
     },
     enabled: !!user,
   });
   
-  // Get details for a specific trip
   const { data: selectedTrip } = useQuery({
     queryKey: ["trip", selectedTripId],
     queryFn: async () => {
@@ -133,14 +135,14 @@ export function TripList({ filterType }: TripListProps) {
         .from("vehicle_logs")
         .select(`
           *,
-          drivers:drivers(
+          drivers:driver_id(
             id,
             man_number,
             profiles(
               full_name
             )
           ),
-          vehicles:vehicles(
+          vehicles:vehicle_id(
             plate_number,
             make,
             model
@@ -155,7 +157,6 @@ export function TripList({ filterType }: TripListProps) {
     enabled: !!selectedTripId,
   });
   
-  // Mutation for approving/rejecting trips
   const tripApprovalMutation = useMutation({
     mutationFn: async ({ 
       tripId, 
@@ -168,7 +169,6 @@ export function TripList({ filterType }: TripListProps) {
     }) => {
       if (!user) throw new Error("You must be logged in to perform this action");
       
-      // Update the trip status
       const { error: updateError } = await supabase
         .from("vehicle_logs")
         .update({
@@ -181,7 +181,6 @@ export function TripList({ filterType }: TripListProps) {
         
       if (updateError) throw updateError;
       
-      // Log the approval action
       await supabase.from("audit_logs").insert({
         table_name: "vehicle_logs",
         record_id: tripId,
@@ -344,7 +343,6 @@ export function TripList({ filterType }: TripListProps) {
         </div>
       )}
       
-      {/* Trip Details Dialog */}
       <Dialog open={showDetails && !!selectedTripId} onOpenChange={setShowDetails}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -442,7 +440,6 @@ export function TripList({ filterType }: TripListProps) {
         </DialogContent>
       </Dialog>
       
-      {/* Approval Dialog */}
       <Dialog 
         open={!showDetails && !!selectedTripId && selectedTrip?.approval_status === "pending"} 
         onOpenChange={(open) => {
@@ -480,7 +477,6 @@ export function TripList({ filterType }: TripListProps) {
         </DialogContent>
       </Dialog>
       
-      {/* Rejection Dialog */}
       <Dialog 
         open={!showDetails && !!selectedTripId && selectedTrip?.approval_status === "pending" && !!rejectionReason} 
         onOpenChange={(open) => {

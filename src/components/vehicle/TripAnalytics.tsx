@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,9 +26,9 @@ interface TripData {
   vehicle_id: string;
   driver_id: string;
   start_time: string;
-  end_time: string;
+  end_time: string | null;
   start_kilometers: number;
-  end_kilometers: number;
+  end_kilometers: number | null;
   purpose: string;
   approval_status: string;
   vehicles: {
@@ -70,12 +69,12 @@ export function TripAnalytics() {
           end_kilometers,
           purpose,
           approval_status,
-          vehicles(
+          vehicles:vehicle_id(
             make,
             model,
             plate_number
           ),
-          drivers(
+          drivers:driver_id(
             profiles(
               full_name
             )
@@ -96,7 +95,10 @@ export function TripAnalytics() {
       let pendingTrips = 0;
       let rejectedTrips = 0;
       
-      (trips as TripData[])?.forEach(trip => {
+      // Safely transform and process the data
+      const typedTrips = trips as unknown as TripData[];
+      
+      typedTrips?.forEach(trip => {
         // Vehicle usage
         const vehicleKey = trip.vehicles?.plate_number || "Unknown";
         vehicleUsage[vehicleKey] = (vehicleUsage[vehicleKey] || 0) + 1;

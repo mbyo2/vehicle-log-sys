@@ -23,6 +23,15 @@ interface DriverData {
   };
 }
 
+// This defines a single driver row as returned from Supabase
+interface DriverRow {
+  id: string;
+  man_number: string;
+  profiles: {
+    full_name: string;
+  };
+}
+
 export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
   const { user } = useAuth();
   const [driverName, setDriverName] = useState("");
@@ -54,7 +63,9 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
           .single();
           
         if (!error && data) {
-          const driverData = data as DriverData;
+          // Cast the data to DriverRow to match Supabase's structure
+          const driverData = data as DriverRow;
+          // Access profiles.full_name directly since it's a single object, not an array
           setDriverName(driverData.profiles.full_name || "");
           onTripLogChange({ 
             driver: driverData.man_number,
