@@ -1,3 +1,4 @@
+
 export interface Vehicle {
   id: string;
   plate_number: string;
@@ -12,6 +13,9 @@ export interface Vehicle {
   fitness_expiry?: string;
   road_tax_expiry?: string;
   insurance_expiry?: string;
+  assigned_to?: string;
+  assignment_start_date?: string;
+  assignment_end_date?: string;
 }
 
 export interface VehicleService {
@@ -50,4 +54,14 @@ export interface FuelLog {
   odometer: number;
   efficiency?: number;
   costPerKm?: number;
+}
+
+export interface MaintenanceSchedule {
+  id: string;
+  vehicle_id: string;
+  service_type: string;
+  scheduled_date: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  estimated_cost?: number;
+  description?: string;
 }

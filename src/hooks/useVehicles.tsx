@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Vehicle } from '@/types/vehicle';
@@ -19,7 +20,13 @@ export function useVehicles() {
             id,
             kilometers,
             service_date
-          )
+          ),
+          vehicle_comments (
+            id,
+            text,
+            timestamp
+          ),
+          assigned_profile:profiles(full_name)
         `)
         .order('created_at', { ascending: false });
 
