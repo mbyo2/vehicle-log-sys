@@ -12,6 +12,7 @@ import { Settings } from '@/pages/Settings';
 import { TripApprovals } from '@/pages/TripApprovals';
 import { VehicleStatus } from '@/pages/VehicleStatus';
 import { TripManagement } from '@/pages/TripManagement';
+import Documents from '@/pages/Documents';
 
 export function AppRoutes() {
   return (
@@ -48,6 +49,13 @@ export function AppRoutes() {
       <Route path="/settings" element={
         <ProtectedRoute allowedRoles={['company_admin']}>
           <Settings />
+        </ProtectedRoute>
+      } />
+
+      {/* Document Management */}
+      <Route path="/documents" element={
+        <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+          <Documents />
         </ProtectedRoute>
       } />
 

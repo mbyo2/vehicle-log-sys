@@ -1,217 +1,202 @@
-import { useState } from "react";
-import { Upload, CheckCircle, XCircle, Clock, FolderOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DocumentType } from '@/types/document';
+import { useDocuments } from '@/hooks/useDocuments';
+import { format } from 'date-fns';
+import { CalendarIcon, Upload } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 
-export function DocumentUpload() {
-  const [uploading, setUploading] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [verificationNote, setVerificationNote] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [versionNotes, setVersionNotes] = useState("");
-  const { toast } = useToast();
-  const { profile } = useAuth();
+const documentTypes: Array<{ value: DocumentType; label: string }> = [
+  { value: 'driver_license', label: 'Driver License' },
+  { value: 'vehicle_registration', label: 'Vehicle Registration' },
+  { value: 'insurance', label: 'Insurance' },
+  { value: 'fitness_certificate', label: 'Fitness Certificate' },
+  { value: 'road_tax', label: 'Road Tax' },
+  { value: 'other', label: 'Other' },
+];
 
-  const { data: categories } = useQuery({
-    queryKey: ["document-categories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("document_categories")
-        .select("*")
-        .order("name");
-      
-      if (error) throw error;
-      return data;
+const documentSchema = z.object({
+  name: z.string().min(1, 'Document name is required'),
+  type: z.string().min(1, 'Document type is required'),
+  expiry_date: z.date().optional(),
+  vehicle_id: z.string().optional(),
+  driver_id: z.string().optional(),
+});
+
+type DocumentFormValues = z.infer<typeof documentSchema>;
+
+interface DocumentUploadProps {
+  companyId: string;
+  vehicleId?: string;
+  driverId?: string;
+  onSuccess?: () => void;
+}
+
+export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: DocumentUploadProps) {
+  const [file, setFile] = useState<File | null>(null);
+  const { uploadDocument, isUploading } = useDocuments();
+
+  const form = useForm<DocumentFormValues>({
+    resolver: zodResolver(documentSchema),
+    defaultValues: {
+      name: '',
+      type: '',
+      vehicle_id: vehicleId,
+      driver_id: driverId,
     },
   });
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    try {
-      setUploading(true);
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      // Upload file to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('documents')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      // Create document record in the database
-      const { error: dbError } = await supabase.from('documents').insert({
-        name: file.name,
-        type: file.type,
-        storage_path: filePath,
-        verification_status: 'pending',
-        category_id: selectedCategory,
-        version: 1,
-        version_notes: versionNotes,
-      });
-
-      if (dbError) throw dbError;
-
-      toast({
-        title: "Success",
-        description: "Document uploaded successfully",
-      });
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setUploading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      // Use the file name as the default document name
+      form.setValue('name', e.target.files[0].name);
     }
   };
 
-  const handleVerification = async (documentId: string, status: 'approved' | 'rejected') => {
-    try {
-      setVerifying(true);
-      
-      const { error } = await supabase
-        .from('documents')
-        .update({
-          verification_status: status,
-          verified_by: profile?.id,
-          verified_at: new Date().toISOString(),
-          verification_notes: verificationNote,
-        })
-        .eq('id', documentId);
+  const onSubmit = async (values: DocumentFormValues) => {
+    if (!file) return;
 
-      if (error) throw error;
+    const success = await uploadDocument(file, {
+      name: values.name,
+      type: values.type as DocumentType,
+      expiry_date: values.expiry_date ? format(values.expiry_date, 'yyyy-MM-dd') : undefined,
+      company_id: companyId,
+      vehicle_id: vehicleId,
+      driver_id: driverId,
+    });
 
-      toast({
-        title: "Success",
-        description: `Document ${status} successfully`,
-      });
-      
-      setVerificationNote("");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message,
-      });
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'approved':
-        return <Badge className="bg-green-500"><CheckCircle className="w-4 h-4 mr-1" /> Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500"><XCircle className="w-4 h-4 mr-1" /> Rejected</Badge>;
-      default:
-        return <Badge className="bg-yellow-500"><Clock className="w-4 h-4 mr-1" /> Pending</Badge>;
+    if (success && onSuccess) {
+      onSuccess();
+      form.reset();
+      setFile(null);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category">
-              <div className="flex items-center">
-                <FolderOpen className="w-4 h-4 mr-2" />
-                Select Category
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {categories?.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="file">Document File</Label>
+          <Input
+            id="file"
+            type="file"
+            onChange={handleFileChange}
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            required
+          />
+        </div>
 
-        <Textarea
-          placeholder="Version notes (optional)"
-          value={versionNotes}
-          onChange={(e) => setVersionNotes(e.target.value)}
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Document Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter document name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
-        <div className="flex items-center space-x-2">
-          <Input
-            type="file"
-            onChange={handleFileUpload}
-            disabled={uploading || !selectedCategory}
-            className="flex-1"
-          />
-          <Button disabled={uploading || !selectedCategory}>
-            <Upload className="mr-2 h-4 w-4" />
-            {uploading ? "Uploading..." : "Upload"}
-          </Button>
-        </div>
-      </div>
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Document Type</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select document type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {documentTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {/* Document List with Verification Status */}
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Documents</h3>
-        <div className="space-y-4">
-          {/* We'll map through documents here */}
-          {/* Example document item */}
-          <div className="border p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <div>
-                <h4 className="font-medium">document.name</h4>
-                {getStatusBadge('pending')}
-              </div>
-              {profile.get()?.role === 'company_admin' && (
-                <div className="flex items-center space-x-2">
-                  <Textarea
-                    placeholder="Verification notes..."
-                    value={verificationNote}
-                    onChange={(e) => setVerificationNote(e.target.value)}
-                    className="text-sm"
+        <FormField
+          control={form.control}
+          name="expiry_date"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Expiry Date</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value ? (
+                        format(field.value, "PPP")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
                   />
-                  <Button
-                    variant="outline"
-                    className="bg-green-50 hover:bg-green-100"
-                    onClick={() => handleVerification('documentId', 'approved')}
-                    disabled={verifying}
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="bg-red-50 hover:bg-red-100"
-                    onClick={() => handleVerification('documentId', 'rejected')}
-                    disabled={verifying}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Reject
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" disabled={isUploading || !file} className="w-full">
+          {isUploading ? 'Uploading...' : 'Upload Document'}
+          <Upload className="ml-2 h-4 w-4" />
+        </Button>
+      </form>
+    </Form>
   );
 }
