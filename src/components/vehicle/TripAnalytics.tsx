@@ -22,6 +22,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+interface TripData {
+  id: string;
+  vehicle_id: string;
+  driver_id: string;
+  start_time: string;
+  end_time: string;
+  start_kilometers: number;
+  end_kilometers: number;
+  purpose: string;
+  approval_status: string;
+  vehicles: {
+    make: string;
+    model: string;
+    plate_number: string;
+  };
+  drivers: {
+    profiles: {
+      full_name: string;
+    };
+  };
+}
+
 export function TripAnalytics() {
   const [startDate, setStartDate] = useState(() => {
     return format(startOfMonth(new Date()), "yyyy-MM-dd");
@@ -74,7 +96,7 @@ export function TripAnalytics() {
       let pendingTrips = 0;
       let rejectedTrips = 0;
       
-      trips?.forEach(trip => {
+      (trips as TripData[])?.forEach(trip => {
         // Vehicle usage
         const vehicleKey = trip.vehicles?.plate_number || "Unknown";
         vehicleUsage[vehicleKey] = (vehicleUsage[vehicleKey] || 0) + 1;

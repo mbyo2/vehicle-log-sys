@@ -22,11 +22,35 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
+interface TripData {
+  id: string;
+  start_time: string;
+  end_time: string | null;
+  purpose: string;
+  start_kilometers: number;
+  end_kilometers: number | null;
+  approval_status: string;
+  approval_comment: string | null;
+  comments: string | null;
+  driver_id: string;
+  vehicle_id: string;
+  drivers: {
+    id: string;
+    man_number: string;
+    profiles: {
+      full_name: string;
+    };
+  };
+  vehicles: {
+    plate_number: string;
+    make: string;
+    model: string;
+  };
+}
 
 interface TripListProps {
   filterType: "my-trips" | "pending-approval" | "all";
@@ -94,7 +118,7 @@ export function TripList({ filterType }: TripListProps) {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data;
+      return data as TripData[];
     },
     enabled: !!user,
   });
@@ -253,10 +277,10 @@ export function TripList({ filterType }: TripListProps) {
                 {format(new Date(trip.start_time), "MMM dd, yyyy")}
               </TableCell>
               <TableCell>
-                {trip.vehicles?.plate_number} - {trip.vehicles?.make} {trip.vehicles?.model}
+                {trip.vehicles.plate_number} - {trip.vehicles.make} {trip.vehicles.model}
               </TableCell>
               <TableCell>
-                {trip.drivers?.profiles?.full_name}
+                {trip.drivers.profiles.full_name}
               </TableCell>
               <TableCell>{trip.purpose}</TableCell>
               <TableCell>

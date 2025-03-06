@@ -1,22 +1,36 @@
-import React from 'react';
+
+import React, { useEffect } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Vehicle } from '@/types/vehicle';
 
 interface VehicleSelectProps {
-  vehicles: Vehicle[];
-  onVehicleSelect: (vehicleId: string) => void;
+  selectedId?: string;
+  onSelect: (vehicleId: string) => void;
 }
 
-export const VehicleSelect = ({ vehicles, onVehicleSelect }: VehicleSelectProps) => {
+export const VehicleSelect = ({ selectedId, onSelect }: VehicleSelectProps) => {
+  // Fetch vehicles
+  const { data: vehicles, isLoading } = useQuery({
+    queryKey: ['vehicles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('id, plate_number');
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-2">Vehicle Details</h3>
-      <Select onValueChange={onVehicleSelect}>
+      <Select value={selectedId} onValueChange={onSelect}>
         <SelectTrigger>
-          <SelectValue placeholder="Select Plate Number" />
+          <SelectValue placeholder="Select a vehicle" />
         </SelectTrigger>
         <SelectContent>
-          {vehicles.map((vehicle) => (
+          {vehicles?.map((vehicle) => (
             <SelectItem key={vehicle.id} value={vehicle.id}>
               {vehicle.plate_number}
             </SelectItem>

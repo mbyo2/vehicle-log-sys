@@ -61,7 +61,8 @@ export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAs
         .single();
 
       if (error) throw error;
-      return data as VehicleData;
+      
+      return data as unknown as VehicleData;
     },
   });
 

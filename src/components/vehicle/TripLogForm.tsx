@@ -15,6 +15,14 @@ interface TripLogFormProps {
   onTripLogChange: (updates: Partial<TripLog>) => void;
 }
 
+interface DriverData {
+  id: string;
+  man_number: string;
+  profiles: {
+    full_name: string;
+  };
+}
+
 export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
   const { user } = useAuth();
   const [driverName, setDriverName] = useState("");
@@ -46,17 +54,18 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
           .single();
           
         if (!error && data) {
-          setDriverName(data.profiles?.full_name || "");
+          const driverData = data as DriverData;
+          setDriverName(driverData.profiles.full_name || "");
           onTripLogChange({ 
-            driver: data.man_number,
-            driverId: data.id
+            driver: driverData.man_number,
+            driverId: driverData.id
           });
         }
       }
     };
     
     fetchDriverInfo();
-  }, [user]);
+  }, [user, onTripLogChange]);
   
   // Fetch vehicle details when selected
   const { data: selectedVehicle } = useQuery({
