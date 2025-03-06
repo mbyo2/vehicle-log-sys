@@ -23,6 +23,17 @@ interface CurrentAssignment {
   endDate: Date | null;
 }
 
+// Define an interface for the vehicle data returned from the query
+interface VehicleData {
+  id: string;
+  assigned_to: string | null;
+  assignment_start_date: string | null;
+  assignment_end_date: string | null;
+  drivers: {
+    full_name: string;
+  } | null;
+}
+
 export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAssignmentProps) {
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(new Date());
@@ -50,7 +61,7 @@ export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAs
         .single();
 
       if (error) throw error;
-      return data;
+      return data as VehicleData;
     },
   });
 
