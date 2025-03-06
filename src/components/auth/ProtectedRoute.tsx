@@ -21,7 +21,7 @@ const routeState = observable<RouteState>({
   attempts: 0
 });
 
-const DEFAULT_ROUTES: Record<UserRole, string> = {
+export const DEFAULT_ROUTES: Record<UserRole, string> = {
   super_admin: '/companies',
   company_admin: '/fleet',
   supervisor: '/fleet',
