@@ -44,7 +44,7 @@ export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAs
           assigned_to,
           assignment_start_date,
           assignment_end_date,
-          drivers:profiles!inner(full_name)
+          drivers:profiles(full_name)
         `)
         .eq('id', vehicleId)
         .single();
