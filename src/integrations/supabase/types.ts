@@ -481,6 +481,56 @@ export type Database = {
           },
         ]
       }
+      driver_trainings: {
+        Row: {
+          certificate_file_path: string | null
+          certificate_number: string | null
+          company_id: string
+          completion_date: string
+          course_id: string
+          created_at: string
+          driver_id: string
+          expiry_date: string | null
+          id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          certificate_file_path?: string | null
+          certificate_number?: string | null
+          company_id: string
+          completion_date?: string
+          course_id: string
+          created_at?: string
+          driver_id: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          certificate_file_path?: string | null
+          certificate_number?: string | null
+          company_id?: string
+          completion_date?: string
+          course_id?: string
+          created_at?: string
+          driver_id?: string
+          expiry_date?: string | null
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_trainings_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "training_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drivers: {
         Row: {
           company_id: string | null
@@ -856,6 +906,42 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean
+          recipient_id: string
+          sender_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id: string
+          sender_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          recipient_id?: string
+          sender_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       parts_inventory: {
         Row: {
           company_id: string | null
@@ -1066,6 +1152,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      training_courses: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          duration_hours: number
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          duration_hours: number
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          duration_hours?: number
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       trip_approvals: {
         Row: {

@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2 } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { UserRole } from "@/types/auth";
@@ -29,8 +29,11 @@ const navigation = {
   ],
   driver: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Driver Portal', href: '/driver', icon: LayoutDashboard },
     { name: 'My Trips', href: '/trips', icon: Car },
     { name: 'Vehicle Status', href: '/vehicle-status', icon: Wrench },
+    { name: 'Messages', href: '/driver/messages', icon: MessageSquare },
+    { name: 'Certifications', href: '/driver/trainings', icon: GraduationCap },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
   ],
 };
@@ -53,8 +56,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             to={item.href}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50",
-              location.pathname === item.href &&
-                "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
+              location.pathname === item.href ||
+              (item.href === '/driver' && location.pathname.startsWith('/driver/')) ||
+              (item.href === '/driver/messages' && location.pathname === '/driver/messages') ||
+              (item.href === '/driver/trainings' && location.pathname === '/driver/trainings')
+                ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
+                : ""
             )}
             onClick={() => setIsMobileMenuOpen(false)}
           >

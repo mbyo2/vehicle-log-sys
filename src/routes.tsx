@@ -13,6 +13,7 @@ import { TripApprovals } from '@/pages/TripApprovals';
 import { VehicleStatus } from '@/pages/VehicleStatus';
 import { TripManagement } from '@/pages/TripManagement';
 import Documents from '@/pages/Documents';
+import DriverPortal from '@/pages/DriverPortal';
 
 export function AppRoutes() {
   return (
@@ -75,6 +76,23 @@ export function AppRoutes() {
       <Route path="/vehicle-status" element={
         <ProtectedRoute allowedRoles={['driver']}>
           <VehicleStatus />
+        </ProtectedRoute>
+      } />
+
+      {/* Driver Portal Routes */}
+      <Route path="/driver" element={
+        <ProtectedRoute allowedRoles={['driver']}>
+          <DriverPortal />
+        </ProtectedRoute>
+      } />
+      <Route path="/driver/messages" element={
+        <ProtectedRoute allowedRoles={['driver']}>
+          <DriverPortal />
+        </ProtectedRoute>
+      } />
+      <Route path="/driver/trainings" element={
+        <ProtectedRoute allowedRoles={['driver']}>
+          <DriverPortal />
         </ProtectedRoute>
       } />
 
