@@ -2,7 +2,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { supabase } from './integrations/supabase/client';
-import { AppRoutes } from './routes';
+import { router } from './routes';
+import { RouterProvider } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
@@ -27,7 +28,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppRoutes />
+      <RouterProvider router={router} />
       <Toaster />
     </div>
   );

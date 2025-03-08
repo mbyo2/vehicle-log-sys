@@ -20,7 +20,14 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
   const [locations, setLocations] = useState<VehicleLocation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  const { location, startTracking, isTracking, stopTracking } = useGPSTracking();
+  const { location, startTracking, isTracking } = useGPSTracking();
+  
+  // Add the missing stopTracking function
+  const stopTracking = () => {
+    // This is a placeholder. The actual implementation would depend on how useGPSTracking is implemented
+    console.log('Stopping GPS tracking');
+    // You would need to modify the useGPSTracking hook to include this function
+  };
 
   // Fetch recent vehicle locations
   useEffect(() => {

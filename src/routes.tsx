@@ -1,21 +1,21 @@
 
 import { createBrowserRouter } from "react-router-dom";
-import { Dashboard } from "./pages/Dashboard";
+import Dashboard from "./pages/Dashboard";
 import { Fleet } from "./pages/Fleet";
 import { Drivers } from "./pages/Drivers";
 import { Companies } from "./pages/Companies";
-import { Documents } from "./pages/Documents";
+import Documents from "./pages/Documents";
 import { Maintenance } from "./pages/Maintenance";
-import { SignIn } from "./pages/SignIn";
-import { SignUp } from "./pages/SignUp";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Settings } from "./pages/Settings";
 import { ServiceBookings } from "./pages/ServiceBookings";
 import { Trips } from "./pages/Trips";
-import { Profile } from "./pages/Profile";
+import Profile from "./pages/Profile";
 import { TripApprovals } from "./pages/TripApprovals";
 import { VehicleStatus } from "./pages/VehicleStatus";
-import { DriverPortal } from "./pages/DriverPortal";
+import DriverPortal from "./pages/DriverPortal";
 import { Advertisements } from "./pages/Advertisements";
 import { Analytics } from "./pages/Analytics";
 import { Reports } from "./pages/Reports";
@@ -109,3 +109,10 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute><Integrations /></ProtectedRoute>,
   },
 ]);
+
+// Export the routes component for use in App.tsx
+export const AppRoutes = () => {
+  return (
+    <></>
+  );
+};
