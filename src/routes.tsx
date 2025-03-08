@@ -1,115 +1,111 @@
 
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import SignUp from '@/pages/SignUp';
-import SignIn from '@/pages/SignIn';
-import Dashboard from '@/pages/Dashboard';
-import { Fleet } from '@/pages/Fleet';
-import { Trips } from '@/pages/Trips';
-import { Companies } from '@/pages/Companies';
-import { Users } from '@/pages/Users';
-import { Settings } from '@/pages/Settings';
-import { TripApprovals } from '@/pages/TripApprovals';
-import { VehicleStatus } from '@/pages/VehicleStatus';
-import { TripManagement } from '@/pages/TripManagement';
-import Documents from '@/pages/Documents';
-import DriverPortal from '@/pages/DriverPortal';
-import { Analytics } from '@/pages/Analytics';
+import { createBrowserRouter } from "react-router-dom";
+import { Dashboard } from "./pages/Dashboard";
+import { Fleet } from "./pages/Fleet";
+import { Drivers } from "./pages/Drivers";
+import { Companies } from "./pages/Companies";
+import { Documents } from "./pages/Documents";
+import { Maintenance } from "./pages/Maintenance";
+import { SignIn } from "./pages/SignIn";
+import { SignUp } from "./pages/SignUp";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { Settings } from "./pages/Settings";
+import { ServiceBookings } from "./pages/ServiceBookings";
+import { Trips } from "./pages/Trips";
+import { Profile } from "./pages/Profile";
+import { TripApprovals } from "./pages/TripApprovals";
+import { VehicleStatus } from "./pages/VehicleStatus";
+import { DriverPortal } from "./pages/DriverPortal";
+import { Advertisements } from "./pages/Advertisements";
+import { Analytics } from "./pages/Analytics";
+import { Reports } from "./pages/Reports";
+import { TripManagement } from "./pages/TripManagement";
+import { Users } from "./pages/Users";
+import { Integrations } from "./pages/Integrations";
 
-export function AppRoutes() {
-  return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/signup" element={<SignUp />} />
-      <Route path="/signin" element={<SignIn />} />
-      
-      {/* Protected routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
-
-      {/* Super Admin Routes */}
-      <Route path="/companies" element={
-        <ProtectedRoute allowedRoles={['super_admin']}>
-          <Companies />
-        </ProtectedRoute>
-      } />
-
-      {/* Company Admin Routes */}
-      <Route path="/users" element={
-        <ProtectedRoute allowedRoles={['company_admin']}>
-          <Users />
-        </ProtectedRoute>
-      } />
-      <Route path="/fleet" element={
-        <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
-          <Fleet />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute allowedRoles={['company_admin']}>
-          <Settings />
-        </ProtectedRoute>
-      } />
-
-      {/* Document Management */}
-      <Route path="/documents" element={
-        <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
-          <Documents />
-        </ProtectedRoute>
-      } />
-
-      {/* Analytics & Reporting */}
-      <Route path="/analytics" element={
-        <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
-          <Analytics />
-        </ProtectedRoute>
-      } />
-
-      {/* Supervisor Routes */}
-      <Route path="/trip-approvals" element={
-        <ProtectedRoute allowedRoles={['supervisor']}>
-          <TripApprovals />
-        </ProtectedRoute>
-      } />
-
-      {/* Driver Routes */}
-      <Route path="/trips" element={
-        <ProtectedRoute allowedRoles={['driver']}>
-          <Trips />
-        </ProtectedRoute>
-      } />
-      <Route path="/vehicle-status" element={
-        <ProtectedRoute allowedRoles={['driver']}>
-          <VehicleStatus />
-        </ProtectedRoute>
-      } />
-
-      {/* Driver Portal Routes */}
-      <Route path="/driver" element={
-        <ProtectedRoute allowedRoles={['driver']}>
-          <DriverPortal />
-        </ProtectedRoute>
-      } />
-      <Route path="/driver/messages" element={
-        <ProtectedRoute allowedRoles={['driver']}>
-          <DriverPortal />
-        </ProtectedRoute>
-      } />
-      <Route path="/driver/trainings" element={
-        <ProtectedRoute allowedRoles={['driver']}>
-          <DriverPortal />
-        </ProtectedRoute>
-      } />
-
-      {/* New Trip Management Route */}
-      <Route path="/trip-management" element={
-        <ProtectedRoute allowedRoles={['company_admin', 'supervisor', 'driver']}>
-          <TripManagement />
-        </ProtectedRoute>
-      } />
-    </Routes>
-  );
-}
+export const router = createBrowserRouter([
+  {
+    path: "/signin",
+    element: <SignIn />,
+  },
+  {
+    path: "/signup",
+    element: <SignUp />,
+  },
+  {
+    path: "/",
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
+  },
+  {
+    path: "/fleet",
+    element: <ProtectedRoute><Fleet /></ProtectedRoute>,
+  },
+  {
+    path: "/drivers",
+    element: <ProtectedRoute><Drivers /></ProtectedRoute>,
+  },
+  {
+    path: "/companies",
+    element: <ProtectedRoute><Companies /></ProtectedRoute>,
+  },
+  {
+    path: "/documents",
+    element: <ProtectedRoute><Documents /></ProtectedRoute>,
+  },
+  {
+    path: "/maintenance",
+    element: <ProtectedRoute><Maintenance /></ProtectedRoute>,
+  },
+  {
+    path: "/settings",
+    element: <ProtectedRoute><Settings /></ProtectedRoute>,
+  },
+  {
+    path: "/service-bookings",
+    element: <ProtectedRoute><ServiceBookings /></ProtectedRoute>,
+  },
+  {
+    path: "/trips",
+    element: <ProtectedRoute><Trips /></ProtectedRoute>,
+  },
+  {
+    path: "/profile",
+    element: <ProtectedRoute><Profile /></ProtectedRoute>,
+  },
+  {
+    path: "/trip-approvals",
+    element: <ProtectedRoute><TripApprovals /></ProtectedRoute>,
+  },
+  {
+    path: "/vehicle-status",
+    element: <ProtectedRoute><VehicleStatus /></ProtectedRoute>,
+  },
+  {
+    path: "/driver-portal",
+    element: <ProtectedRoute><DriverPortal /></ProtectedRoute>,
+  },
+  {
+    path: "/advertisements",
+    element: <ProtectedRoute><Advertisements /></ProtectedRoute>,
+  },
+  {
+    path: "/analytics",
+    element: <ProtectedRoute><Analytics /></ProtectedRoute>,
+  },
+  {
+    path: "/reports",
+    element: <ProtectedRoute><Reports /></ProtectedRoute>,
+  },
+  {
+    path: "/trip-management",
+    element: <ProtectedRoute><TripManagement /></ProtectedRoute>,
+  },
+  {
+    path: "/users",
+    element: <ProtectedRoute><Users /></ProtectedRoute>,
+  },
+  {
+    path: "/integrations",
+    element: <ProtectedRoute><Integrations /></ProtectedRoute>,
+  },
+]);
