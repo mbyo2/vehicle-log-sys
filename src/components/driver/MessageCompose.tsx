@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,7 +33,7 @@ export function MessageCompose({ recipientId, onSuccess }: MessageComposeProps) 
     setIsSubmitting(true);
     
     try {
-      await sendMessage({
+      await sendMessage.mutateAsync({
         recipient_id: recipientId,
         subject: subject,
         content: content,
@@ -45,11 +44,9 @@ export function MessageCompose({ recipientId, onSuccess }: MessageComposeProps) 
         description: "Your message has been sent successfully.",
       });
       
-      // Clear form
       setSubject("");
       setContent("");
       
-      // Call onSuccess if provided
       if (onSuccess) {
         onSuccess();
       }
