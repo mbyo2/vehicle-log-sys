@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/auth/useAuthActions';
+import { useAuth } from '@/contexts/AuthContext';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { Button } from '@/components/ui/button';
@@ -20,11 +20,11 @@ import {
 import { Upload, FileText } from 'lucide-react';
 
 export default function Documents() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   
-  const companyId = user?.company_id;
-  const isAdmin = user?.role === 'company_admin' || user?.role === 'super_admin';
+  const companyId = profile?.company_id;
+  const isAdmin = profile?.role === 'company_admin' || profile?.role === 'super_admin';
 
   if (!companyId) {
     return (

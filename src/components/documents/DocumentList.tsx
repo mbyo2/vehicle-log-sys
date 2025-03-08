@@ -71,7 +71,8 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
   const handleDownload = async (document: Document) => {
     try {
       const url = await getDocumentUrl(document.file_path);
-      const link = document.createElement('a');
+      // Use the global window.document instead of Document type
+      const link = window.document.createElement('a');
       link.href = url;
       link.download = document.name;
       link.click();

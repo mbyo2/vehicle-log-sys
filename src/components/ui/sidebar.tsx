@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/contexts/auth/useAuthActions';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   Car,
@@ -16,7 +16,7 @@ import {
   LogOut,
   Map,
   FileText,
-  Tool,
+  Wrench,
   LineChart,
   MessageSquare,
 } from 'lucide-react';
@@ -30,7 +30,7 @@ interface NavItem {
 
 export function Sidebar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   const navItems: NavItem[] = [
     {
@@ -89,7 +89,7 @@ export function Sidebar() {
     {
       title: 'Maintenance',
       href: '/maintenance',
-      icon: <Tool className="mr-2 h-4 w-4" />,
+      icon: <Wrench className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'supervisor'],
     },
     {
@@ -113,8 +113,8 @@ export function Sidebar() {
 
   const filteredNavItems = navItems.filter((item) => {
     if (!item.roles) return true; // Items without roles are shown to everyone
-    if (!user?.role) return false; // If user role is not available, don't show role-specific items
-    return item.roles.includes(user.role);
+    if (!profile?.role) return false; // If user role is not available, don't show role-specific items
+    return item.roles.includes(profile.role);
   });
 
   return (
@@ -143,7 +143,7 @@ export function Sidebar() {
           <Button
             variant="ghost"
             className="justify-start text-red-500 hover:bg-red-100 hover:text-red-600"
-            onClick={logout}
+            onClick={signOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
