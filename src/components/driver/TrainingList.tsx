@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useTrainings } from "@/hooks/useTrainings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +17,7 @@ import {
   Download,
   Eye,
   Calendar,
-  CertificateIcon
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { TrainingDetails } from "./TrainingDetails";

@@ -10,4 +10,5 @@ export interface Message {
   created_at: string;
   updated_at: string;
   sender_name?: string;
+  recipient_name?: string;
 }
