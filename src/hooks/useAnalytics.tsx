@@ -295,9 +295,13 @@ export function useAnalytics() {
         const fuelEfficiencyRating = 70 + Math.random() * 30; // Random value between 70-100
         const safetyScore = 80 + Math.random() * 20; // Random value between 80-100
         
+        // Fix: Access profile data safely by handling the type correctly
+        const profileData = driver.profiles as { full_name: string } | null;
+        const driverName = profileData?.full_name || 'Unknown Driver';
+        
         return {
           driverId: driver.id,
-          driverName: driver.profiles?.full_name || 'Unknown Driver',
+          driverName,
           tripsCompleted,
           totalDistance,
           averageTripDistance,
