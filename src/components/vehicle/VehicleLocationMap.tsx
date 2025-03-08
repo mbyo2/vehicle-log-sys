@@ -16,12 +16,12 @@ interface VehicleLocation {
   driver: string;
 }
 
-// Define proper types for the database query results
+// Adjust the interface to match the actual data structure from Supabase
 interface TripLogResult {
   id: string;
   vehicle_id: string;
-  vehicles: { plate_number: string } | null;
-  drivers: { profiles: { full_name: string } | null } | null;
+  vehicles: { plate_number: string };
+  drivers: { profiles: { full_name: string } | null };
   start_location: { latitude: number; longitude: number } | null;
   end_location: { latitude: number; longitude: number } | null;
   start_time: string;
@@ -54,21 +54,21 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
 
         if (error) throw error;
 
-        // Type cast to proper type
-        const typedData = data as TripLogResult[];
+        // Convert the raw data to our expected format
+        if (data) {
+          const formattedLocations = data
+            .filter(log => log.start_location)
+            .map(log => ({
+              vehicleId: log.vehicle_id,
+              plateNumber: log.vehicles?.plate_number || 'Unknown',
+              latitude: log.start_location!.latitude,
+              longitude: log.start_location!.longitude,
+              timestamp: log.start_time,
+              driver: log.drivers?.profiles?.full_name || 'Unknown'
+            }));
 
-        const formattedLocations = typedData
-          .filter(log => log.start_location)
-          .map(log => ({
-            vehicleId: log.vehicle_id,
-            plateNumber: log.vehicles ? log.vehicles.plate_number : 'Unknown',
-            latitude: log.start_location!.latitude,
-            longitude: log.start_location!.longitude,
-            timestamp: log.start_time,
-            driver: log.drivers && log.drivers.profiles ? log.drivers.profiles.full_name : 'Unknown'
-          }));
-
-        setLocations(formattedLocations);
+          setLocations(formattedLocations);
+        }
       } catch (error) {
         console.error('Error fetching locations:', error);
         toast({
