@@ -111,10 +111,13 @@ export function Sidebar() {
     },
   ];
 
+  // Get the actual value of profile.role using .get()
+  const userRole = profile?.get()?.role;
+
   const filteredNavItems = navItems.filter((item) => {
     if (!item.roles) return true; // Items without roles are shown to everyone
-    if (!profile?.role) return false; // If user role is not available, don't show role-specific items
-    return item.roles.includes(profile.role);
+    if (!userRole) return false; // If user role is not available, don't show role-specific items
+    return item.roles.includes(userRole);
   });
 
   return (

@@ -23,8 +23,10 @@ export default function Documents() {
   const { profile } = useAuth();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   
-  const companyId = profile?.company_id;
-  const isAdmin = profile?.role === 'company_admin' || profile?.role === 'super_admin';
+  // Get the actual values using .get()
+  const profileData = profile?.get();
+  const companyId = profileData?.company_id;
+  const isAdmin = profileData?.role === 'company_admin' || profileData?.role === 'super_admin';
 
   if (!companyId) {
     return (
