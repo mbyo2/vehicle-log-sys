@@ -47,11 +47,11 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
           .filter(log => log.start_location)
           .map(log => ({
             vehicleId: log.vehicle_id,
-            plateNumber: log.vehicles?.plate_number || 'Unknown',
+            plateNumber: log.vehicles ? log.vehicles.plate_number : 'Unknown',
             latitude: log.start_location.latitude,
             longitude: log.start_location.longitude,
             timestamp: log.start_time,
-            driver: log.drivers?.profiles?.full_name || 'Unknown'
+            driver: log.drivers && log.drivers.profiles ? log.drivers.profiles.full_name : 'Unknown'
           }));
 
         setLocations(formattedLocations);

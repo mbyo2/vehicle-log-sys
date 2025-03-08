@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 interface LocationData {
@@ -10,7 +9,6 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if the device is mobile by screen width or user agent
     const checkMobile = () => {
       const width = window.innerWidth;
       const isMobileByWidth = width < 768;
@@ -80,7 +78,6 @@ export function useGPSTracking() {
   return { location, error, isTracking, startTracking, stopTracking };
 }
 
-// New hook for device info
 export function useDeviceInfo() {
   const isMobile = useIsMobile();
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
@@ -105,23 +102,24 @@ export function useDeviceInfo() {
     };
   }, []);
   
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
+  
   return { 
     isMobile, 
     orientation,
     userAgent: navigator.userAgent,
     platform: navigator.platform,
-    isIOS: /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
-    isAndroid: /Android/.test(navigator.userAgent)
+    isIOS,
+    isAndroid
   };
 }
 
-// New hook for offline sync
 export function useOfflineSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingRecords, setPendingRecords] = useState(0);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
-  // Check for pending records in IndexedDB
   useEffect(() => {
     const checkPendingRecords = async () => {
       try {
@@ -149,7 +147,6 @@ export function useOfflineSync() {
     
     checkPendingRecords();
     
-    // Also check when the app comes back online
     const handleOnline = () => {
       checkPendingRecords();
     };
@@ -167,7 +164,6 @@ export function useOfflineSync() {
     setIsSyncing(true);
     
     try {
-      // Open the database
       const request = indexedDB.open('TripLogDB', 2);
       
       request.onsuccess = async (event: any) => {
@@ -189,7 +185,6 @@ export function useOfflineSync() {
             if (log.synced) continue;
             
             try {
-              // Attempt to sync with the server
               const response = await fetch('/api/trip-logs', {
                 method: 'POST',
                 headers: {
@@ -199,7 +194,6 @@ export function useOfflineSync() {
               });
               
               if (response.ok) {
-                // Mark as synced in IndexedDB
                 log.synced = true;
                 store.put(log);
                 syncCount++;
@@ -209,7 +203,6 @@ export function useOfflineSync() {
             }
           }
           
-          // Update pending records count
           setPendingRecords(prevCount => prevCount - syncCount);
           setLastSyncTime(new Date());
           setIsSyncing(false);
@@ -241,7 +234,6 @@ export function useOfflineSync() {
   };
 }
 
-// New hook for push notifications
 export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   
