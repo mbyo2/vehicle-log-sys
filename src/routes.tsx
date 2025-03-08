@@ -14,6 +14,7 @@ import { VehicleStatus } from '@/pages/VehicleStatus';
 import { TripManagement } from '@/pages/TripManagement';
 import Documents from '@/pages/Documents';
 import DriverPortal from '@/pages/DriverPortal';
+import { Analytics } from '@/pages/Analytics';
 
 export function AppRoutes() {
   return (
@@ -57,6 +58,13 @@ export function AppRoutes() {
       <Route path="/documents" element={
         <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
           <Documents />
+        </ProtectedRoute>
+      } />
+
+      {/* Analytics & Reporting */}
+      <Route path="/analytics" element={
+        <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+          <Analytics />
         </ProtectedRoute>
       } />
 
