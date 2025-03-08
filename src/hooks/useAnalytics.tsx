@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -295,8 +294,8 @@ export function useAnalytics() {
         const fuelEfficiencyRating = 70 + Math.random() * 30; // Random value between 70-100
         const safetyScore = 80 + Math.random() * 20; // Random value between 80-100
         
-        // Fix: Access profile data safely by handling the type correctly
-        const profileData = driver.profiles as { full_name: string } | null;
+        // Fix: Access profile data safely using type assertion
+        const profileData = driver.profiles as unknown as { full_name: string };
         const driverName = profileData?.full_name || 'Unknown Driver';
         
         return {

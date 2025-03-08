@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -5,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useGPSTracking, useOfflineSync, useIsMobile } from '@/hooks/use-mobile';
+import { useGPSTracking, useOfflineSync, useDeviceInfo } from '@/hooks/use-mobile';
 import { TripFormHeader } from './TripFormHeader';
 import { TripFormLocation } from './TripFormLocation';
 import { TripFormStatus } from './TripFormStatus';
@@ -25,8 +26,8 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
   const { user } = useAuth();
   const { toast } = useToast();
   const { location, isTracking, startTracking } = useGPSTracking();
-  const { isSyncing, syncOfflineData } = useOfflineSync();
-  const isMobile = useIsMobile();
+  const { isSyncing, pendingRecords, syncOfflineData } = useOfflineSync();
+  const { isMobile, orientation } = useDeviceInfo();
 
   const filteredPurposes = tripPurposes.filter(purpose =>
     purpose.toLowerCase().includes(searchTerm.toLowerCase())
@@ -59,13 +60,20 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
         if (data) {
           setDriverId(data.id);
           setManNumber(data.man_number);
-          onTripLogChange({ driver: data.man_number });
+          onTripLogChange({ driver: data.man_number, driverId: data.id });
         }
       }
     };
 
     fetchDriverId();
-  }, [user]);
+  }, [user, onTripLogChange]);
+
+  useEffect(() => {
+    // Auto-start GPS tracking on mobile devices
+    if (isMobile && !isTracking && isOnline) {
+      startTracking();
+    }
+  }, [isMobile, isTracking, isOnline, startTracking]);
 
   const handleEndKilometersChange = (value: number) => {
     onTripLogChange({ 
@@ -83,6 +91,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
       <TripFormHeader 
         isOnline={isOnline}
         isSyncing={isSyncing}
+        pendingRecords={pendingRecords}
         syncOfflineData={syncOfflineData}
       />
 
@@ -132,19 +141,23 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
         {showSuggestions && searchTerm && (
           <Card className="absolute z-10 w-full mt-1 max-h-60 overflow-auto">
             <div className="p-2">
-              {filteredPurposes.map((purpose, index) => (
-                <div
-                  key={index}
-                  className="p-2 hover:bg-accent cursor-pointer"
-                  onClick={() => {
-                    setSearchTerm(purpose);
-                    onTripLogChange({ purpose });
-                    setShowSuggestions(false);
-                  }}
-                >
-                  {purpose}
-                </div>
-              ))}
+              {filteredPurposes.length > 0 ? (
+                filteredPurposes.map((purpose, index) => (
+                  <div
+                    key={index}
+                    className="p-2 hover:bg-accent cursor-pointer"
+                    onClick={() => {
+                      setSearchTerm(purpose);
+                      onTripLogChange({ purpose });
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    {purpose}
+                  </div>
+                ))
+              ) : (
+                <div className="p-2 text-muted-foreground">No matches found</div>
+              )}
             </div>
           </Card>
         )}
