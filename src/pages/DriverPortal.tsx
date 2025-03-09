@@ -7,10 +7,12 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { LayoutDashboard, MessageSquare, GraduationCap } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DriverPortal() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   // Extract tab from URL path or default to dashboard
   const getTabFromPath = () => {
@@ -42,18 +44,18 @@ export default function DriverPortal() {
   return (
     <DashboardLayout>
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="mb-8">
+        <TabsList className={`${isMobile ? 'mb-4 w-full grid grid-cols-3' : 'mb-8'}`}>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
-            Dashboard
+            <span className={isMobile ? 'hidden sm:inline' : ''}>Dashboard</span>
           </TabsTrigger>
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            Messages
+            <span className={isMobile ? 'hidden sm:inline' : ''}>Messages</span>
           </TabsTrigger>
           <TabsTrigger value="trainings" className="flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
-            Certifications
+            <span className={isMobile ? 'hidden sm:inline' : ''}>Certifications</span>
           </TabsTrigger>
         </TabsList>
         

@@ -1,45 +1,81 @@
+
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface TripFormStatusProps {
-  approvalStatus: string;
+  approvalStatus: 'approved' | 'rejected' | 'pending';
   approvalComment?: string;
-  totalKilometers: number;
+  totalKilometers?: number;
 }
 
-export const TripFormStatus = ({ approvalStatus, approvalComment, totalKilometers }: TripFormStatusProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
+export const TripFormStatus = ({
+  approvalStatus,
+  approvalComment,
+  totalKilometers
+}: TripFormStatusProps) => {
+  const isMobile = useIsMobile();
+  
+  const getStatusIcon = () => {
+    switch (approvalStatus) {
       case 'approved':
-        return 'bg-green-500';
+        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'rejected':
-        return 'bg-red-500';
+        return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return 'bg-yellow-500';
+        return <Clock className="h-5 w-5 text-yellow-500" />;
     }
   };
-
+  
+  const getStatusBadge = () => {
+    switch (approvalStatus) {
+      case 'approved':
+        return (
+          <Badge className="bg-green-100 text-green-800 border-green-200">
+            Approved
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge className="bg-red-100 text-red-800 border-red-200">
+            Rejected
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+            Pending Approval
+          </Badge>
+        );
+    }
+  };
+  
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Badge className={getStatusColor(approvalStatus)}>
-          Status: {approvalStatus.charAt(0).toUpperCase() + approvalStatus.slice(1)}
-        </Badge>
-        {totalKilometers > 0 && (
-          <div className="bg-primary/10 p-2 rounded-md">
-            <p className="text-sm font-medium">
-              Distance: <span className="text-primary">{totalKilometers} km</span>
-            </p>
+    <Card className={`p-4 ${isMobile ? 'text-sm' : ''}`}>
+      <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'justify-between items-center'}`}>
+        <div className="flex items-center gap-2">
+          {getStatusIcon()}
+          <div>
+            <p className="font-medium">Status</p>
+            <div className="mt-1">{getStatusBadge()}</div>
+          </div>
+        </div>
+        
+        {totalKilometers !== undefined && (
+          <div className={`${isMobile ? 'border-t pt-3' : ''}`}>
+            <p className="text-sm text-muted-foreground">Total Distance</p>
+            <p className="text-lg font-semibold">{totalKilometers} km</p>
           </div>
         )}
       </div>
       
       {approvalComment && (
-        <Card className="p-4 bg-muted">
-          <p className="text-sm font-medium">Approval Comment:</p>
-          <p className="text-sm mt-1">{approvalComment}</p>
-        </Card>
+        <div className={`${isMobile ? 'mt-3' : 'mt-2'} border-t pt-3`}>
+          <p className="text-sm font-medium mb-1">Comments from Supervisor:</p>
+          <p className="text-sm text-muted-foreground">{approvalComment}</p>
+        </div>
       )}
-    </div>
+    </Card>
   );
 };

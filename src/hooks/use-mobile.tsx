@@ -12,12 +12,16 @@ export function useIsMobile() {
     const checkMobile = () => {
       const width = window.innerWidth;
       const isMobileByWidth = width < 768;
-      const isMobileByUserAgent = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      setIsMobile(isMobileByWidth || isMobileByUserAgent);
+      setIsMobile(isMobileByWidth);
     };
 
+    // Initial check
     checkMobile();
+    
+    // Add event listener for window resize
     window.addEventListener("resize", checkMobile);
+    
+    // Cleanup
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TripLog } from "@/types/vehicle";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TripLogForm } from "@/components/vehicle/TripLogForm";
 import { TripAnalytics } from "@/components/vehicle/TripAnalytics";
@@ -18,12 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useTripLog } from "@/hooks/useTripLog";
-import { format } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function TripManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("my-trips");
   const { tripLog, updateTripLog, saveTripLog } = useTripLog();
+  const isMobile = useIsMobile();
   
   const handleSave = async () => {
     await saveTripLog();
@@ -32,16 +32,16 @@ export function TripManagement() {
   
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Trip Management</h1>
+      <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between'} items-center mb-6`}>
+        <h1 className="text-2xl md:text-3xl font-bold">Trip Management</h1>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className={isMobile ? 'w-full' : ''}>
               <Plus className="mr-2 h-4 w-4" />
               Log New Trip
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className={isMobile ? 'w-[95vw] max-w-lg' : 'max-w-2xl'}>
             <DialogHeader>
               <DialogTitle>Log New Trip</DialogTitle>
             </DialogHeader>
@@ -59,19 +59,19 @@ export function TripManagement() {
         </Dialog>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+        <TabsList className={`${isMobile ? 'grid grid-cols-3 w-full' : 'w-full max-w-md'}`}>
           <TabsTrigger value="my-trips">My Trips</TabsTrigger>
-          <TabsTrigger value="approvals">Approval Queue</TabsTrigger>
+          <TabsTrigger value="approvals">Approvals</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         
         <TabsContent value="my-trips">
           <Card>
             <CardHeader>
-              <CardTitle>Recent Trips</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Recent Trips</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className={isMobile ? 'px-2' : ''}>
               <TripList filterType="my-trips" />
             </CardContent>
           </Card>
@@ -80,9 +80,9 @@ export function TripManagement() {
         <TabsContent value="approvals">
           <Card>
             <CardHeader>
-              <CardTitle>Trips Pending Approval</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Trips Pending Approval</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className={isMobile ? 'px-2' : ''}>
               <TripList filterType="pending-approval" />
             </CardContent>
           </Card>

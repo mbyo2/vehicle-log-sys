@@ -5,8 +5,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserRole } from "@/types/auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navigation = {
   super_admin: [
@@ -42,9 +43,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { profile, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const currentProfile = profile.get();
   const userNavigation = currentProfile ? navigation[currentProfile.role as UserRole] : [];
+
+  // Close mobile menu when changing route
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const NavLinks = () => (
     <>
@@ -65,8 +72,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             )}
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <Icon className="h-4 w-4" />
-            {item.name}
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">{item.name}</span>
           </Link>
         );
       })}
@@ -74,7 +81,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col md:flex-row">
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-col border-r px-4 py-6 md:flex">
         <div className="flex flex-1 flex-col gap-4">
@@ -131,8 +138,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="container py-6">{children}</div>
+      <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        <div className={`container ${isMobile ? 'pt-16 px-4' : 'py-6'}`}>{children}</div>
       </main>
     </div>
   );

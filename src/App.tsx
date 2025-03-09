@@ -25,6 +25,20 @@ function App() {
     };
   }, [navigate]);
 
+  // Add viewport meta tag for better mobile experience
+  useEffect(() => {
+    // Check if viewport meta tag exists, add if not
+    let viewportMeta = document.querySelector('meta[name="viewport"]');
+    if (!viewportMeta) {
+      viewportMeta = document.createElement('meta');
+      viewportMeta.setAttribute('name', 'viewport');
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      document.head.appendChild(viewportMeta);
+    } else {
+      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background">
