@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Check, X, Calendar, User, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TripLog {
   id: string;
@@ -36,7 +39,12 @@ interface TripLog {
 
 export function TripApprovals() {
   const { toast } = useToast();
+  const { sendNotification } = useNotifications();
+  const { profile } = useAuth();
   const [selectedTab, setSelectedTab] = useState("pending");
+
+  const profileData = profile?.get();
+  const userId = profileData?.id;
 
   const { data: trips, isLoading, refetch } = useQuery({
     queryKey: ["trips", selectedTab],
@@ -103,6 +111,23 @@ export function TripApprovals() {
         });
 
       if (approvalError) throw approvalError;
+
+      // Send notification to the driver
+      if (userId && trip.drivers.profile_id) {
+        await sendNotification.mutateAsync({
+          to: [trip.drivers.profile_id],
+          subject: `Trip ${status}`,
+          type: status === "approved" ? "user_action" : "approval_required",
+          details: {
+            message: `Your trip with vehicle ${trip.vehicles.plate_number} has been ${status}.`,
+            vehicle: `${trip.vehicles.make} ${trip.vehicles.model} (${trip.vehicles.plate_number})`,
+            actionRequired: status === "rejected" ? "Please review and submit a new trip request" : undefined,
+            comment: comment || undefined
+          },
+          // Send urgent notifications for rejections, regular for approvals
+          delivery: status === "rejected" ? "all" : "in_app"
+        });
+      }
 
       toast({
         title: `Trip ${status}`,
