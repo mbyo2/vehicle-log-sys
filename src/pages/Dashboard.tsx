@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -14,7 +13,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 
 export default function Dashboard() {
   const { profile } = useAuth();
-  const { vehiclesData } = useVehicles();
+  const { vehicles } = useVehicles();
   const { dashboardData, maintenanceForecasts } = useAnalytics();
   const [loading, setLoading] = useState(true);
 
@@ -33,11 +32,10 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    // Set loading to false once data is available
-    if (dashboardData && maintenanceForecasts && vehiclesData) {
+    if (dashboardData && maintenanceForecasts && vehicles) {
       setLoading(false);
     }
-  }, [dashboardData, maintenanceForecasts, vehiclesData]);
+  }, [dashboardData, maintenanceForecasts, vehicles]);
 
   const getRoleSpecificContent = () => {
     const userRole = profile.get()?.role;
