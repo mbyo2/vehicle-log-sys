@@ -1,5 +1,5 @@
 
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import { Fleet } from "./pages/Fleet";
 import { Drivers } from "./pages/Drivers";
@@ -22,97 +22,116 @@ import { Reports } from "./pages/Reports";
 import { TripManagement } from "./pages/TripManagement";
 import { Users } from "./pages/Users";
 import { Integrations } from "./pages/Integrations";
+import App from "./App";
+
+// Create a layout route with the ProtectedRoute component
+const ProtectedLayout = () => {
+  return (
+    <ProtectedRoute>
+      <Outlet />
+    </ProtectedRoute>
+  );
+};
 
 export const router = createBrowserRouter([
   {
-    path: "/signin",
-    element: <SignIn />,
-  },
-  {
-    path: "/signup",
-    element: <SignUp />,
-  },
-  {
     path: "/",
-    element: <ProtectedRoute><Dashboard /></ProtectedRoute>,
-  },
-  {
-    path: "/fleet",
-    element: <ProtectedRoute><Fleet /></ProtectedRoute>,
-  },
-  {
-    path: "/drivers",
-    element: <ProtectedRoute><Drivers /></ProtectedRoute>,
-  },
-  {
-    path: "/companies",
-    element: <ProtectedRoute><Companies /></ProtectedRoute>,
-  },
-  {
-    path: "/documents",
-    element: <ProtectedRoute><Documents /></ProtectedRoute>,
-  },
-  {
-    path: "/maintenance",
-    element: <ProtectedRoute><Maintenance /></ProtectedRoute>,
-  },
-  {
-    path: "/settings",
-    element: <ProtectedRoute><Settings /></ProtectedRoute>,
-  },
-  {
-    path: "/service-bookings",
-    element: <ProtectedRoute><ServiceBookings /></ProtectedRoute>,
-  },
-  {
-    path: "/trips",
-    element: <ProtectedRoute><Trips /></ProtectedRoute>,
-  },
-  {
-    path: "/profile",
-    element: <ProtectedRoute><Profile /></ProtectedRoute>,
-  },
-  {
-    path: "/trip-approvals",
-    element: <ProtectedRoute><TripApprovals /></ProtectedRoute>,
-  },
-  {
-    path: "/vehicle-status",
-    element: <ProtectedRoute><VehicleStatus /></ProtectedRoute>,
-  },
-  {
-    path: "/driver-portal",
-    element: <ProtectedRoute><DriverPortal /></ProtectedRoute>,
-  },
-  {
-    path: "/advertisements",
-    element: <ProtectedRoute><Advertisements /></ProtectedRoute>,
-  },
-  {
-    path: "/analytics",
-    element: <ProtectedRoute><Analytics /></ProtectedRoute>,
-  },
-  {
-    path: "/reports",
-    element: <ProtectedRoute><Reports /></ProtectedRoute>,
-  },
-  {
-    path: "/trip-management",
-    element: <ProtectedRoute><TripManagement /></ProtectedRoute>,
-  },
-  {
-    path: "/users",
-    element: <ProtectedRoute><Users /></ProtectedRoute>,
-  },
-  {
-    path: "/integrations",
-    element: <ProtectedRoute><Integrations /></ProtectedRoute>,
+    element: <App />,
+    children: [
+      {
+        path: "signin",
+        element: <SignIn />,
+      },
+      {
+        path: "signup",
+        element: <SignUp />,
+      },
+      {
+        path: "/",
+        element: <ProtectedLayout />,
+        children: [
+          {
+            path: "/",
+            element: <Dashboard />,
+          },
+          {
+            path: "dashboard",
+            element: <Dashboard />,
+          },
+          {
+            path: "fleet",
+            element: <Fleet />,
+          },
+          {
+            path: "drivers",
+            element: <Drivers />,
+          },
+          {
+            path: "companies",
+            element: <Companies />,
+          },
+          {
+            path: "documents",
+            element: <Documents />,
+          },
+          {
+            path: "maintenance",
+            element: <Maintenance />,
+          },
+          {
+            path: "settings",
+            element: <Settings />,
+          },
+          {
+            path: "service-bookings",
+            element: <ServiceBookings />,
+          },
+          {
+            path: "trips",
+            element: <Trips />,
+          },
+          {
+            path: "profile",
+            element: <Profile />,
+          },
+          {
+            path: "trip-approvals",
+            element: <TripApprovals />,
+          },
+          {
+            path: "vehicle-status",
+            element: <VehicleStatus />,
+          },
+          {
+            path: "driver-portal",
+            element: <DriverPortal />,
+          },
+          {
+            path: "advertisements",
+            element: <Advertisements />,
+          },
+          {
+            path: "analytics",
+            element: <Analytics />,
+          },
+          {
+            path: "reports",
+            element: <Reports />,
+          },
+          {
+            path: "trip-management",
+            element: <TripManagement />,
+          },
+          {
+            path: "users",
+            element: <Users />,
+          },
+          {
+            path: "integrations",
+            element: <Integrations />,
+          },
+        ],
+      },
+    ],
   },
 ]);
-
-// Export the routes component for use in App.tsx
-export const AppRoutes = () => {
-  return (
-    <></>
-  );
-};

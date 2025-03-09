@@ -1,10 +1,9 @@
 
-import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { supabase } from './integrations/supabase/client';
-import { router } from './routes';
-import { RouterProvider } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 function App() {
   const navigate = useNavigate();
@@ -27,10 +26,12 @@ function App() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <RouterProvider router={router} />
-      <Toaster />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-background">
+        <Outlet />
+        <Toaster />
+      </div>
+    </ErrorBoundary>
   );
 }
 
