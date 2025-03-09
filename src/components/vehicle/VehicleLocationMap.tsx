@@ -20,8 +20,8 @@ interface VehicleLocation {
 interface TripLogResult {
   id: string;
   vehicle_id: string;
-  vehicles: { plate_number: string };
-  drivers: { profiles: { full_name: string } | null };
+  vehicles: { plate_number: string };  // This is an object, not an array
+  drivers: { profiles: { full_name: string } | null };  // This is an object, not an array
   start_location: { latitude: number; longitude: number } | null;
   end_location: { latitude: number; longitude: number } | null;
   start_time: string;
@@ -58,7 +58,7 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
         if (data) {
           const formattedLocations = data
             .filter(log => log.start_location)
-            .map(log => {
+            .map((log: any) => {
               // Make sure we access properties safely
               return {
                 vehicleId: log.vehicle_id,
