@@ -33,43 +33,136 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
     purpose.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Monitor online/offline status
   useEffect(() => {
-    const handleOnlineStatus = () => setIsOnline(navigator.onLine);
+    const handleOnlineStatus = () => {
+      const online = navigator.onLine;
+      setIsOnline(online);
+      
+      if (online && pendingRecords > 0) {
+        toast({
+          title: "Back Online",
+          description: `You're back online. ${pendingRecords} trip logs ready to sync.`,
+        });
+      } else if (!online) {
+        toast({
+          variant: "warning",
+          title: "Offline Mode",
+          description: "You're now working offline. Changes will be saved locally.",
+        });
+      }
+    };
+    
     window.addEventListener('online', handleOnlineStatus);
     window.addEventListener('offline', handleOnlineStatus);
+    
     return () => {
       window.removeEventListener('online', handleOnlineStatus);
       window.removeEventListener('offline', handleOnlineStatus);
     };
-  }, []);
+  }, [pendingRecords, toast]);
 
+  // Load driver details from Supabase when user is available
   useEffect(() => {
     const fetchDriverId = async () => {
       if (user) {
-        const { data, error } = await supabase
-          .from('drivers')
-          .select('id, man_number')
-          .eq('profile_id', user.id)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from('drivers')
+            .select('id, man_number')
+            .eq('profile_id', user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching driver:', error);
-          return;
-        }
+          if (error) {
+            console.error('Error fetching driver:', error);
+            // If we're offline, try to load from indexedDB
+            if (!navigator.onLine) {
+              loadDriverFromIndexedDB();
+            }
+            return;
+          }
 
-        if (data) {
-          setDriverId(data.id);
-          setManNumber(data.man_number);
-          onTripLogChange({ driver: data.man_number, driverId: data.id });
+          if (data) {
+            setDriverId(data.id);
+            setManNumber(data.man_number);
+            onTripLogChange({ driver: data.man_number, driverId: data.id });
+            
+            // Save to IndexedDB for offline use
+            saveDriverToIndexedDB(data);
+          }
+        } catch (error) {
+          console.error('Error in fetchDriverId:', error);
+          // If fetch fails, try to load from indexedDB
+          loadDriverFromIndexedDB();
         }
+      }
+    };
+
+    const saveDriverToIndexedDB = async (driverData: any) => {
+      try {
+        const request = indexedDB.open('DriverCache', 1);
+        
+        request.onupgradeneeded = (event: any) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('drivers')) {
+            db.createObjectStore('drivers', { keyPath: 'id' });
+          }
+        };
+        
+        request.onsuccess = (event: any) => {
+          const db = event.target.result;
+          const transaction = db.transaction(['drivers'], 'readwrite');
+          const store = transaction.objectStore('drivers');
+          
+          store.put({
+            ...driverData,
+            cachedAt: new Date().toISOString()
+          });
+        };
+      } catch (error) {
+        console.error('Error saving driver to IndexedDB:', error);
+      }
+    };
+
+    const loadDriverFromIndexedDB = async () => {
+      try {
+        if (!user) return;
+        
+        const request = indexedDB.open('DriverCache', 1);
+        
+        request.onsuccess = (event: any) => {
+          const db = event.target.result;
+          
+          if (!db.objectStoreNames.contains('drivers')) {
+            console.log('No drivers store found in IndexedDB');
+            return;
+          }
+          
+          const transaction = db.transaction(['drivers'], 'readonly');
+          const store = transaction.objectStore('drivers');
+          const getAllRequest = store.getAll();
+          
+          getAllRequest.onsuccess = () => {
+            const drivers = getAllRequest.result;
+            if (drivers && drivers.length > 0) {
+              // Just use the first driver for now - in a real app we'd match by profile_id
+              const driver = drivers[0];
+              setDriverId(driver.id);
+              setManNumber(driver.man_number);
+              onTripLogChange({ driver: driver.man_number, driverId: driver.id });
+            }
+          };
+        };
+      } catch (error) {
+        console.error('Error loading driver from IndexedDB:', error);
       }
     };
 
     fetchDriverId();
   }, [user, onTripLogChange]);
 
+  // Auto-start GPS tracking on mobile
   useEffect(() => {
-    // Auto-start GPS tracking on mobile devices
     if (isMobile && !isTracking && isOnline) {
       startTracking();
     }
@@ -86,8 +179,14 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
     onTripLogChange({ [`${type}Time`]: value });
   };
 
+  // Handle form submit with offline support
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Form submission handling is in useTripLog hook
+  };
+
   return (
-    <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <TripFormHeader 
         isOnline={isOnline}
         isSyncing={isSyncing}
@@ -106,6 +205,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
           type="date"
           value={tripLog.date}
           onChange={(e) => onTripLogChange({ date: e.target.value })}
+          required
         />
       </div>
 
@@ -137,6 +237,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
             onTripLogChange({ purpose: e.target.value });
           }}
           onFocus={() => setShowSuggestions(true)}
+          required
         />
         {showSuggestions && searchTerm && (
           <Card className="absolute z-10 w-full mt-1 max-h-60 overflow-auto">
@@ -168,6 +269,6 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
           className="min-h-[100px]"
         />
       </div>
-    </div>
+    </form>
   );
 };

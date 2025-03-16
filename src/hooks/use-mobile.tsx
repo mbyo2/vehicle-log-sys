@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 interface LocationData {
@@ -129,6 +130,13 @@ export function useOfflineSync() {
       try {
         const request = indexedDB.open('TripLogDB', 2);
         
+        request.onupgradeneeded = (event: any) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('tripLogs')) {
+            db.createObjectStore('tripLogs', { keyPath: 'id' });
+          }
+        };
+        
         request.onsuccess = (event: any) => {
           const db = event.target.result;
           if (!db.objectStoreNames.contains('tripLogs')) {
@@ -138,10 +146,12 @@ export function useOfflineSync() {
           
           const transaction = db.transaction(['tripLogs'], 'readonly');
           const store = transaction.objectStore('tripLogs');
-          const countRequest = store.count();
+          const countRequest = store.getAll();
           
           countRequest.onsuccess = () => {
-            setPendingRecords(countRequest.result);
+            const records = countRequest.result || [];
+            const pendingCount = records.filter((record: any) => !record.synced).length;
+            setPendingRecords(pendingCount);
           };
         };
       } catch (error) {
@@ -149,16 +159,28 @@ export function useOfflineSync() {
       }
     };
     
+    // Check for pending records when component mounts
     checkPendingRecords();
     
+    // Set up event listeners for online status
     const handleOnline = () => {
       checkPendingRecords();
     };
     
+    const handleOffline = () => {
+      checkPendingRecords();
+    };
+    
     window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Check pending records every minute
+    const interval = setInterval(checkPendingRecords, 60000);
     
     return () => {
       window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(interval);
     };
   }, []);
   
@@ -182,25 +204,44 @@ export function useOfflineSync() {
         const getRequest = store.getAll();
         
         getRequest.onsuccess = async () => {
-          const tripLogs = getRequest.result;
+          const tripLogs = getRequest.result || [];
           let syncCount = 0;
           
-          for (const log of tripLogs) {
-            if (log.synced) continue;
-            
+          // Filter only unsynchronized records
+          const unsyncedLogs = tripLogs.filter((log: any) => !log.synced);
+          
+          if (unsyncedLogs.length === 0) {
+            setIsSyncing(false);
+            return;
+          }
+          
+          // Import supabase client
+          const { supabase } = await import('@/integrations/supabase/client');
+          
+          for (const log of unsyncedLogs) {
             try {
-              const response = await fetch('/api/trip-logs', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(log)
-              });
+              // Convert the stored offline format to the format expected by Supabase
+              const { error } = await supabase
+                .from('vehicle_logs')
+                .insert({
+                  vehicle_id: log.vehicleId,
+                  driver_id: log.driverId,
+                  start_kilometers: log.startKilometers,
+                  end_kilometers: log.endKilometers || null,
+                  start_time: new Date(`${log.date}T${log.startTime}`).toISOString(),
+                  end_time: log.endTime ? new Date(`${log.date}T${log.endTime}`).toISOString() : null,
+                  purpose: log.purpose,
+                  comments: log.comment || null,
+                  approval_status: 'pending'
+                });
               
-              if (response.ok) {
+              if (!error) {
+                // Mark as synchronized
                 log.synced = true;
                 store.put(log);
                 syncCount++;
+              } else {
+                console.error('Error syncing record:', error);
               }
             } catch (error) {
               console.error('Failed to sync log:', error);
@@ -210,6 +251,13 @@ export function useOfflineSync() {
           setPendingRecords(prevCount => prevCount - syncCount);
           setLastSyncTime(new Date());
           setIsSyncing(false);
+          
+          // Show notification for successful sync
+          if (syncCount > 0 && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('Sync Complete', {
+              body: `Successfully synchronized ${syncCount} trip records.`
+            });
+          }
         };
         
         getRequest.onerror = () => {

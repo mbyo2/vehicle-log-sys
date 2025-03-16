@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TripLog } from '@/types/vehicle';
@@ -29,10 +30,27 @@ export function useTripLog() {
   const [isOfflineSaved, setIsOfflineSaved] = useState(false);
 
   useEffect(() => {
+    // Reset offline saved state when back online
     if (navigator.onLine && isOfflineSaved) {
       setIsOfflineSaved(false);
     }
   }, [isOfflineSaved]);
+
+  // Add event listener for online status
+  useEffect(() => {
+    const handleOnline = () => {
+      if (isOfflineSaved) {
+        toast({
+          title: "Back Online",
+          description: "You're back online. Syncing data...",
+        });
+        syncOfflineData();
+      }
+    };
+    
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [isOfflineSaved, syncOfflineData, toast]);
 
   const updateTripLog = (updates: Partial<TripLog>) => {
     setTripLog(prev => ({ ...prev, ...updates }));
@@ -59,7 +77,8 @@ export function useTripLog() {
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             ...tripData,
             synced: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            offlineId: crypto.randomUUID ? crypto.randomUUID() : `offline-${Date.now()}` 
           };
           
           const addRequest = store.add(entry);
@@ -105,7 +124,9 @@ export function useTripLog() {
     setIsSaving(true);
 
     try {
+      // Check if we're offline
       if (!navigator.onLine) {
+        // Save data offline
         await saveOffline(tripLog);
         
         toast({
@@ -115,6 +136,7 @@ export function useTripLog() {
         
         setIsOfflineSaved(true);
         
+        // Reset form
         setTripLog(prev => ({
           ...prev,
           date: new Date().toISOString().split('T')[0],
@@ -126,9 +148,11 @@ export function useTripLog() {
           totalKilometers: 0
         }));
         
+        setIsSaving(false);
         return;
       }
 
+      // We're online, save directly to Supabase
       const { error } = await supabase
         .from('vehicle_logs')
         .insert({
@@ -150,6 +174,7 @@ export function useTripLog() {
         description: "Trip log saved successfully",
       });
 
+      // Reset form
       setTripLog(prev => ({
         ...prev,
         date: new Date().toISOString().split('T')[0],
@@ -163,87 +188,60 @@ export function useTripLog() {
 
     } catch (error: any) {
       console.error('Error saving trip log:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Could not save trip log",
-      });
+      
+      // If there was an error with the online save, try saving offline
+      if (!navigator.onLine) {
+        try {
+          await saveOffline(tripLog);
+          setIsOfflineSaved(true);
+          toast({
+            title: "Saved Offline",
+            description: "Connection lost. Trip log saved offline and will sync when online.",
+          });
+        } catch (offlineError) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save trip log offline.",
+          });
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Could not save trip log",
+        });
+      }
     } finally {
       setIsSaving(false);
     }
   };
 
   const syncOfflineTripLogs = async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) {
+      toast({
+        variant: "destructive",
+        title: "Offline",
+        description: "Cannot sync while offline. Please connect to the internet.",
+      });
+      return;
+    }
     
     try {
-      const request = indexedDB.open('TripLogDB', 2);
+      await syncOfflineData();
       
-      request.onsuccess = async (event: any) => {
-        const db = event.target.result;
-        const transaction = db.transaction(['tripLogs'], 'readwrite');
-        const store = transaction.objectStore('tripLogs');
-        
-        const getRequest = store.getAll();
-        
-        getRequest.onsuccess = async () => {
-          const tripLogs = getRequest.result.filter((log: any) => !log.synced);
-          
-          if (tripLogs.length === 0) return;
-          
-          let successCount = 0;
-          
-          for (const log of tripLogs) {
-            try {
-              const { error } = await supabase
-                .from('vehicle_logs')
-                .insert({
-                  vehicle_id: log.vehicleId,
-                  driver_id: log.driverId,
-                  start_kilometers: log.startKilometers,
-                  end_kilometers: log.endKilometers || null,
-                  start_time: new Date(`${log.date}T${log.startTime}`).toISOString(),
-                  end_time: log.endTime ? new Date(`${log.date}T${log.endTime}`).toISOString() : null,
-                  purpose: log.purpose,
-                  comments: log.comment || null,
-                  approval_status: 'pending'
-                });
-              
-              if (!error) {
-                log.synced = true;
-                store.put(log);
-                successCount++;
-              }
-            } catch (error) {
-              console.error('Error syncing trip log:', error);
-            }
-          }
-          
-          if (successCount > 0) {
-            toast({
-              title: "Sync Complete",
-              description: `${successCount} trip logs synchronized successfully.`,
-            });
-          }
-        };
-      };
+      // Reset offline saved state
+      setIsOfflineSaved(false);
       
     } catch (error) {
       console.error('Error syncing offline trip logs:', error);
+      toast({
+        variant: "destructive",
+        title: "Sync Failed",
+        description: "Failed to sync offline trip logs. Please try again.",
+      });
     }
   };
-
-  useEffect(() => {
-    const handleOnline = () => {
-      syncOfflineTripLogs();
-    };
-    
-    window.addEventListener('online', handleOnline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
-  }, []);
 
   return { 
     tripLog, 
