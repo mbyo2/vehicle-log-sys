@@ -1,7 +1,7 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ModalProvider } from '@/contexts/ModalContext';
@@ -15,11 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="ui-theme">
-        <AuthProvider>
-          <ModalProvider>
-            <RouterProvider router={router} />
-          </ModalProvider>
-        </AuthProvider>
+        <RouterProvider router={router}>
+          <AuthProvider>
+            <ModalProvider />
+          </AuthProvider>
+        </RouterProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>

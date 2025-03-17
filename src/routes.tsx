@@ -23,6 +23,20 @@ import { TripManagement } from "./pages/TripManagement";
 import { Users } from "./pages/Users";
 import { Integrations } from "./pages/Integrations";
 import App from "./App";
+import Index from "./pages/Index";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ModalProvider } from "./contexts/ModalContext";
+
+// Create a layout route with the providers
+const RootLayout = () => {
+  return (
+    <AuthProvider>
+      <ModalProvider>
+        <Outlet />
+      </ModalProvider>
+    </AuthProvider>
+  );
+};
 
 // Create a layout route with the ProtectedRoute component
 const ProtectedLayout = () => {
@@ -36,99 +50,105 @@ const ProtectedLayout = () => {
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <RootLayout />,
     children: [
       {
-        path: "signin",
-        element: <SignIn />,
-      },
-      {
-        path: "signup",
-        element: <SignUp />,
-      },
-      {
         path: "/",
-        element: <ProtectedLayout />,
+        element: <App />,
         children: [
           {
+            index: true,
+            element: <Index />,
+          },
+          {
+            path: "signin",
+            element: <SignIn />,
+          },
+          {
+            path: "signup",
+            element: <SignUp />,
+          },
+          {
             path: "/",
-            element: <Dashboard />,
-          },
-          {
-            path: "dashboard",
-            element: <Dashboard />,
-          },
-          {
-            path: "fleet",
-            element: <Fleet />,
-          },
-          {
-            path: "drivers",
-            element: <Drivers />,
-          },
-          {
-            path: "companies",
-            element: <Companies />,
-          },
-          {
-            path: "documents",
-            element: <Documents />,
-          },
-          {
-            path: "maintenance",
-            element: <Maintenance />,
-          },
-          {
-            path: "settings",
-            element: <Settings />,
-          },
-          {
-            path: "service-bookings",
-            element: <ServiceBookings />,
-          },
-          {
-            path: "trips",
-            element: <Trips />,
-          },
-          {
-            path: "profile",
-            element: <Profile />,
-          },
-          {
-            path: "trip-approvals",
-            element: <TripApprovals />,
-          },
-          {
-            path: "vehicle-status",
-            element: <VehicleStatus />,
-          },
-          {
-            path: "driver-portal",
-            element: <DriverPortal />,
-          },
-          {
-            path: "advertisements",
-            element: <Advertisements />,
-          },
-          {
-            path: "analytics",
-            element: <Analytics />,
-          },
-          {
-            path: "reports",
-            element: <Reports />,
-          },
-          {
-            path: "trip-management",
-            element: <TripManagement />,
-          },
-          {
-            path: "users",
-            element: <Users />,
-          },
-          {
-            path: "integrations",
-            element: <Integrations />,
+            element: <ProtectedLayout />,
+            children: [
+              {
+                path: "dashboard",
+                element: <Dashboard />,
+              },
+              {
+                path: "fleet",
+                element: <Fleet />,
+              },
+              {
+                path: "drivers",
+                element: <Drivers />,
+              },
+              {
+                path: "companies",
+                element: <Companies />,
+              },
+              {
+                path: "documents",
+                element: <Documents />,
+              },
+              {
+                path: "maintenance",
+                element: <Maintenance />,
+              },
+              {
+                path: "settings",
+                element: <Settings />,
+              },
+              {
+                path: "service-bookings",
+                element: <ServiceBookings />,
+              },
+              {
+                path: "trips",
+                element: <Trips />,
+              },
+              {
+                path: "profile",
+                element: <Profile />,
+              },
+              {
+                path: "trip-approvals",
+                element: <TripApprovals />,
+              },
+              {
+                path: "vehicle-status",
+                element: <VehicleStatus />,
+              },
+              {
+                path: "driver-portal",
+                element: <DriverPortal />,
+              },
+              {
+                path: "advertisements",
+                element: <Advertisements />,
+              },
+              {
+                path: "analytics",
+                element: <Analytics />,
+              },
+              {
+                path: "reports",
+                element: <Reports />,
+              },
+              {
+                path: "trip-management",
+                element: <TripManagement />,
+              },
+              {
+                path: "users",
+                element: <Users />,
+              },
+              {
+                path: "integrations",
+                element: <Integrations />,
+              },
+            ],
           },
         ],
       },
