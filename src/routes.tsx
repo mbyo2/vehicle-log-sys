@@ -1,4 +1,3 @@
-
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import { Fleet } from "./pages/Fleet";
