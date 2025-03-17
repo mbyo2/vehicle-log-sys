@@ -16,20 +16,49 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Plus, WifiOff } from "lucide-react";
+import { Plus, WifiOff, AlertTriangle, CloudOff } from "lucide-react";
 import { useTripLog } from "@/hooks/useTripLog";
 import { useIsMobile, useOfflineSync } from "@/hooks/use-mobile";
+import { useToast } from "@/components/ui/use-toast";
 
 export function TripManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("my-trips");
-  const { tripLog, updateTripLog, saveTripLog, isOfflineSaved } = useTripLog();
+  const { tripLog, updateTripLog, saveTripLog, isOfflineSaved, syncOfflineTripLogs } = useTripLog();
   const isMobile = useIsMobile();
-  const { pendingRecords, isOnline } = useOfflineSync();
+  const { pendingRecords, isOnline, isSyncing } = useOfflineSync();
+  const { toast } = useToast();
+  
+  // Auto-sync when coming back online
+  useEffect(() => {
+    const handleOnline = () => {
+      if (pendingRecords > 0) {
+        toast({
+          title: "Back Online",
+          description: `You're back online. ${pendingRecords} trip logs ready to sync.`,
+        });
+        // Auto-sync after a short delay
+        const timer = setTimeout(() => {
+          syncOfflineTripLogs();
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    };
+    
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [pendingRecords, syncOfflineTripLogs, toast]);
   
   const handleSave = async () => {
     await saveTripLog();
     setIsOpen(false);
+    
+    if (!isOnline && isOfflineSaved) {
+      toast({
+        title: "Saved Offline",
+        description: "Trip log saved locally and will sync when you're back online.",
+      });
+    }
   };
   
   // Handle network status
@@ -63,19 +92,39 @@ export function TripManagement() {
               <Button variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave}>Save Trip</Button>
+              <Button onClick={handleSave} disabled={isSyncing}>
+                {isSyncing ? 'Syncing...' : 'Save Trip'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
+      {!isOnline && (
+        <Alert className="mb-4 bg-yellow-50 border-yellow-200">
+          <CloudOff className="h-4 w-4 text-yellow-600" />
+          <AlertTitle>Offline Mode</AlertTitle>
+          <AlertDescription>
+            You're currently offline. Limited functionality is available, and changes will be saved locally.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {pendingRecords > 0 && (
         <Alert className="mb-4 bg-yellow-50 border-yellow-200">
-          <WifiOff className="h-4 w-4 text-yellow-600" />
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertTitle>Offline data pending sync</AlertTitle>
           <AlertDescription>
             You have {pendingRecords} trip{pendingRecords > 1 ? 's' : ''} stored offline. 
-            They will automatically sync when you're back online.
+            They will automatically sync when you're back online or you can 
+            <Button 
+              variant="link" 
+              className="px-1 text-yellow-700 h-auto" 
+              onClick={syncOfflineTripLogs}
+              disabled={!isOnline || isSyncing}
+            >
+              sync now
+            </Button>
           </AlertDescription>
         </Alert>
       )}

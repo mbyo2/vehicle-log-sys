@@ -46,7 +46,7 @@ export const TripForm = ({ tripLog, onTripLogChange, tripPurposes }: TripFormPro
         });
       } else if (!online) {
         toast({
-          variant: "warning",
+          variant: "destructive", // Fixed: Changed from "warning" to "destructive"
           title: "Offline Mode",
           description: "You're now working offline. Changes will be saved locally.",
         });

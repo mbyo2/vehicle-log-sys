@@ -1,9 +1,11 @@
 
-import { Wifi, WifiOff, RotateCw, Bell, BellOff, Database } from 'lucide-react';
+import { Wifi, WifiOff, RotateCw, Bell, BellOff, Database, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { usePushNotifications } from '@/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
+import { useState, useEffect } from 'react';
 
 interface TripFormHeaderProps {
   isOnline: boolean;
@@ -19,6 +21,37 @@ export const TripFormHeader = ({
   syncOfflineData 
 }: TripFormHeaderProps) => {
   const { permission, requestPermission, sendTestNotification } = usePushNotifications();
+  const [syncProgress, setSyncProgress] = useState(0);
+  
+  // Simulate sync progress when syncing
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isSyncing) {
+      setSyncProgress(10); // Start at 10%
+      interval = setInterval(() => {
+        setSyncProgress(prev => {
+          // Don't go to 100% until sync is actually complete
+          const next = prev + Math.random() * 15;
+          return next > 90 ? 90 : next;
+        });
+      }, 800);
+    } else {
+      // When sync completes, show 100%
+      if (syncProgress > 0) {
+        setSyncProgress(100);
+        // Reset after showing 100% briefly
+        const timeout = setTimeout(() => {
+          setSyncProgress(0);
+        }, 1000);
+        return () => clearTimeout(timeout);
+      }
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isSyncing, syncProgress]);
   
   return (
     <div className="flex flex-col gap-2 mb-4">
@@ -66,8 +99,12 @@ export const TripFormHeader = ({
                   disabled={isSyncing || !pendingRecords || !isOnline}
                   className="flex items-center gap-1"
                 >
-                  <RotateCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                  <span>Sync</span>
+                  {isSyncing ? (
+                    <RotateCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -103,6 +140,15 @@ export const TripFormHeader = ({
           </TooltipProvider>
         </div>
       </div>
+      
+      {syncProgress > 0 && (
+        <div className="mt-2">
+          <Progress value={syncProgress} className="h-1" />
+          <p className="text-xs text-muted-foreground mt-1 text-right">
+            {syncProgress < 100 ? 'Syncing data...' : 'Sync complete!'}
+          </p>
+        </div>
+      )}
       
       {!isOnline && (
         <div className="mt-1 text-xs text-yellow-600 bg-yellow-50 p-2 rounded border border-yellow-200">
