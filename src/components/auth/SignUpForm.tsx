@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +30,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
 
     setLoading(true);
     try {
+      // Set the role in the user_metadata for the handle_new_user function
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -64,6 +65,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
 
         if (companyError) throw companyError;
 
+        // Update the user's profile with the company ID
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -101,12 +103,12 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         <Card className="w-full max-w-[400px]">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
-              {isFirstUser ? 'Create Super Admin Account' : 'Create Company Account'}
+              {isFirstUser ? 'Create Super Admin Account' : 'Create Account'}
             </CardTitle>
             <CardDescription className="text-center">
               {isFirstUser 
                 ? 'Set up your super admin account to get started'
-                : 'Register your company to start managing your fleet'}
+                : 'Register your account to start managing your fleet'}
             </CardDescription>
           </CardHeader>
           <CardContent>

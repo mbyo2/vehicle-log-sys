@@ -1,3 +1,4 @@
+
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,12 +36,15 @@ export function useAuthActions() {
   const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
     try {
       authState.loading.set(true);
+      
+      // Ensure role is set in the user metadata
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            role: role,
           },
         },
       });
@@ -62,11 +66,11 @@ export function useAuthActions() {
 
         if (companyError) throw companyError;
 
+        // Update the user's profile with the company ID
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
             company_id: company.id,
-            role: role,
           })
           .eq('id', user.id);
 
