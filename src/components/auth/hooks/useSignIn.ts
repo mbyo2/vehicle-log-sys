@@ -17,8 +17,8 @@ export function useSignIn() {
   const location = useLocation();
 
   const checkFirstUser = async () => {
-    // Skip the check if we're having database issues
     try {
+      // Skip the check if we're having database issues
       const { count, error } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true });
@@ -33,32 +33,20 @@ export function useSignIn() {
       }
     } catch (error: any) {
       console.error("Error checking first user:", error);
-      // Don't show error toast for this operation, just log it
-      // The user can still try to sign in
     }
   };
 
   const handleSignIn = async (values: SignInFormValues) => {
     try {
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
       if (signInError) throw signInError;
 
-      if (!user) {
+      if (!data.user) {
         throw new Error("No user returned after sign in");
-      }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        throw profileError;
       }
 
       toast({

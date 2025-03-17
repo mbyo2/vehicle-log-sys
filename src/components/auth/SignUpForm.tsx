@@ -1,12 +1,11 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignUpFormFields } from "./SignUpFormFields";
+import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
 
 interface SignUpFormProps {
@@ -16,79 +15,26 @@ interface SignUpFormProps {
 export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { signUp } = useAuthActions();
 
   const onSubmit = async (values: SignUpFormValues) => {
     if (!isFirstUser && (values.role === "driver" || values.role === "supervisor")) {
-      toast({
-        variant: "destructive",
-        title: "Registration not allowed",
-        description: "Drivers and supervisors can only be added by company administrators.",
-      });
+      console.error("Registration not allowed for this role");
       return;
     }
 
     setLoading(true);
     try {
-      // Set the role in the user_metadata for the handle_new_user function
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            full_name: values.fullName,
-            role: isFirstUser ? 'super_admin' : values.role,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      if (!authData.user) {
-        throw new Error("Failed to create user account");
-      }
-
-      if (!isFirstUser && values.role === "company_admin" && values.companyName && values.subscriptionType) {
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .insert({
-            name: values.companyName,
-            subscription_type: values.subscriptionType,
-            trial_start_date: values.subscriptionType === 'trial' ? new Date().toISOString() : null,
-            trial_end_date: values.subscriptionType === 'trial' 
-              ? new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString() 
-              : null,
-            created_by: authData.user.id,
-          })
-          .select()
-          .single();
-
-        if (companyError) throw companyError;
-
-        // Update the user's profile with the company ID
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            company_id: companyData.id,
-          })
-          .eq('id', authData.user.id);
-
-        if (profileError) throw profileError;
-      }
-
-      toast({
-        title: "Account created successfully!",
-        description: "Please check your email to verify your account.",
-      });
-
-      navigate('/signin', { replace: true });
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error creating account",
-        description: error.message,
-      });
+      await signUp(
+        values.email,
+        values.password,
+        isFirstUser ? 'super_admin' : values.role,
+        values.fullName,
+        values.companyName,
+        values.subscriptionType
+      );
+    } catch (error) {
+      console.error('Form submission error:', error);
     } finally {
       setLoading(false);
     }

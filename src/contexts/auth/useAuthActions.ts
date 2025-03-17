@@ -16,7 +16,10 @@ export function useAuthActions() {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading user profile:', error);
+        return;
+      }
       
       if (data) {
         authState.profile.set({
@@ -38,43 +41,23 @@ export function useAuthActions() {
       authState.loading.set(true);
       
       // Ensure role is set in the user metadata
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
             role: role,
+            company_name: companyName,
+            subscription_type: subscriptionType
           },
         },
       });
 
       if (signUpError) throw signUpError;
 
-      if (role === 'company_admin' && companyName && user) {
-        const { data: company, error: companyError } = await supabase
-          .from('companies')
-          .insert({
-            name: companyName,
-            subscription_type: subscriptionType || 'trial',
-            trial_start_date: new Date().toISOString(),
-            trial_end_date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
-            created_by: user.id,
-          })
-          .select()
-          .single();
-
-        if (companyError) throw companyError;
-
-        // Update the user's profile with the company ID
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            company_id: company.id,
-          })
-          .eq('id', user.id);
-
-        if (profileError) throw profileError;
+      if (!data.user) {
+        throw new Error("Failed to create user account");
       }
 
       toast({
@@ -84,6 +67,7 @@ export function useAuthActions() {
       
       navigate('/signin');
     } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         variant: "destructive",
         title: "Error",
