@@ -19,8 +19,9 @@ export function SignInForm() {
   const { state, handleSubmit, checkFirstUser } = useSignIn();
 
   useEffect(() => {
+    // Check if this is the first user to determine if we should redirect to signup
     checkFirstUser();
-  }, [checkFirstUser]);
+  }, []);
 
   return (
     <ErrorBoundary>

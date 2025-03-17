@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -33,6 +33,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         values.companyName,
         values.subscriptionType
       );
+      // Navigation is handled in the signUp function
     } catch (error) {
       console.error('Form submission error:', error);
     } finally {

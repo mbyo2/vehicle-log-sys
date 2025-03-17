@@ -27,6 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
+      authState.user.set(null);
+      authState.profile.set(null);
       navigate('/signin');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -37,16 +39,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (session?.user) {
           authState.user.set(session.user);
-          const { data: profileData } = await supabase
+          
+          const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+          }
           
           if (profileData) {
             authState.profile.set(profileData);
+          } else {
+            console.warn('No profile found for user:', session.user.id);
           }
         }
       } catch (error) {
@@ -66,16 +76,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authState.user.set(session?.user ?? null);
 
       if (session?.user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        authState.profile.set(profileData ?? null);
+        try {
+          const { data: profileData, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+          }
+          
+          authState.profile.set(profileData ?? null);
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          authState.profile.set(null);
+        }
       } else {
         authState.profile.set(null);
       }
+      
       authState.loading.set(false);
     });
 

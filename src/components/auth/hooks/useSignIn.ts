@@ -18,7 +18,6 @@ export function useSignIn() {
 
   const checkFirstUser = async () => {
     try {
-      // Skip the check if we're having database issues
       const { count, error } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true });
@@ -31,19 +30,19 @@ export function useSignIn() {
       if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error checking first user:", error);
     }
   };
 
   const handleSignIn = async (values: SignInFormValues) => {
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password,
       });
 
-      if (signInError) throw signInError;
+      if (error) throw error;
 
       if (!data.user) {
         throw new Error("No user returned after sign in");
@@ -81,7 +80,7 @@ export function useSignIn() {
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: error.message,
+        description: error.message || "Failed to sign in",
       });
     } finally {
       signInState.loading.set(false);

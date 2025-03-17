@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -6,7 +7,8 @@ import { Navigate } from 'react-router-dom';
 export default function SignIn() {
   const { user, loading } = useAuth();
 
-  if (!loading && user) {
+  // If user is authenticated, redirect to dashboard
+  if (!loading.get() && user.get()) {
     return <Navigate to="/dashboard" replace />;
   }
 

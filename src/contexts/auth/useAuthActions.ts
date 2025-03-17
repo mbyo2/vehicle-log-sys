@@ -14,7 +14,7 @@ export function useAuthActions() {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading user profile:', error);
@@ -32,6 +32,7 @@ export function useAuthActions() {
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
+    } finally {
       authState.loading.set(false);
     }
   };
@@ -40,8 +41,7 @@ export function useAuthActions() {
     try {
       authState.loading.set(true);
       
-      // Ensure role is set in the user metadata
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -54,7 +54,7 @@ export function useAuthActions() {
         },
       });
 
-      if (signUpError) throw signUpError;
+      if (error) throw error;
 
       if (!data.user) {
         throw new Error("Failed to create user account");
@@ -62,7 +62,7 @@ export function useAuthActions() {
 
       toast({
         title: "Success!",
-        description: "Please check your email to verify your account.",
+        description: "Account created successfully. Please sign in.",
       });
       
       navigate('/signin');
@@ -71,7 +71,7 @@ export function useAuthActions() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create account",
       });
     } finally {
       authState.loading.set(false);
@@ -84,6 +84,10 @@ export function useAuthActions() {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      // Clear the auth state
+      authState.user.set(null);
+      authState.profile.set(null);
+      
       toast({
         title: "Signed out",
         description: "Successfully signed out.",
@@ -93,7 +97,7 @@ export function useAuthActions() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to sign out",
       });
     } finally {
       authState.loading.set(false);
