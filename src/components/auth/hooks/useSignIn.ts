@@ -17,6 +17,7 @@ export function useSignIn() {
   const location = useLocation();
 
   const checkFirstUser = async () => {
+    signInState.loading.set(true);
     try {
       const { count, error } = await supabase
         .from('profiles')
@@ -24,14 +25,19 @@ export function useSignIn() {
       
       if (error) {
         console.error("Error checking first user:", error);
-        return; // Just return without redirecting on error
+        return false; // Return a value to avoid undefined
       }
       
       if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
+        return true;
       }
+      return false;
     } catch (error) {
       console.error("Error checking first user:", error);
+      return false; // Return a value to avoid undefined
+    } finally {
+      signInState.loading.set(false);
     }
   };
 
