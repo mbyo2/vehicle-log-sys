@@ -19,15 +19,16 @@ export function useSignIn() {
   const checkFirstUser = async () => {
     signInState.loading.set(true);
     try {
-      // Use a direct count query to avoid potential RLS issues
-      const { data, error } = await supabase.rpc('get_total_profile_count');
+      // Directly count users in the auth.users table - this avoids RLS issues
+      const { count, error } = await supabase.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+      });
       
       if (error) {
         console.error("Error checking first user:", error);
         return false;
       }
-      
-      const count = data || 0;
       
       if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
