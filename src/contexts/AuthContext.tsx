@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('Signing out user...');
       await supabase.auth.signOut();
       authState.user.set(null);
       authState.profile.set(null);
@@ -35,9 +36,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
+          console.log('Found existing session for user:', session.user.id);
           authState.user.set(session.user);
           
           const { data: profileData, error } = await supabase
@@ -51,10 +54,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           if (profileData) {
+            console.log('Profile found:', profileData.role);
             authState.profile.set(profileData);
           } else {
             console.warn('No profile found for user:', session.user.id);
           }
+        } else {
+          console.log('No session found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
@@ -67,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      console.log('Auth state changed:', event, session?.user?.id);
       
       authState.loading.set(true);
       authState.user.set(session?.user ?? null);
@@ -85,6 +91,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           authState.profile.set(profileData ?? null);
+          
+          if (profileData) {
+            console.log('Profile loaded:', profileData.role);
+          } else {
+            console.warn('No profile found after auth state change');
+          }
         } catch (error) {
           console.error('Error fetching profile:', error);
           authState.profile.set(null);

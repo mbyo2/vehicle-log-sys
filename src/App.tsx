@@ -13,9 +13,11 @@ function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN') {
-          navigate('/dashboard');
+          console.log('Auth event: SIGNED_IN - redirecting to dashboard');
+          navigate('/dashboard', { replace: true });
         } else if (event === 'SIGNED_OUT') {
-          navigate('/signin');
+          console.log('Auth event: SIGNED_OUT - redirecting to signin');
+          navigate('/signin', { replace: true });
         }
       }
     );
