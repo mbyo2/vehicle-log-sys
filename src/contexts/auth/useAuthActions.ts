@@ -41,6 +41,7 @@ export function useAuthActions() {
     try {
       authState.loading.set(true);
       
+      // Include metadata in signup that the trigger will use to create the profile
       const { data, error } = await supabase.auth.signUp({
         email,
         password,

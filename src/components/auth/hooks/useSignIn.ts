@@ -19,14 +19,15 @@ export function useSignIn() {
   const checkFirstUser = async () => {
     signInState.loading.set(true);
     try {
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true });
+      // Use a direct count query to avoid potential RLS issues
+      const { data, error } = await supabase.rpc('get_total_profile_count');
       
       if (error) {
         console.error("Error checking first user:", error);
-        return false; // Return a value to avoid undefined
+        return false;
       }
+      
+      const count = data || 0;
       
       if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
@@ -35,7 +36,7 @@ export function useSignIn() {
       return false;
     } catch (error) {
       console.error("Error checking first user:", error);
-      return false; // Return a value to avoid undefined
+      return false;
     } finally {
       signInState.loading.set(false);
     }

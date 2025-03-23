@@ -18,18 +18,16 @@ export function SignInForm() {
   const navigate = useNavigate();
   const { state, handleSubmit, checkFirstUser } = useSignIn();
 
-  // Use useEffect hook consistently for every render
+  // Use useEffect hook to check for first user
   useEffect(() => {
-    // Check if this is the first user to determine if we should redirect to signup
-    const checkForFirstUser = async () => {
+    // Using an IIFE to handle the async operation
+    (async () => {
       try {
         await checkFirstUser();
       } catch (error) {
         console.error("Error in checkFirstUser:", error);
       }
-    };
-    
-    checkForFirstUser();
+    })();
   }, []);
 
   return (

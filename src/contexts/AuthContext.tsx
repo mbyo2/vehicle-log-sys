@@ -1,11 +1,9 @@
 
 import { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
 import { authState } from './auth/AuthState';
-import type { User } from '@supabase/supabase-js';
-import type { UserProfile } from '@/types/auth';
 
 enableReactTracking({
   auto: true
@@ -22,7 +20,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const signOut = async () => {
     try {
