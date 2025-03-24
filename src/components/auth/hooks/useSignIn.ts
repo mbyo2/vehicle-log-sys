@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +26,23 @@ export function useSignIn() {
     signInState.loading.set(true);
     try {
       console.log("Checking if first user exists...");
+      
+      // Safely check if profiles table exists first
+      const { error: tableError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .limit(1);
+      
+      if (tableError) {
+        // If there's an error with the profiles table, assume this is a first-time setup
+        console.log("Error checking profiles table, may not exist:", tableError);
+        signInState.isFirstUser.set(true);
+        signInState.isFirstUserChecked.set(true);
+        navigate('/signup', { state: { isFirstUser: true }, replace: true });
+        return true;
+      }
+      
+      // If we get here, the table exists, now check for any profiles
       const { count, error } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -35,7 +53,8 @@ export function useSignIn() {
       }
       
       console.log("Profile count:", count);
-      const isFirst = count === 0;
+      const profileCount = typeof count === 'string' ? parseInt(count, 10) : count;
+      const isFirst = profileCount === 0;
       
       signInState.isFirstUser.set(isFirst);
       signInState.isFirstUserChecked.set(true);
@@ -96,10 +115,19 @@ export function useSignIn() {
       console.error("Authentication error:", error);
       signInState.attempts.set(prev => prev + 1);
       
+      let errorMessage = error.message || "Failed to sign in";
+      
+      // Check for specific database errors that might indicate setup issues
+      if (errorMessage.includes("relation") && errorMessage.includes("does not exist")) {
+        errorMessage = "Database setup is incomplete. Please contact support.";
+        // Redirect to signup with first user flag if this appears to be a fresh install
+        navigate('/signup', { state: { isFirstUser: true }, replace: true });
+      }
+      
       toast({
         variant: "destructive",
         title: "Authentication Error",
-        description: error.message || "Failed to sign in",
+        description: errorMessage,
       });
     } finally {
       signInState.loading.set(false);
