@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 export function useOfflineSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingRecords, setPendingRecords] = useState(0);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -35,6 +36,23 @@ export function useOfflineSync() {
     } catch (error) {
       console.error('Error checking pending records:', error);
     }
+  }, []);
+
+  // Update online status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Set initial status
+    setIsOnline(navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Sync offline data to Supabase
@@ -135,6 +153,7 @@ export function useOfflineSync() {
   return {
     isSyncing,
     pendingRecords,
+    isOnline,
     syncOfflineData,
     checkPendingRecords
   };
