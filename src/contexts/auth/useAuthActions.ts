@@ -40,6 +40,7 @@ export function useAuthActions() {
   const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
     try {
       authState.loading.set(true);
+      console.log('Signing up user with role:', role);
       
       // Include metadata in signup that the trigger will use to create the profile
       const { data, error } = await supabase.auth.signUp({
@@ -59,6 +60,26 @@ export function useAuthActions() {
 
       if (!data.user) {
         throw new Error("Failed to create user account");
+      }
+
+      console.log('User created successfully:', data.user.id);
+      
+      // For super_admin, we need to manually create the profile since there may not be database triggers yet
+      if (role === 'super_admin') {
+        console.log('Creating super admin profile manually');
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: data.user.id,
+          email: email,
+          full_name: fullName,
+          role: role
+        });
+        
+        if (profileError) {
+          console.error('Error creating super admin profile:', profileError);
+          throw profileError;
+        }
+        
+        console.log('Super admin profile created successfully');
       }
 
       toast({

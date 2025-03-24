@@ -8,6 +8,7 @@ import { SignUpFormFields } from "./SignUpFormFields";
 import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignUpFormProps {
   isFirstUser?: boolean;
@@ -30,7 +31,26 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
     }
 
     setLoading(true);
+    
     try {
+      console.log('Creating account with role:', isFirstUser ? 'super_admin' : values.role);
+      
+      // Check if the profiles table exists for super_admin
+      if (isFirstUser) {
+        // Try to create the profiles table if it doesn't exist
+        try {
+          const { error: checkError } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .limit(1);
+          
+          // If the table doesn't exist, we'll get an error, which is fine
+          console.log('Profiles table check:', checkError ? 'Table may not exist' : 'Table exists');
+        } catch (error) {
+          console.log('Error checking profiles table, likely does not exist yet');
+        }
+      }
+      
       await signUp(
         values.email,
         values.password,
@@ -51,7 +71,9 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           description: "Your account has been created. Please sign in."
         });
       }
-      // Navigation is handled in the signUp function
+      
+      // Navigate to signin page
+      navigate('/signin');
     } catch (error: any) {
       console.error('Form submission error:', error);
       toast({

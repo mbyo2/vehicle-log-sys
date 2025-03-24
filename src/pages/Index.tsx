@@ -39,30 +39,37 @@ export default function Index() {
       // Check if any users exist in the system
       try {
         console.log("Checking if any profiles exist...");
-        // Fix: Using a more explicit type conversion to number for the count
-        const { count, error } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-        
-        if (error) {
-          console.error("Error checking profiles:", error);
-          navigate('/signin', { replace: true });
-          return;
-        }
-        
-        // Fix: Properly convert the count to a number before comparing
-        const profileCount = count === null ? 0 : (typeof count === 'number' ? count : parseInt(String(count), 10));
-        console.log("Profile count:", profileCount);
-        
-        if (profileCount === 0) {
-          console.log("No profiles found, directing to first user signup");
+        // Using a try-catch because the table might not exist yet
+        try {
+          // Using a more explicit type conversion to number for the count
+          const { count, error } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+          
+          if (error) {
+            console.error("Error checking profiles:", error);
+            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            return;
+          }
+          
+          // Fix: Properly convert the count to a number before comparing
+          const profileCount = count === null ? 0 : (typeof count === 'number' ? count : parseInt(String(count), 10));
+          console.log("Profile count:", profileCount);
+          
+          if (profileCount === 0) {
+            console.log("No profiles found, directing to first user signup");
+            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+          } else {
+            console.log("Profiles exist, directing to signin");
+            navigate('/signin', { replace: true });
+          }
+        } catch (err) {
+          // If any error occurs during check, assume it's first setup
+          console.error("Error checking profiles (table may not exist):", err);
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
-        } else {
-          console.log("Profiles exist, directing to signin");
-          navigate('/signin', { replace: true });
         }
       } catch (err) {
-        console.error("Error checking profiles:", err);
+        console.error("General error checking profiles:", err);
         navigate('/signin', { replace: true });
       }
     }, 1000);
