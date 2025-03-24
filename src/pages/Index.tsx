@@ -39,6 +39,7 @@ export default function Index() {
       // Check if any users exist in the system
       try {
         console.log("Checking if any profiles exist...");
+        // Fix: Using a more explicit type conversion to number for the count
         const { count, error } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
@@ -49,9 +50,11 @@ export default function Index() {
           return;
         }
         
-        console.log("Profile count:", count);
+        // The issue was here: count might be coming as a string but needs to be a number
+        const profileCount = typeof count === 'string' ? parseInt(count, 10) : count;
+        console.log("Profile count:", profileCount);
         
-        if (count === 0) {
+        if (profileCount === 0) {
           console.log("No profiles found, directing to first user signup");
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
         } else {
