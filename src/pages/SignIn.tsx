@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';

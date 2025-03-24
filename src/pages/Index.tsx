@@ -12,40 +12,55 @@ export default function Index() {
 
   useEffect(() => {
     // Simple timeout to prevent infinite loop/recursion
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       // If authentication is still loading, we wait
-      if (loading.get()) return;
+      if (loading.get()) {
+        console.log("Auth is still loading, waiting...");
+        return;
+      }
       
       const currentUser = user.get();
       const currentProfile = profile.get();
       
+      console.log("Index page - Current auth state:", { 
+        hasUser: !!currentUser, 
+        hasProfile: !!currentProfile,
+        loading: loading.get()
+      });
+      
       // User is authenticated with a profile
       if (currentUser && currentProfile) {
+        console.log("User authenticated, navigating to default route for role:", currentProfile.role);
         const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
         navigate(defaultRoute, { replace: true });
         return;
       }
       
-      // If there's no user profile, check if any users exist
-      const checkFirstUser = async () => {
-        const { count } = await supabase
+      // Check if any users exist in the system
+      try {
+        console.log("Checking if any profiles exist...");
+        const { count, error } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
         
+        if (error) {
+          console.error("Error checking profiles:", error);
+          navigate('/signin', { replace: true });
+          return;
+        }
+        
+        console.log("Profile count:", count);
+        
         if (count === 0) {
+          console.log("No profiles found, directing to first user signup");
           navigate('/signup', { state: { isFirstUser: true }, replace: true });
         } else {
+          console.log("Profiles exist, directing to signin");
           navigate('/signin', { replace: true });
         }
-      };
-      
-      // User has no auth or profile, check if first user
-      if (!currentUser || !currentProfile) {
-        checkFirstUser().catch(err => {
-          console.error("Error checking first user:", err);
-          navigate('/signin', { replace: true });
-        });
-        return;
+      } catch (err) {
+        console.error("Error checking profiles:", err);
+        navigate('/signin', { replace: true });
       }
     }, 1000);
     
@@ -55,7 +70,8 @@ export default function Index() {
   // Simple loading screen while we determine where to navigate
   return (
     <div className="flex h-screen items-center justify-center">
-      <LoadingSpinner />
+      <LoadingSpinner size="lg" />
+      <span className="ml-2 text-muted-foreground">Loading...</span>
     </div>
   );
 }

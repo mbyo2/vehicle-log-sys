@@ -7,27 +7,23 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignInFormFields } from "./SignInFormFields";
 import { useSignIn } from "./hooks/useSignIn";
-import { observable } from '@legendapp/state';
-
-const signInState = observable({
-  resetPasswordOpen: false,
-  isFirstUser: false
-});
 
 export function SignInForm() {
   const navigate = useNavigate();
   const { state, handleSubmit, checkFirstUser } = useSignIn();
 
-  // Use useEffect hook to check for first user
+  // Use useEffect hook to check for first user only once on component mount
   useEffect(() => {
-    // Using an IIFE to handle the async operation
-    (async () => {
+    const checkForFirstUser = async () => {
       try {
+        console.log("Checking for first user on SignInForm mount");
         await checkFirstUser();
       } catch (error) {
         console.error("Error in checkFirstUser:", error);
       }
-    })();
+    };
+    
+    checkForFirstUser();
   }, []);
 
   return (

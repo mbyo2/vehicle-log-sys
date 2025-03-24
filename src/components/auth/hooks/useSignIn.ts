@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -9,6 +8,8 @@ import type { SignInFormValues } from '../schemas/signInSchema';
 const signInState = observable({
   loading: false,
   attempts: 0,
+  isFirstUserChecked: false,
+  isFirstUser: false
 });
 
 export function useSignIn() {
@@ -17,9 +18,13 @@ export function useSignIn() {
   const location = useLocation();
 
   const checkFirstUser = async () => {
+    if (signInState.isFirstUserChecked.get()) {
+      return signInState.isFirstUser.get();
+    }
+
     signInState.loading.set(true);
     try {
-      // Using a simpler approach to check if there are any users
+      console.log("Checking if first user exists...");
       const { count, error } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -29,8 +34,14 @@ export function useSignIn() {
         return false;
       }
       
-      // If no profiles exist, direct to first user signup
-      if (count === 0) {
+      console.log("Profile count:", count);
+      const isFirst = count === 0;
+      
+      signInState.isFirstUser.set(isFirst);
+      signInState.isFirstUserChecked.set(true);
+      
+      if (isFirst) {
+        console.log("No profiles found, directing to first user signup");
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
         return true;
       }
