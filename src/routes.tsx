@@ -1,3 +1,4 @@
+
 import { createBrowserRouter, Outlet } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import { Fleet } from "./pages/Fleet";
@@ -25,6 +26,8 @@ import App from "./App";
 import Index from "./pages/Index";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ModalProvider } from "./contexts/ModalContext";
+import VehicleDetails from "./pages/VehicleDetails";
+import NewTrip from "./pages/NewTrip";
 
 // Create a layout route with the providers
 const RootLayout = () => {
@@ -80,6 +83,10 @@ export const router = createBrowserRouter([
                 element: <Fleet />,
               },
               {
+                path: "fleet/:id",
+                element: <VehicleDetails />,
+              },
+              {
                 path: "drivers",
                 element: <Drivers />,
               },
@@ -106,6 +113,14 @@ export const router = createBrowserRouter([
               {
                 path: "trips",
                 element: <Trips />,
+              },
+              {
+                path: "trips/new",
+                element: <NewTrip />,
+              },
+              {
+                path: "trips/new/:vehicleId",
+                element: <NewTrip />,
               },
               {
                 path: "profile",
