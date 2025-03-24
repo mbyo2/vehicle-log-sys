@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
 import { authState } from './auth/AuthState';
+import { useToast } from '@/hooks/use-toast';
 
 enableReactTracking({
   auto: true
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const signOut = async () => {
     try {
@@ -27,9 +29,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
       authState.user.set(null);
       authState.profile.set(null);
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
       navigate('/signin');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign out"
+      });
     }
   };
 

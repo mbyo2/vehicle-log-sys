@@ -20,10 +20,9 @@ export function useSignIn() {
     signInState.loading.set(true);
     try {
       // Using a simpler approach to check if there are any users
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('profiles')
-        .select('id')
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
       
       if (error) {
         console.error("Error checking first user:", error);
@@ -31,7 +30,7 @@ export function useSignIn() {
       }
       
       // If no profiles exist, direct to first user signup
-      if (!data || data.length === 0) {
+      if (count === 0) {
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
         return true;
       }

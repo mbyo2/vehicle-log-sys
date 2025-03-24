@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignUpFormFields } from "./SignUpFormFields";
 import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
+import { useToast } from '@/hooks/use-toast';
 
 interface SignUpFormProps {
   isFirstUser?: boolean;
@@ -16,10 +17,15 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { signUp } = useAuthActions();
+  const { toast } = useToast();
 
   const onSubmit = async (values: SignUpFormValues) => {
     if (!isFirstUser && (values.role === "driver" || values.role === "supervisor")) {
-      console.error("Registration not allowed for this role");
+      toast({
+        variant: "destructive",
+        title: "Registration not allowed",
+        description: "Drivers and supervisors must be added by company administrators"
+      });
       return;
     }
 
@@ -33,9 +39,26 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         values.companyName,
         values.subscriptionType
       );
+      
+      if (isFirstUser) {
+        toast({
+          title: "Super Admin Created",
+          description: "You've created the super admin account. Please sign in."
+        });
+      } else {
+        toast({
+          title: "Account Created",
+          description: "Your account has been created. Please sign in."
+        });
+      }
       // Navigation is handled in the signUp function
-    } catch (error) {
+    } catch (error: any) {
       console.error('Form submission error:', error);
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: error.message || "Failed to create account"
+      });
     } finally {
       setLoading(false);
     }
