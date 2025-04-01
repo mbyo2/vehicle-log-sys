@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -14,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MaintenanceList } from '@/components/vehicle/MaintenanceList';
 import { VehicleDocuments } from '@/components/vehicle/VehicleDocuments';
 import { useAuth } from '@/contexts/AuthContext';
+import { Vehicle } from '@/types/vehicle';
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
@@ -309,7 +309,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="maintenance">
-            <MaintenanceList vehicle={id} />
+            <MaintenanceList vehicle={vehicle} />
           </TabsContent>
           
           <TabsContent value="trips">
@@ -361,7 +361,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="documents">
-            <VehicleDocuments vehicleId={id} companyId={currentCompanyId} />
+            <VehicleDocuments vehicleId={id || ''} companyId={currentCompanyId} />
           </TabsContent>
         </Tabs>
       </div>

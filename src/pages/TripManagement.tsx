@@ -20,6 +20,7 @@ import { Plus, WifiOff, AlertTriangle, CloudOff } from "lucide-react";
 import { useTripLog } from "@/hooks/useTripLog";
 import { useIsMobile, useOfflineSync } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
+import { TripLog } from "@/types/vehicle";
 
 export function TripManagement() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,6 +70,14 @@ export function TripManagement() {
     }
   }, [isOnline, selectedTab]);
   
+  // Create a default trip log with required fields for the form
+  const defaultTripLog: Partial<TripLog> = {
+    ...tripLog,
+    vehicleId: tripLog.vehicleId || '',
+    plateNumber: tripLog.plateNumber || '',
+    timestamp: tripLog.timestamp || null
+  };
+  
   return (
     <div className="space-y-6">
       <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'justify-between'} items-center mb-6`}>
@@ -85,7 +94,7 @@ export function TripManagement() {
               <DialogTitle>Log New Trip</DialogTitle>
             </DialogHeader>
             <TripLogForm
-              tripLog={tripLog}
+              tripLog={defaultTripLog as TripLog}
               onTripLogChange={handleTripLogChange}
             />
             <div className="flex justify-end gap-4 mt-4">

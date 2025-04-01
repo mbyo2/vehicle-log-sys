@@ -139,7 +139,6 @@ export function useOfflineSync() {
           title: "You're back online",
           description: `${pendingRecords} records ready to sync`,
           action: {
-            text: "Sync Now",
             altText: "Sync Now",
             onClick: () => syncOfflineData()
           }
