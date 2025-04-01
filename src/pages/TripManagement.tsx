@@ -24,9 +24,9 @@ import { useToast } from "@/components/ui/use-toast";
 export function TripManagement() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("my-trips");
-  const { tripLog, updateTripLog, saveTripLog, isOfflineSaved, syncOfflineTripLogs } = useTripLog();
+  const { tripLog, handleTripLogChange, submitTripLog, isSubmitting } = useTripLog();
   const isMobile = useIsMobile();
-  const { pendingRecords, isOnline, isSyncing } = useOfflineSync();
+  const { pendingRecords, isOnline, isSyncing, syncOfflineData } = useOfflineSync();
   const { toast } = useToast();
   
   // Auto-sync when coming back online
@@ -39,7 +39,7 @@ export function TripManagement() {
         });
         // Auto-sync after a short delay
         const timer = setTimeout(() => {
-          syncOfflineTripLogs();
+          syncOfflineData();
         }, 2000);
         return () => clearTimeout(timer);
       }
@@ -47,13 +47,13 @@ export function TripManagement() {
     
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [pendingRecords, syncOfflineTripLogs, toast]);
+  }, [pendingRecords, syncOfflineData, toast]);
   
   const handleSave = async () => {
-    await saveTripLog();
+    await submitTripLog();
     setIsOpen(false);
     
-    if (!isOnline && isOfflineSaved) {
+    if (!isOnline) {
       toast({
         title: "Saved Offline",
         description: "Trip log saved locally and will sync when you're back online.",
@@ -86,13 +86,13 @@ export function TripManagement() {
             </DialogHeader>
             <TripLogForm
               tripLog={tripLog}
-              onTripLogChange={updateTripLog}
+              onTripLogChange={handleTripLogChange}
             />
             <div className="flex justify-end gap-4 mt-4">
               <Button variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={isSyncing}>
+              <Button onClick={handleSave} disabled={isSyncing || isSubmitting}>
                 {isSyncing ? 'Syncing...' : 'Save Trip'}
               </Button>
             </div>
@@ -120,7 +120,7 @@ export function TripManagement() {
             <Button 
               variant="link" 
               className="px-1 text-yellow-700 h-auto" 
-              onClick={syncOfflineTripLogs}
+              onClick={syncOfflineData}
               disabled={!isOnline || isSyncing}
             >
               sync now

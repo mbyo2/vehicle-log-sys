@@ -56,7 +56,7 @@ export default function NewTrip() {
         </div>
 
         {!isOnline && (
-          <Alert variant="warning" className="bg-yellow-50 text-yellow-900 border-yellow-200">
+          <Alert variant="destructive" className="bg-yellow-50 text-yellow-900 border-yellow-200">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>You're working offline</AlertTitle>
             <AlertDescription>

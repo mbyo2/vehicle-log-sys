@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MaintenanceList } from '@/components/vehicle/MaintenanceList';
 import { VehicleDocuments } from '@/components/vehicle/VehicleDocuments';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,7 @@ export default function VehicleDetails() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { profile } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -129,6 +131,8 @@ export default function VehicleDetails() {
       </DashboardLayout>
     );
   }
+
+  const currentCompanyId = profile.get()?.company_id;
 
   return (
     <DashboardLayout>
@@ -305,7 +309,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="maintenance">
-            <MaintenanceList vehicleId={id} />
+            <MaintenanceList vehicle={id} />
           </TabsContent>
           
           <TabsContent value="trips">
@@ -357,7 +361,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="documents">
-            <VehicleDocuments vehicleId={id} />
+            <VehicleDocuments vehicleId={id} companyId={currentCompanyId} />
           </TabsContent>
         </Tabs>
       </div>
