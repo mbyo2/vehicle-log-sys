@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -57,7 +58,7 @@ export function useOfflineSync() {
 
   // Sync offline data to Supabase
   const syncOfflineData = useCallback(async () => {
-    if (!user.get()) {
+    if (!user) {
       toast({
         title: "Authentication Required",
         description: "Please log in to sync your offline data",

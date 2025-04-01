@@ -53,7 +53,7 @@ export default function SignUp() {
   }, [checkFirstUser]);
 
   // If already logged in and not first user, redirect to dashboard
-  if (!loading.get() && user.get() && !isFirstUser) {
+  if (!loading && user && !isFirstUser) {
     return <Navigate to="/dashboard" replace />;
   }
   
