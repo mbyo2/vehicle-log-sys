@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,10 +24,12 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth";
+import { useRoleManagement } from "@/hooks/useRoleManagement";
+import { Icons } from "@/components/ui/icons";
 
 const invitationSchema = z.object({
   email: z.string().email("Invalid email address"),
-  role: z.enum(["supervisor", "driver"] as const),
+  role: z.enum(["supervisor", "driver", "company_admin"] as const),
 });
 
 type InvitationFormValues = z.infer<typeof invitationSchema>;
@@ -35,6 +38,8 @@ export function UserInvitationForm() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { profile } = useAuth();
+  const { getAssignableRoles } = useRoleManagement();
+  const assignableRoles = getAssignableRoles();
 
   const form = useForm<InvitationFormValues>({
     resolver: zodResolver(invitationSchema),
@@ -45,7 +50,8 @@ export function UserInvitationForm() {
   });
 
   const onSubmit = async (values: InvitationFormValues) => {
-    if (!profile?.company_id) {
+    const currentProfile = profile.get();
+    if (!currentProfile?.company_id) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -59,8 +65,8 @@ export function UserInvitationForm() {
       const { error } = await supabase.from("user_invitations").insert({
         email: values.email,
         role: values.role,
-        company_id: profile.company_id,
-        invited_by: profile.id,
+        company_id: currentProfile.company_id,
+        invited_by: currentProfile.id,
         token: crypto.randomUUID(),
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
       });
@@ -122,8 +128,12 @@ export function UserInvitationForm() {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="supervisor">Supervisor</SelectItem>
-                  <SelectItem value="driver">Driver</SelectItem>
+                  {assignableRoles
+                    .filter(role => role !== 'super_admin') // Filter out super_admin
+                    .map(role => (
+                      <SelectItem key={role} value={role}>{role.replace('_', ' ')}</SelectItem>
+                    ))
+                  }
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -132,7 +142,14 @@ export function UserInvitationForm() {
         />
 
         <Button type="submit" disabled={loading} className="w-full">
-          {loading ? "Sending invitation..." : "Send Invitation"}
+          {loading ? (
+            <>
+              <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+              Sending invitation...
+            </>
+          ) : (
+            "Send Invitation"
+          )}
         </Button>
       </form>
     </Form>
