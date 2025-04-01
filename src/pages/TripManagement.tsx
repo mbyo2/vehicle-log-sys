@@ -71,10 +71,18 @@ export function TripManagement() {
   }, [isOnline, selectedTab]);
   
   // Create a default trip log with required fields for the form
-  const defaultTripLog: Partial<TripLog> = {
-    ...tripLog,
-    vehicleId: tripLog.vehicle_id || '',
+  const defaultTripLog: TripLog = {
+    vehicle_id: tripLog.vehicle_id || '',
     plateNumber: tripLog.plateNumber || '',
+    driver: tripLog.driver || '',
+    date: tripLog.date || new Date().toISOString().split('T')[0],
+    startTime: tripLog.startTime || '',
+    endTime: tripLog.endTime || '',
+    startKilometers: tripLog.startKilometers || 0,
+    endKilometers: tripLog.endKilometers || 0,
+    purpose: tripLog.purpose || '',
+    comment: tripLog.comment || '',
+    totalKilometers: tripLog.totalKilometers || 0,
     timestamp: tripLog.timestamp || null
   };
   
@@ -94,7 +102,7 @@ export function TripManagement() {
               <DialogTitle>Log New Trip</DialogTitle>
             </DialogHeader>
             <TripLogForm
-              tripLog={defaultTripLog as TripLog}
+              tripLog={defaultTripLog}
               onTripLogChange={handleTripLogChange}
             />
             <div className="flex justify-end gap-4 mt-4">

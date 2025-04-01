@@ -33,7 +33,7 @@ export interface VehicleComment {
 export interface TripLog {
   vehicle_id: string;
   vehicleId?: string; // Added for compatibility
-  plateNumber: string;
+  plateNumber?: string;
   driver: string;
   driverId?: string;
   date: string;
@@ -44,7 +44,7 @@ export interface TripLog {
   purpose: string;
   comment: string;
   totalKilometers: number;
-  timestamp: string | null;
+  timestamp?: string | null;
   approval_status?: string;
   approval_comment?: string;
 }
