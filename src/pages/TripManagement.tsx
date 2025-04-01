@@ -19,7 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, WifiOff, AlertTriangle, CloudOff } from "lucide-react";
 import { useTripLog } from "@/hooks/useTripLog";
 import { useIsMobile, useOfflineSync } from "@/hooks/use-mobile";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from '@/hooks/use-toast';
 import { TripLog } from "@/types/vehicle";
 
 export function TripManagement() {
