@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, Calendar, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Car, Edit, FileText, Map, RotateCw, Settings, Trash, Truck } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { MaintenanceScheduler } from '@/components/vehicle/MaintenanceScheduler';
+import { ServiceStatus } from '@/components/vehicle/ServiceStatus';
 import { MaintenanceList } from '@/components/vehicle/MaintenanceList';
 import { VehicleDocuments } from '@/components/vehicle/VehicleDocuments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -193,7 +192,7 @@ export default function VehicleDetails() {
           </div>
         </div>
         
-        <Tabs defaultValue="details">
+        <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="details" className="flex items-center gap-1">
               <Car className="h-4 w-4" />
@@ -309,7 +308,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="maintenance">
-            <MaintenanceList vehicle={vehicle} />
+            <MaintenanceList vehicle={vehicle as Vehicle} />
           </TabsContent>
           
           <TabsContent value="trips">
@@ -361,7 +360,7 @@ export default function VehicleDetails() {
           </TabsContent>
           
           <TabsContent value="documents">
-            <VehicleDocuments vehicleId={id || ''} companyId={currentCompanyId} />
+            <VehicleDocuments vehicleId={id || ''} companyId={currentCompanyId || ''} />
           </TabsContent>
         </Tabs>
       </div>

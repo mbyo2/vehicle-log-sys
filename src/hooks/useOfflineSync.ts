@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { ToastAction } from "@/components/ui/toast";
 
 export function useOfflineSync() {
   const [isSyncing, setIsSyncing] = useState(false);
@@ -138,10 +139,7 @@ export function useOfflineSync() {
         toast({
           title: "You're back online",
           description: `${pendingRecords} records ready to sync`,
-          action: {
-            altText: "Sync Now",
-            onClick: () => syncOfflineData()
-          }
+          action: <ToastAction onClick={() => syncOfflineData()}>Sync Now</ToastAction>
         });
       }
     };

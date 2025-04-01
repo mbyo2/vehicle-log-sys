@@ -73,7 +73,7 @@ export function TripManagement() {
   // Create a default trip log with required fields for the form
   const defaultTripLog: Partial<TripLog> = {
     ...tripLog,
-    vehicleId: tripLog.vehicleId || '',
+    vehicleId: tripLog.vehicle_id || '',
     plateNumber: tripLog.plateNumber || '',
     timestamp: tripLog.timestamp || null
   };

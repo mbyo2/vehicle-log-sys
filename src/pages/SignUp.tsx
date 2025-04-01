@@ -34,8 +34,8 @@ export default function SignUp() {
           // If there's an error, it might be that the table doesn't exist yet
           setIsFirstUser(true);
         } else {
-          // Fix: Properly convert the count to a number
-          const profileCount = count === null ? 0 : (typeof count === 'number' ? count : parseInt(String(count), 10));
+          // Convert count to number
+          const profileCount = count === null ? 0 : Number(count);
           console.log("Profile count:", profileCount);
           setIsFirstUser(profileCount === 0);
         }

@@ -52,8 +52,8 @@ export default function Index() {
             return;
           }
           
-          // Fix: Properly convert the count to a number before comparing
-          const profileCount = count === null ? 0 : (typeof count === 'number' ? count : parseInt(String(count), 10));
+          // Convert count to number before comparing
+          const profileCount = count === null ? 0 : Number(count);
           console.log("Profile count:", profileCount);
           
           if (profileCount === 0) {
