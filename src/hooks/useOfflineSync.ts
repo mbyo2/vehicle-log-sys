@@ -138,7 +138,10 @@ export function useOfflineSync() {
         toast({
           title: "You're back online",
           description: `${pendingRecords} records ready to sync`,
-          action: <button onClick={syncOfflineData}>Sync Now</button>
+          action: {
+            label: "Sync Now",
+            onClick: () => syncOfflineData()
+          }
         });
       }
     };
