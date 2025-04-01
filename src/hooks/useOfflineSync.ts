@@ -58,7 +58,8 @@ export function useOfflineSync() {
 
   // Sync offline data to Supabase
   const syncOfflineData = useCallback(async () => {
-    if (!user) {
+    const currentUser = user.get();
+    if (!currentUser) {
       toast({
         title: "Authentication Required",
         description: "Please log in to sync your offline data",

@@ -52,8 +52,12 @@ export default function SignUp() {
     checkFirstUser();
   }, [checkFirstUser]);
 
+  // Store these values in variables to avoid using hooks in conditionals
+  const isUserLoading = loading.get();
+  const currentUser = user.get();
+
   // If already logged in and not first user, redirect to dashboard
-  if (!loading && user && !isFirstUser) {
+  if (!isUserLoading && currentUser && !isFirstUser) {
     return <Navigate to="/dashboard" replace />;
   }
   
