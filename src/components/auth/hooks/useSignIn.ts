@@ -53,7 +53,8 @@ export function useSignIn() {
       }
       
       console.log("Profile count:", count);
-      const profileCount = typeof count === 'string' ? parseInt(count, 10) : count;
+      // Make sure count is correctly converted to number
+      const profileCount = count === null ? 0 : (typeof count === 'string' ? parseInt(count, 10) : count);
       const isFirst = profileCount === 0;
       
       signInState.isFirstUser.set(isFirst);
