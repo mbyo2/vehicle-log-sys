@@ -21,7 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 
-export default function Users() {
+export function Users() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -234,3 +234,5 @@ export default function Users() {
     </DashboardLayout>
   );
 }
+
+export default Users;
