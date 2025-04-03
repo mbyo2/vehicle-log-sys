@@ -1,17 +1,21 @@
 
 import { useEffect } from 'react';
-import { Wifi, WifiOff, AlertCircle } from 'lucide-react';
+import { Wifi, WifiOff, AlertCircle, Signal, SignalLow } from 'lucide-react';
 import { useConnectivity } from '@/hooks/useConnectivity';
 import { cn } from '@/lib/utils';
 
 interface ConnectionStatusProps {
   className?: string;
+  showDetails?: boolean;
 }
 
-export function ConnectionStatus({ className }: ConnectionStatusProps) {
-  const { isOnline, connectionQuality, checkConnectionSpeed } = useConnectivity();
+export function ConnectionStatus({ className, showDetails = false }: ConnectionStatusProps) {
+  const { isOnline, connectionQuality, checkConnectionSpeed, lastChecked } = useConnectivity();
   
   useEffect(() => {
+    // Check connection on mount
+    checkConnectionSpeed();
+    
     // Check connection periodically
     const interval = setInterval(() => {
       checkConnectionSpeed();
@@ -27,7 +31,8 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
         className
       )}>
         <WifiOff className="h-3 w-3 mr-1" />
-        <span>Offline</span>
+        <span className="mr-1">Offline</span>
+        {showDetails && <span className="text-xs text-red-600">(Sync disabled)</span>}
       </div>
     );
   }
@@ -38,8 +43,13 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
         "flex items-center px-3 py-1 text-xs rounded-full bg-amber-100 text-amber-800", 
         className
       )}>
-        <AlertCircle className="h-3 w-3 mr-1" />
+        <SignalLow className="h-3 w-3 mr-1" />
         <span>Slow Connection</span>
+        {showDetails && lastChecked && (
+          <span className="text-xs ml-1">
+            (Last checked: {new Date(lastChecked).toLocaleTimeString()})
+          </span>
+        )}
       </div>
     );
   }
@@ -49,8 +59,17 @@ export function ConnectionStatus({ className }: ConnectionStatusProps) {
       "flex items-center px-3 py-1 text-xs rounded-full bg-green-100 text-green-800", 
       className
     )}>
-      <Wifi className="h-3 w-3 mr-1" />
-      <span>Online</span>
+      {connectionQuality === 'excellent' ? (
+        <Signal className="h-3 w-3 mr-1" />
+      ) : (
+        <Wifi className="h-3 w-3 mr-1" />
+      )}
+      <span>{connectionQuality === 'excellent' ? 'Excellent' : 'Online'}</span>
+      {showDetails && lastChecked && (
+        <span className="text-xs ml-1">
+          (Last checked: {new Date(lastChecked).toLocaleTimeString()})
+        </span>
+      )}
     </div>
   );
 }

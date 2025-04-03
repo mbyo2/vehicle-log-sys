@@ -19,23 +19,37 @@ export function useOfflineSync() {
       
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('tripLogs')) {
-          db.createObjectStore('tripLogs', { keyPath: 'id' });
-        }
+        // Create all needed stores for offline data
+        ['tripLogs', 'maintenance', 'documents', 'vehicleInspections'].forEach(storeName => {
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName, { keyPath: 'id' });
+          }
+        });
       };
       
       request.onsuccess = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['tripLogs'], 'readonly');
-        const store = transaction.objectStore('tripLogs');
-        const countRequest = store.count();
+        let totalCount = 0;
+        const transaction = db.transaction(db.objectStoreNames, 'readonly');
         
-        countRequest.onsuccess = () => {
-          setPendingRecords(countRequest.result);
-        };
+        Array.from(db.objectStoreNames).forEach(storeName => {
+          const store = transaction.objectStore(storeName);
+          const countRequest = store.count();
+          
+          countRequest.onsuccess = () => {
+            totalCount += countRequest.result;
+            setPendingRecords(totalCount);
+          };
+        });
+      };
+      
+      request.onerror = () => {
+        console.error('Error opening IndexedDB');
+        setPendingRecords(0);
       };
     } catch (error) {
       console.error('Error checking pending records:', error);
+      setPendingRecords(0);
     }
   }, []);
 
@@ -76,6 +90,15 @@ export function useOfflineSync() {
       return;
     }
     
+    if (!navigator.onLine) {
+      toast({
+        title: "Offline",
+        description: "Cannot sync while offline",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsSyncing(true);
     
     try {
@@ -83,40 +106,76 @@ export function useOfflineSync() {
       
       request.onsuccess = async (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        const transaction = db.transaction(['tripLogs'], 'readonly');
-        const store = transaction.objectStore('tripLogs');
-        const getAllRequest = store.getAll();
+        let syncCount = 0;
+        let tables: { [key: string]: string } = {
+          'tripLogs': 'trip_logs',
+          'maintenance': 'vehicle_services',
+          'documents': 'documents',
+          'vehicleInspections': 'vehicle_inspections'
+        };
         
-        getAllRequest.onsuccess = async () => {
-          const offlineData = getAllRequest.result;
-          let syncCount = 0;
-          
-          for (const item of offlineData) {
-            try {
-              const { error } = await supabase
-                .from('trip_logs')
-                .insert(item);
+        // Process each store
+        for (const [storeName, tableName] of Object.entries(tables)) {
+          if (db.objectStoreNames.contains(storeName)) {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const getAllRequest = store.getAll();
+            
+            await new Promise<void>((resolve) => {
+              getAllRequest.onsuccess = async () => {
+                const items = getAllRequest.result;
+                
+                for (const item of items) {
+                  try {
+                    const { error } = await supabase
+                      .from(tableName)
+                      .insert(item);
+                    
+                    if (!error) {
+                      syncCount++;
+                      store.delete(item.id);
+                    } else {
+                      console.error(`Error syncing ${tableName}:`, error);
+                    }
+                  } catch (error) {
+                    console.error(`Error syncing ${tableName}:`, error);
+                  }
+                }
+                
+                resolve();
+              };
               
-              if (!error) {
-                syncCount++;
-                // Remove from IndexedDB after successful sync
-                const deleteTransaction = db.transaction(['tripLogs'], 'readwrite');
-                const deleteStore = deleteTransaction.objectStore('tripLogs');
-                deleteStore.delete(item.id);
-              }
-            } catch (error) {
-              console.error('Error syncing record:', error);
-            }
+              getAllRequest.onerror = () => {
+                console.error(`Failed to get data from ${storeName}`);
+                resolve();
+              };
+            });
           }
-          
+        }
+        
+        if (syncCount > 0) {
           toast({
             title: "Sync Complete",
             description: `Successfully synchronized ${syncCount} records`
           });
-          
-          // Update pending count
-          checkPendingRecords();
-        };
+        } else {
+          toast({
+            title: "Sync Attempted",
+            description: "No records could be synchronized",
+            variant: "destructive"
+          });
+        }
+        
+        // Update pending count
+        checkPendingRecords();
+      };
+      
+      request.onerror = () => {
+        toast({
+          title: "Sync Failed",
+          description: "Could not access offline data",
+          variant: "destructive"
+        });
       };
     } catch (error) {
       toast({

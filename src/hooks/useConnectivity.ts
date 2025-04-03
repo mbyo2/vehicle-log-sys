@@ -2,9 +2,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+type ConnectionQuality = 'poor' | 'good' | 'excellent' | 'unknown';
+
 export function useConnectivity() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [connectionQuality, setConnectionQuality] = useState<'good'|'poor'|'unknown'>('unknown');
+  const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('unknown');
+  const [lastChecked, setLastChecked] = useState<number | null>(null);
   const { toast } = useToast();
 
   const checkConnectionSpeed = useCallback(async () => {
@@ -28,14 +31,25 @@ export function useConnectivity() {
       const endTime = Date.now();
       const duration = endTime - startTime;
       
-      // Simple heuristic: < 500ms is good, > 500ms is poor
-      const quality = duration < 500 ? 'good' : 'poor';
+      // Set lastChecked timestamp
+      setLastChecked(endTime);
+      
+      // More nuanced quality assessment:
+      // < 200ms is excellent, < 500ms is good, > 500ms is poor
+      let quality: ConnectionQuality = 'good';
+      if (duration < 200) {
+        quality = 'excellent';
+      } else if (duration > 500) {
+        quality = 'poor';
+      }
+      
       setConnectionQuality(quality);
       
       return quality;
     } catch (error) {
       console.error('Connection test failed:', error);
       setConnectionQuality('unknown');
+      setLastChecked(Date.now());
       return 'unknown';
     }
   }, []);
@@ -75,6 +89,7 @@ export function useConnectivity() {
   return {
     isOnline,
     connectionQuality,
-    checkConnectionSpeed
+    checkConnectionSpeed,
+    lastChecked
   };
 }
