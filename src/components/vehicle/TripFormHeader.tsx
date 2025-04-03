@@ -3,6 +3,7 @@ import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CloudOff, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface TripFormHeaderProps {
   isOnline: boolean;
@@ -17,6 +18,8 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
   pendingRecords,
   syncOfflineData
 }) => {
+  const isMobile = useIsMobile();
+
   if (isOnline && pendingRecords === 0) {
     return null;
   }
@@ -27,7 +30,7 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
         <Alert className="bg-yellow-50 border-yellow-200">
           <CloudOff className="h-4 w-4 text-yellow-600" />
           <AlertTitle>Offline Mode</AlertTitle>
-          <AlertDescription>
+          <AlertDescription className={isMobile ? "text-sm" : ""}>
             You're currently offline. Trip logs will be saved locally and synchronized when you're back online.
           </AlertDescription>
         </Alert>
@@ -37,16 +40,17 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
         <Alert className="bg-blue-50 border-blue-200">
           <AlertTriangle className="h-4 w-4 text-blue-600" />
           <AlertTitle>Offline data pending sync</AlertTitle>
-          <AlertDescription className="flex justify-between items-center">
+          <AlertDescription className={`${isMobile ? "text-sm flex flex-col space-y-2" : "flex justify-between items-center"}`}>
             <div>
               You have {pendingRecords} trip{pendingRecords > 1 ? 's' : ''} stored offline.
             </div>
             {isOnline && (
               <Button 
                 variant="outline" 
-                className="ml-2 h-8 bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300"
+                className={`${isMobile ? "w-full mt-2" : "ml-2 h-8"} bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300`}
                 onClick={syncOfflineData}
                 disabled={isSyncing}
+                size={isMobile ? "sm" : "default"}
               >
                 {isSyncing ? (
                   <>
