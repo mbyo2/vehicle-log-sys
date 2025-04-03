@@ -1,7 +1,7 @@
 
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { SignUpFormFields } from "./SignUpFormFields";
@@ -9,6 +9,7 @@ import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { ConnectionStatus } from "@/components/ui/connection-status";
 
 interface SignUpFormProps {
   isFirstUser?: boolean;
@@ -89,10 +90,11 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   return (
     <ErrorBoundary>
       <div className="container relative flex h-screen w-screen flex-col items-center justify-center">
-        <div className="absolute right-4 top-4">
+        <div className="absolute right-4 top-4 flex items-center gap-2">
+          <ConnectionStatus showDetails={false} />
           <ThemeToggle />
         </div>
-        <Card className="w-full max-w-[400px]">
+        <Card className="w-full max-w-[450px] shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
               {isFirstUser ? 'Create Super Admin Account' : 'Create Account'}
@@ -105,18 +107,20 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           </CardHeader>
           <CardContent>
             <SignUpFormFields onSubmit={onSubmit} loading={loading} isFirstUser={isFirstUser} />
-            {!isFirstUser && (
-              <div className="mt-4 text-center text-sm">
+          </CardContent>
+          {!isFirstUser && (
+            <CardFooter className="flex justify-center border-t p-4">
+              <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link
                   to="/signin"
-                  className="text-primary hover:underline"
+                  className="text-primary hover:underline font-medium"
                 >
                   Sign in
                 </Link>
               </div>
-            )}
-          </CardContent>
+            </CardFooter>
+          )}
         </Card>
       </div>
     </ErrorBoundary>
