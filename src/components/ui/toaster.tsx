@@ -9,15 +9,20 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { NotificationCenter } from "@/components/notifications/NotificationCenter"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function Toaster() {
   const { toasts } = useToast()
+  const { user } = useAuth()
+  const isAuthenticated = !!user.get()
 
   return (
     <>
-      <div className="fixed top-0 right-0 z-50 p-4">
-        <NotificationCenter />
-      </div>
+      {isAuthenticated && (
+        <div className="fixed top-0 right-0 z-50 p-4">
+          <NotificationCenter />
+        </div>
+      )}
       <ToastProvider>
         {toasts.map(function ({ id, title, description, action, ...props }) {
           return (
