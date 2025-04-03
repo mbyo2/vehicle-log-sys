@@ -1,81 +1,71 @@
 
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Clock } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
+import React from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Check, Clock, AlertTriangle } from 'lucide-react';
 
 interface TripFormStatusProps {
-  approvalStatus: 'approved' | 'rejected' | 'pending';
+  approvalStatus: string;
   approvalComment?: string;
-  totalKilometers?: number;
+  totalKilometers: number;
 }
 
-export const TripFormStatus = ({
+export const TripFormStatus: React.FC<TripFormStatusProps> = ({
   approvalStatus,
   approvalComment,
   totalKilometers
-}: TripFormStatusProps) => {
-  const isMobile = useIsMobile();
-  
-  const getStatusIcon = () => {
-    switch (approvalStatus) {
-      case 'approved':
-        return <CheckCircle2 className="h-5 w-5 text-green-500" />;
-      case 'rejected':
-        return <XCircle className="h-5 w-5 text-red-500" />;
-      default:
-        return <Clock className="h-5 w-5 text-yellow-500" />;
+}) => {
+  // Status color mapping
+  const statusConfig = {
+    approved: {
+      icon: Check,
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      textColor: 'text-green-700',
+      label: 'Approved'
+    },
+    pending: {
+      icon: Clock,
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      textColor: 'text-yellow-700',
+      label: 'Pending Approval'
+    },
+    rejected: {
+      icon: AlertTriangle,
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      textColor: 'text-red-700',
+      label: 'Rejected'
     }
   };
   
-  const getStatusBadge = () => {
-    switch (approvalStatus) {
-      case 'approved':
-        return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
-            Approved
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge className="bg-red-100 text-red-800 border-red-200">
-            Rejected
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            Pending Approval
-          </Badge>
-        );
-    }
-  };
+  const config = statusConfig[approvalStatus as keyof typeof statusConfig] || statusConfig.pending;
+  const StatusIcon = config.icon;
   
   return (
-    <Card className={`p-4 ${isMobile ? 'text-sm' : ''}`}>
-      <div className={`flex ${isMobile ? 'flex-col space-y-3' : 'justify-between items-center'}`}>
-        <div className="flex items-center gap-2">
-          {getStatusIcon()}
-          <div>
-            <p className="font-medium">Status</p>
-            <div className="mt-1">{getStatusBadge()}</div>
-          </div>
-        </div>
-        
-        {totalKilometers !== undefined && (
-          <div className={`${isMobile ? 'border-t pt-3' : ''}`}>
-            <p className="text-sm text-muted-foreground">Total Distance</p>
-            <p className="text-lg font-semibold">{totalKilometers} km</p>
-          </div>
-        )}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">Total Distance</span>
+        <span className="text-lg font-bold">{totalKilometers} km</span>
       </div>
       
-      {approvalComment && (
-        <div className={`${isMobile ? 'mt-3' : 'mt-2'} border-t pt-3`}>
-          <p className="text-sm font-medium mb-1">Comments from Supervisor:</p>
-          <p className="text-sm text-muted-foreground">{approvalComment}</p>
-        </div>
+      {approvalStatus && (
+        <Card className={`${config.bgColor} border-${config.borderColor}`}>
+          <CardContent className="py-3 px-4 flex items-center">
+            <StatusIcon className={`h-4 w-4 mr-2 ${config.textColor}`} />
+            <div>
+              <div className={`text-sm font-medium ${config.textColor}`}>
+                {config.label}
+              </div>
+              {approvalComment && (
+                <div className="text-xs mt-1">
+                  {approvalComment}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
-    </Card>
+    </div>
   );
 };
