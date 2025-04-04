@@ -88,7 +88,7 @@ export function DriverSelector({
         >
           {isLoading ? (
             <div className="flex items-center">
-              <LoadingSpinner size="sm" />
+              <LoadingSpinner size={16} />
               <span className="ml-2">Loading drivers...</span>
             </div>
           ) : selectedDriverId && localSelectedDriverName ? (

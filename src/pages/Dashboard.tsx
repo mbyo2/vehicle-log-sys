@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { WelcomeBanner } from '@/components/onboarding/WelcomeBanner';
 import { QuickStatsGrid } from '@/components/analytics/QuickStatsCard';
+import { QuickStatProps } from '@/components/analytics/QuickStatsCard';
 
 export default function Dashboard() {
   const { profile } = useAuth();
@@ -21,7 +22,7 @@ export default function Dashboard() {
   }, []);
   
   // Example quick stats based on user role
-  const getQuickStats = () => {
+  const getQuickStats = (): QuickStatProps[] => {
     if (userRole === 'driver') {
       return [
         { title: 'My Trips', value: '24', change: '4 this week', trend: 'up', icon: 'trips' },

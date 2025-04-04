@@ -18,7 +18,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Plus, WifiOff, AlertTriangle, CloudOff } from "lucide-react";
 import { useTripLog } from "@/hooks/useTripLog";
-import { useIsMobile, useOfflineSync } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { useOfflineSync } from "@/hooks/useOfflineSync";
 import { useToast } from '@/hooks/use-toast';
 import { TripLog } from "@/types/vehicle";
 
@@ -27,16 +28,16 @@ export function TripManagement() {
   const [selectedTab, setSelectedTab] = useState("my-trips");
   const { tripLog, handleTripLogChange, submitTripLog, isSubmitting } = useTripLog();
   const isMobile = useIsMobile();
-  const { pendingRecords, isOnline, isSyncing, syncOfflineData } = useOfflineSync();
+  const { pendingOperations, isOnline, isSyncing, syncOfflineData } = useOfflineSync();
   const { toast } = useToast();
   
   // Auto-sync when coming back online
   useEffect(() => {
     const handleOnline = () => {
-      if (pendingRecords > 0) {
+      if (pendingOperations.length > 0) {
         toast({
           title: "Back Online",
-          description: `You're back online. ${pendingRecords} trip logs ready to sync.`,
+          description: `You're back online. ${pendingOperations.length} trip logs ready to sync.`,
         });
         // Auto-sync after a short delay
         const timer = setTimeout(() => {
@@ -48,7 +49,7 @@ export function TripManagement() {
     
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [pendingRecords, syncOfflineData, toast]);
+  }, [pendingOperations.length, syncOfflineData, toast]);
   
   const handleSave = async () => {
     await submitTripLog();
@@ -73,8 +74,10 @@ export function TripManagement() {
   // Create a default trip log with required fields for the form
   const defaultTripLog: TripLog = {
     vehicle_id: tripLog.vehicle_id || '',
-    plateNumber: tripLog.plateNumber || '',
+    vehicleId: tripLog.vehicleId || '',
+    plateNumber: tripLog.vehicleId ? tripLog.plateNumber || '' : '',
     driver: tripLog.driver || '',
+    driverId: tripLog.driverId || '',
     date: tripLog.date || new Date().toISOString().split('T')[0],
     startTime: tripLog.startTime || '',
     endTime: tripLog.endTime || '',
@@ -127,12 +130,12 @@ export function TripManagement() {
         </Alert>
       )}
 
-      {pendingRecords > 0 && (
+      {pendingOperations.length > 0 && (
         <Alert className="mb-4 bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <AlertTitle>Offline data pending sync</AlertTitle>
           <AlertDescription>
-            You have {pendingRecords} trip{pendingRecords > 1 ? 's' : ''} stored offline. 
+            You have {pendingOperations.length} trip{pendingOperations.length > 1 ? 's' : ''} stored offline. 
             They will automatically sync when you're back online or you can 
             <Button 
               variant="link" 
