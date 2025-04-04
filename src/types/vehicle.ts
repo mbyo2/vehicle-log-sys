@@ -35,7 +35,8 @@ export interface TripLog {
   vehicleId?: string; // Added for compatibility
   plateNumber?: string;
   driver: string;
-  driverId?: string;
+  driver_id?: string;
+  driverId?: string; // Added for compatibility
   date: string;
   startTime: string;
   endTime: string;
@@ -44,7 +45,7 @@ export interface TripLog {
   purpose: string;
   comment: string;
   totalKilometers: number;
-  timestamp?: string | null;
+  timestamp?: string | null; // Added for compatibility
   approval_status?: string;
   approval_comment?: string;
 }

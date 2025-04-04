@@ -152,6 +152,9 @@ export function useOfflineSync() {
     }
   }, [isOnline, isSyncing, pendingOperations]);
 
+  // Added syncOfflineData alias for manualSync to ensure compatibility
+  const syncOfflineData = manualSync;
+
   // Auto-sync when coming back online
   useEffect(() => {
     if (isOnline && pendingOperations.length > 0 && !isSyncing) {
@@ -169,6 +172,7 @@ export function useOfflineSync() {
     pendingOperations,
     lastSyncTime,
     addOperation,
-    manualSync
+    manualSync,
+    syncOfflineData
   };
 }

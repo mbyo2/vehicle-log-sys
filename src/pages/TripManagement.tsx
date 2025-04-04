@@ -28,7 +28,7 @@ export function TripManagement() {
   const [selectedTab, setSelectedTab] = useState("my-trips");
   const { tripLog, handleTripLogChange, submitTripLog, isSubmitting } = useTripLog();
   const isMobile = useIsMobile();
-  const { pendingOperations, isOnline, isSyncing, syncOfflineData } = useOfflineSync();
+  const { pendingOperations, isOnline, isSyncing, syncOfflineData, manualSync } = useOfflineSync();
   const { toast } = useToast();
   
   // Auto-sync when coming back online
@@ -41,7 +41,7 @@ export function TripManagement() {
         });
         // Auto-sync after a short delay
         const timer = setTimeout(() => {
-          syncOfflineData();
+          syncOfflineData ? syncOfflineData() : manualSync();
         }, 2000);
         return () => clearTimeout(timer);
       }
@@ -49,7 +49,7 @@ export function TripManagement() {
     
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
-  }, [pendingOperations.length, syncOfflineData, toast]);
+  }, [pendingOperations.length, syncOfflineData, manualSync, toast]);
   
   const handleSave = async () => {
     await submitTripLog();
@@ -74,10 +74,11 @@ export function TripManagement() {
   // Create a default trip log with required fields for the form
   const defaultTripLog: TripLog = {
     vehicle_id: tripLog.vehicle_id || '',
-    vehicleId: tripLog.vehicleId || '',
-    plateNumber: tripLog.vehicleId ? tripLog.plateNumber || '' : '',
+    vehicleId: tripLog.vehicle_id || '',
+    plateNumber: tripLog.plateNumber || '',
     driver: tripLog.driver || '',
     driverId: tripLog.driverId || '',
+    driver_id: tripLog.driverId || '',
     date: tripLog.date || new Date().toISOString().split('T')[0],
     startTime: tripLog.startTime || '',
     endTime: tripLog.endTime || '',
@@ -140,7 +141,7 @@ export function TripManagement() {
             <Button 
               variant="link" 
               className="px-1 text-yellow-700 h-auto" 
-              onClick={syncOfflineData}
+              onClick={syncOfflineData || manualSync}
               disabled={!isOnline || isSyncing}
             >
               sync now

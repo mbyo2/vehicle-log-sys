@@ -25,17 +25,17 @@ export default function Dashboard() {
   const getQuickStats = (): QuickStatProps[] => {
     if (userRole === 'driver') {
       return [
-        { title: 'My Trips', value: '24', change: '4 this week', trend: 'up', icon: 'trips' },
-        { title: 'Total Distance', value: '1,243 km', change: '12% from last month', trend: 'up', icon: 'efficiency' },
+        { title: 'My Trips', value: '24', change: '4 this week', trend: 'up' as const, icon: 'trips' },
+        { title: 'Total Distance', value: '1,243 km', change: '12% from last month', trend: 'up' as const, icon: 'efficiency' },
         { title: 'Vehicle Status', value: 'Ready', icon: 'vehicles' },
         { title: 'Maintenance', value: 'Up to date', icon: 'maintenance' },
       ];
     }
     
     return [
-      { title: 'Active Vehicles', value: '42', change: '2 more than last month', trend: 'up', icon: 'vehicles' },
-      { title: 'Trips This Week', value: '156', change: '23% increase', trend: 'up', icon: 'trips' },
-      { title: 'Maintenance Alerts', value: '3', change: '2 less than last week', trend: 'down', icon: 'maintenance' },
+      { title: 'Active Vehicles', value: '42', change: '2 more than last month', trend: 'up' as const, icon: 'vehicles' },
+      { title: 'Trips This Week', value: '156', change: '23% increase', trend: 'up' as const, icon: 'trips' },
+      { title: 'Maintenance Alerts', value: '3', change: '2 less than last week', trend: 'down' as const, icon: 'maintenance' },
       { title: 'Idle Vehicles', value: '5', change: '12% of fleet', icon: 'idle' },
     ];
   };
