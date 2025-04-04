@@ -33,7 +33,7 @@ export interface VehicleComment {
 export interface TripLog {
   vehicle_id: string;
   vehicleId?: string; // Added for compatibility
-  plateNumber?: string;
+  plateNumber?: string; // Added for compatibility
   driver: string;
   driver_id?: string;
   driverId?: string; // Added for compatibility
