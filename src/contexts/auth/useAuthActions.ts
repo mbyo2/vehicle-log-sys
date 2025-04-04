@@ -88,6 +88,7 @@ export function useAuthActions() {
       });
       
       navigate('/signin');
+      return data.user;
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
@@ -95,6 +96,7 @@ export function useAuthActions() {
         title: "Error",
         description: error.message || "Failed to create account",
       });
+      throw error;
     } finally {
       authState.loading.set(false);
     }
