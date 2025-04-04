@@ -65,7 +65,7 @@ export default function SignUp() {
   if (checkingFirstUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
         <span className="ml-2 text-muted-foreground">Checking application status...</span>
       </div>
     );

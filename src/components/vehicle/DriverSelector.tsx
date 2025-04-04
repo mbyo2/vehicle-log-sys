@@ -9,11 +9,13 @@ import { CheckIcon, ChevronsUpDown, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+interface DriverProfile {
+  full_name: string;
+}
+
 interface Driver {
   id: string;
-  profiles: {
-    full_name: string;
-  };
+  profiles: DriverProfile;
   man_number: string;
 }
 
@@ -46,7 +48,15 @@ export function DriverSelector({
         .order('man_number');
       
       if (error) throw error;
-      return data as Driver[];
+      
+      // Transform data to match Driver interface
+      return (data || []).map(driver => ({
+        id: driver.id,
+        man_number: driver.man_number,
+        profiles: {
+          full_name: driver.profiles?.full_name || 'Unknown'
+        }
+      })) as Driver[];
     },
   });
   

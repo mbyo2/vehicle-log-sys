@@ -3,7 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
 interface TripFormLocationProps {
   startKilometers: number;
@@ -15,6 +15,7 @@ interface TripFormLocationProps {
   onStartTracking: () => void;
   onEndKilometersChange: (value: number) => void;
   onTimeChange: (type: 'start' | 'end', value: string) => void;
+  onStartKilometersChange?: (value: number) => void;
 }
 
 export const TripFormLocation: React.FC<TripFormLocationProps> = ({
@@ -26,8 +27,16 @@ export const TripFormLocation: React.FC<TripFormLocationProps> = ({
   isTracking,
   onStartTracking,
   onEndKilometersChange,
-  onTimeChange
+  onTimeChange,
+  onStartKilometersChange
 }) => {
+  const handleStartKilometersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (onStartKilometersChange) {
+      onStartKilometersChange(value);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -64,7 +73,7 @@ export const TripFormLocation: React.FC<TripFormLocationProps> = ({
             type="number"
             min="0"
             value={startKilometers}
-            onChange={(e) => onTimeChange('startKilometers', e.target.value)}
+            onChange={handleStartKilometersChange}
             required
           />
         </div>

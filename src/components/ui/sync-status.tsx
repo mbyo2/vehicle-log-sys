@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { CloudSync, AlertCircle } from 'lucide-react';
+import { CloudSun, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { cn } from '@/lib/utils';
@@ -11,21 +11,19 @@ interface SyncStatusProps {
 }
 
 export function SyncStatus({ className }: SyncStatusProps) {
-  const { pendingRecords, isSyncing, syncOfflineData, checkPendingRecords, isOnline } = useOfflineSync();
+  const { isOnline, isSyncing, pendingOperations, manualSync } = useOfflineSync();
   
-  // Check for pending records when the component mounts or online status changes
+  // Check for pending operations when the component mounts or online status changes
   useEffect(() => {
-    if (isOnline) {
-      checkPendingRecords();
-    }
-  }, [isOnline, checkPendingRecords]);
+    // We'll just use the existing pendingOperations from the hook
+  }, [isOnline]);
   
-  // No pending records, don't show anything
-  if (pendingRecords === 0) {
+  // No pending operations, don't show anything
+  if (pendingOperations.length === 0) {
     return null;
   }
   
-  // Show pending records with sync button when online
+  // Show pending operations with sync button when online
   if (isOnline) {
     return (
       <div className={cn(
@@ -41,18 +39,18 @@ export function SyncStatus({ className }: SyncStatusProps) {
                 "gap-1 text-xs", 
                 isSyncing ? "bg-blue-50" : "bg-amber-50"
               )}
-              onClick={() => syncOfflineData()}
+              onClick={manualSync}
               disabled={isSyncing}
             >
-              <CloudSync className={cn(
+              <CloudSun className={cn(
                 "h-3.5 w-3.5", 
                 isSyncing && "animate-spin"
               )} />
-              {isSyncing ? 'Syncing...' : `Sync data (${pendingRecords})`}
+              {isSyncing ? 'Syncing...' : `Sync data (${pendingOperations.length})`}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            {pendingRecords} {pendingRecords === 1 ? 'record' : 'records'} waiting to be synced
+            {pendingOperations.length} {pendingOperations.length === 1 ? 'record' : 'records'} waiting to be synced
           </TooltipContent>
         </Tooltip>
       </div>
@@ -66,7 +64,7 @@ export function SyncStatus({ className }: SyncStatusProps) {
       className
     )}>
       <AlertCircle className="h-3.5 w-3.5" />
-      <span>{pendingRecords} offline {pendingRecords === 1 ? 'record' : 'records'}</span>
+      <span>{pendingOperations.length} offline {pendingOperations.length === 1 ? 'record' : 'records'}</span>
     </div>
   );
 }

@@ -80,7 +80,7 @@ export default function Index() {
   // Simple loading screen while we determine where to navigate
   return (
     <div className="flex h-screen items-center justify-center">
-      <LoadingSpinner size="lg" />
+      <LoadingSpinner />
       <span className="ml-2 text-muted-foreground">Loading...</span>
     </div>
   );

@@ -11,7 +11,7 @@ export default function SignIn() {
   if (loading.get()) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
         <span className="ml-2 text-muted-foreground">Loading...</span>
       </div>
     );

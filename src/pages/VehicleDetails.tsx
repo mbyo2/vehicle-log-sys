@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -5,7 +6,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Calendar, Info } from 'lucide-react';
+import { 
+  AlertCircle, 
+  FileText as FileTextIcon, 
+  Truck as TruckIcon, 
+  MapPin, 
+  Settings as SettingsIcon,
+  Edit as EditIcon,
+  Trash as TrashIcon,
+  RotateCw as RotateCwIcon 
+} from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+
 import { supabase } from '@/integrations/supabase/client';
 import { MaintenanceScheduler } from '@/components/vehicle/MaintenanceScheduler';
 import { ServiceStatus } from '@/components/vehicle/ServiceStatus';
@@ -13,6 +36,8 @@ import { MaintenanceList } from '@/components/vehicle/MaintenanceList';
 import { VehicleDocuments } from '@/components/vehicle/VehicleDocuments';
 import { useAuth } from '@/contexts/AuthContext';
 import { Vehicle } from '@/types/vehicle';
+import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
@@ -148,17 +173,17 @@ export default function VehicleDetails() {
           
           <div className="flex flex-wrap justify-center md:justify-end gap-2">
             <Button onClick={handleNewTrip} className="flex items-center gap-2">
-              <Map className="h-4 w-4" />
+              <MapPin className="h-4 w-4" />
               <span>Log Trip</span>
             </Button>
             <Button variant="outline" onClick={handleEdit} className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
+              <EditIcon className="h-4 w-4" />
               <span>Edit</span>
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="outline" className="flex items-center gap-2 text-red-500 hover:text-red-600">
-                  <Trash className="h-4 w-4" />
+                  <TrashIcon className="h-4 w-4" />
                   <span>Delete</span>
                 </Button>
               </AlertDialogTrigger>
@@ -179,7 +204,7 @@ export default function VehicleDetails() {
                   >
                     {deleteLoading ? (
                       <>
-                        <RotateCw className="mr-2 h-4 w-4 animate-spin" />
+                        <RotateCwIcon className="mr-2 h-4 w-4 animate-spin" />
                         Deleting...
                       </>
                     ) : (
@@ -195,19 +220,19 @@ export default function VehicleDetails() {
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="mb-4">
             <TabsTrigger value="details" className="flex items-center gap-1">
-              <Car className="h-4 w-4" />
+              <TruckIcon className="h-4 w-4" />
               <span>Details</span>
             </TabsTrigger>
             <TabsTrigger value="maintenance" className="flex items-center gap-1">
-              <Settings className="h-4 w-4" />
+              <SettingsIcon className="h-4 w-4" />
               <span>Maintenance</span>
             </TabsTrigger>
             <TabsTrigger value="trips" className="flex items-center gap-1">
-              <Map className="h-4 w-4" />
+              <MapPin className="h-4 w-4" />
               <span>Trip Logs</span>
             </TabsTrigger>
             <TabsTrigger value="documents" className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
+              <FileTextIcon className="h-4 w-4" />
               <span>Documents</span>
             </TabsTrigger>
           </TabsList>
@@ -217,7 +242,7 @@ export default function VehicleDetails() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Truck className="h-5 w-5" />
+                    <TruckIcon className="h-5 w-5" />
                     Vehicle Information
                   </CardTitle>
                 </CardHeader>
@@ -254,7 +279,7 @@ export default function VehicleDetails() {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
+                    <AlertCircle className="h-5 w-5" />
                     Important Dates
                   </CardTitle>
                 </CardHeader>
