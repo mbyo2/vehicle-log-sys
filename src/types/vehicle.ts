@@ -1,4 +1,3 @@
-
 export interface Vehicle {
   id: string;
   plate_number: string;
@@ -46,6 +45,8 @@ export interface TripLog {
   comment: string;
   totalKilometers: number;
   timestamp?: string | null; // Added for compatibility with existing code
+  approval_status?: string;
+  approval_comment?: string;
 }
 
 export interface FuelLog {
