@@ -22,6 +22,12 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const { toast } = useToast();
 
   const onSubmit = async (values: SignUpFormValues) => {
+    console.log("SignUpForm: Form submission starting with values:", { 
+      ...values, 
+      email: values.email, 
+      isFirstUser 
+    });
+
     if (!isFirstUser && (values.role === "driver" || values.role === "supervisor")) {
       toast({
         variant: "destructive",
@@ -52,7 +58,16 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         }
       }
       
-      await signUp(
+      console.log("Calling signUp function with params:", {
+        email: values.email,
+        password: values.password.length,
+        role: isFirstUser ? 'super_admin' : values.role,
+        fullName: values.fullName,
+        companyName: values.companyName,
+        subscriptionType: values.subscriptionType
+      });
+
+      const user = await signUp(
         values.email,
         values.password,
         isFirstUser ? 'super_admin' : values.role,
@@ -60,6 +75,8 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         values.companyName,
         values.subscriptionType
       );
+      
+      console.log("SignUp successful, user:", user?.id);
       
       if (isFirstUser) {
         toast({

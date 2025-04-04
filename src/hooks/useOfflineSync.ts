@@ -1,225 +1,198 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { ToastAction } from "@/components/ui/toast";
+import { useToast } from '@/hooks/use-toast';
+
+interface SyncableOperation {
+  id: string;
+  table: string;
+  operation: 'insert' | 'update' | 'delete';
+  data: any;
+  condition?: Record<string, any>;
+  timestamp: number;
+}
 
 export function useOfflineSync() {
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [pendingRecords, setPendingRecords] = useState(0);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [pendingOperations, setPendingOperations] = useState<SyncableOperation[]>([]);
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(
+    parseInt(localStorage.getItem('lastSyncTime') || '0', 10)
+  );
   const { toast } = useToast();
-  const { user } = useAuth();
-
-  // Check for pending records in IndexedDB
-  const checkPendingRecords = useCallback(async () => {
-    try {
-      const request = indexedDB.open('OfflineData', 1);
-      
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        // Create all needed stores for offline data
-        ['tripLogs', 'maintenance', 'documents', 'vehicleInspections'].forEach(storeName => {
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, { keyPath: 'id' });
-          }
-        });
-      };
-      
-      request.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        let totalCount = 0;
-        const transaction = db.transaction(db.objectStoreNames, 'readonly');
-        
-        Array.from(db.objectStoreNames).forEach(storeName => {
-          const store = transaction.objectStore(storeName);
-          const countRequest = store.count();
-          
-          countRequest.onsuccess = () => {
-            totalCount += countRequest.result;
-            setPendingRecords(totalCount);
-          };
-        });
-      };
-      
-      request.onerror = () => {
-        console.error('Error opening IndexedDB');
-        setPendingRecords(0);
-      };
-    } catch (error) {
-      console.error('Error checking pending records:', error);
-      setPendingRecords(0);
-    }
-  }, []);
-
-  // Update online status
+  
+  // Track online status
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast({
+        title: "You're back online",
+        description: "Changes will now be synchronized with the server.",
+      });
+      syncWithServer();
+    };
+    
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast({
+        variant: "destructive",
+        title: "You're offline",
+        description: "Changes will be saved locally and synchronized when you're back online.",
+      });
+    };
     
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     
-    // Set initial status
-    setIsOnline(navigator.onLine);
+    // Load pending operations from localStorage on mount
+    const savedOperations = localStorage.getItem('pendingOperations');
+    if (savedOperations) {
+      setPendingOperations(JSON.parse(savedOperations));
+    }
     
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  // Sync offline data to Supabase
-  const syncOfflineData = useCallback(async () => {
-    const currentUser = user.get();
-    if (!currentUser) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to sync your offline data",
-        variant: "destructive"
-      });
-      return;
-    }
+  }, [toast]);
+  
+  // Save pending operations to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('pendingOperations', JSON.stringify(pendingOperations));
+  }, [pendingOperations]);
+  
+  // Function to add a new operation to the queue
+  const addOperation = (operation: Omit<SyncableOperation, 'id' | 'timestamp'>) => {
+    const newOperation: SyncableOperation = {
+      ...operation,
+      id: crypto.randomUUID(),
+      timestamp: Date.now(),
+    };
     
-    if (pendingRecords === 0) {
-      toast({
-        title: "No data to sync",
-        description: "All data is already synchronized"
-      });
-      return;
-    }
+    setPendingOperations(prev => [...prev, newOperation]);
     
-    if (!navigator.onLine) {
-      toast({
-        title: "Offline",
-        description: "Cannot sync while offline",
-        variant: "destructive"
-      });
+    // If online, attempt to sync immediately
+    if (isOnline) {
+      syncWithServer();
+    }
+  };
+  
+  // Function to sync pending operations with the server
+  const syncWithServer = async () => {
+    if (!isOnline || isSyncing || pendingOperations.length === 0) {
       return;
     }
     
     setIsSyncing(true);
+    let successCount = 0;
+    let failCount = 0;
+    
+    // Clone the operations to work with
+    const operations = [...pendingOperations];
+    const completedOperationIds: string[] = [];
     
     try {
-      const request = indexedDB.open('OfflineData', 1);
-      
-      request.onsuccess = async (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        let syncCount = 0;
-        let tables: { [key: string]: string } = {
-          'tripLogs': 'trip_logs',
-          'maintenance': 'vehicle_services',
-          'documents': 'documents',
-          'vehicleInspections': 'vehicle_inspections'
-        };
-        
-        // Process each store
-        for (const [storeName, tableName] of Object.entries(tables)) {
-          if (db.objectStoreNames.contains(storeName)) {
-            const transaction = db.transaction([storeName], 'readwrite');
-            const store = transaction.objectStore(storeName);
-            const getAllRequest = store.getAll();
-            
-            await new Promise<void>((resolve) => {
-              getAllRequest.onsuccess = async () => {
-                const items = getAllRequest.result;
-                
-                for (const item of items) {
-                  try {
-                    const { error } = await supabase
-                      .from(tableName)
-                      .insert(item);
-                    
-                    if (!error) {
-                      syncCount++;
-                      store.delete(item.id);
-                    } else {
-                      console.error(`Error syncing ${tableName}:`, error);
-                    }
-                  } catch (error) {
-                    console.error(`Error syncing ${tableName}:`, error);
-                  }
-                }
-                
-                resolve();
-              };
-              
-              getAllRequest.onerror = () => {
-                console.error(`Failed to get data from ${storeName}`);
-                resolve();
-              };
-            });
+      // Process operations in the order they were created
+      for (const operation of operations) {
+        try {
+          switch (operation.operation) {
+            case 'insert':
+              await supabase.from(operation.table).insert(operation.data);
+              break;
+            case 'update':
+              if (operation.condition) {
+                const query = supabase.from(operation.table).update(operation.data);
+                // Apply conditions
+                Object.entries(operation.condition).forEach(([key, value]) => {
+                  query.eq(key, value);
+                });
+                await query;
+              } else {
+                await supabase.from(operation.table).update(operation.data).eq('id', operation.data.id);
+              }
+              break;
+            case 'delete':
+              if (operation.condition) {
+                const query = supabase.from(operation.table).delete();
+                // Apply conditions
+                Object.entries(operation.condition).forEach(([key, value]) => {
+                  query.eq(key, value);
+                });
+                await query;
+              } else {
+                await supabase.from(operation.table).delete().eq('id', operation.data.id);
+              }
+              break;
           }
+          
+          // Mark as completed
+          completedOperationIds.push(operation.id);
+          successCount++;
+        } catch (error) {
+          console.error(`Error processing operation ${operation.id}:`, error);
+          failCount++;
+          // We continue processing other operations even if one fails
         }
-        
-        if (syncCount > 0) {
-          toast({
-            title: "Sync Complete",
-            description: `Successfully synchronized ${syncCount} records`
-          });
-        } else {
-          toast({
-            title: "Sync Attempted",
-            description: "No records could be synchronized",
-            variant: "destructive"
-          });
-        }
-        
-        // Update pending count
-        checkPendingRecords();
-      };
+      }
       
-      request.onerror = () => {
+      // Remove completed operations
+      if (completedOperationIds.length > 0) {
+        setPendingOperations(prev => 
+          prev.filter(op => !completedOperationIds.includes(op.id))
+        );
+      }
+      
+      // Update last sync time
+      const now = Date.now();
+      setLastSyncTime(now);
+      localStorage.setItem('lastSyncTime', now.toString());
+      
+      // Show toast based on results
+      if (successCount > 0) {
         toast({
-          title: "Sync Failed",
-          description: "Could not access offline data",
-          variant: "destructive"
+          title: "Sync completed",
+          description: `Successfully synchronized ${successCount} operation${successCount !== 1 ? 's' : ''}.${
+            failCount > 0 ? ` Failed to sync ${failCount} operation${failCount !== 1 ? 's' : ''}.` : ''
+          }`,
         });
-      };
+      } else if (failCount > 0) {
+        toast({
+          variant: "destructive",
+          title: "Sync failed",
+          description: `Failed to synchronize ${failCount} operation${failCount !== 1 ? 's' : ''}.`,
+        });
+      }
     } catch (error) {
+      console.error("Error during sync process:", error);
       toast({
-        title: "Sync Failed",
-        description: "Failed to synchronize offline data",
-        variant: "destructive"
+        variant: "destructive",
+        title: "Sync failed",
+        description: "An error occurred while synchronizing with the server.",
       });
-      console.error('Error in syncOfflineData:', error);
     } finally {
       setIsSyncing(false);
     }
-  }, [checkPendingRecords, pendingRecords, toast, user]);
-
-  // Check for pending records on component mount and when online status changes
-  useEffect(() => {
-    checkPendingRecords();
-    
-    const handleOnline = () => {
-      checkPendingRecords();
-      if (pendingRecords > 0) {
-        toast({
-          title: "You're back online",
-          description: `${pendingRecords} records ready to sync`,
-          action: (
-            <ToastAction altText="Sync Now" onClick={syncOfflineData}>
-              Sync Now
-            </ToastAction>
-          )
-        });
-      }
-    };
-    
-    window.addEventListener('online', handleOnline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
-  }, [checkPendingRecords, pendingRecords, syncOfflineData, toast]);
-
+  };
+  
+  // Manually trigger a sync
+  const manualSync = () => {
+    if (isOnline && !isSyncing) {
+      syncWithServer();
+    } else if (!isOnline) {
+      toast({
+        variant: "destructive",
+        title: "Cannot sync",
+        description: "You are currently offline. Please connect to the internet and try again.",
+      });
+    }
+  };
+  
   return {
-    isSyncing,
-    pendingRecords,
     isOnline,
-    syncOfflineData,
-    checkPendingRecords
+    isSyncing,
+    pendingOperations,
+    lastSyncTime,
+    addOperation,
+    manualSync,
   };
 }

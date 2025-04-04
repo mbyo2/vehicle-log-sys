@@ -41,6 +41,7 @@ export function useAuthActions() {
     try {
       authState.loading.set(true);
       console.log('Signing up user with role:', role);
+      console.log('SignUp details:', { email, role, fullName, companyName, subscriptionType });
       
       // Include metadata in signup that the trigger will use to create the profile
       const { data, error } = await supabase.auth.signUp({
@@ -56,9 +57,13 @@ export function useAuthActions() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Signup API error:', error);
+        throw error;
+      }
 
       if (!data.user) {
+        console.error('No user returned from signup');
         throw new Error("Failed to create user account");
       }
 
