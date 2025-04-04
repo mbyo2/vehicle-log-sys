@@ -45,9 +45,7 @@ export interface TripLog {
   purpose: string;
   comment: string;
   totalKilometers: number;
-  timestamp?: string | null; // Added for compatibility
-  approval_status?: string;
-  approval_comment?: string;
+  timestamp?: string | null; // Added for compatibility with existing code
 }
 
 export interface FuelLog {
