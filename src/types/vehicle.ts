@@ -1,4 +1,3 @@
-
 export interface Vehicle {
   id: string;
   plate_number: string;
@@ -31,23 +30,22 @@ export interface VehicleComment {
 }
 
 export interface TripLog {
+  id?: string;
   vehicle_id: string;
-  vehicleId?: string; // Added for compatibility
-  plateNumber?: string; // Added for compatibility
-  driver: string;
-  driver_id?: string;
-  driverId?: string; // Added for compatibility
+  driver_id: string;
   date: string;
   startTime: string;
   endTime: string;
   startKilometers: number;
   endKilometers: number;
   purpose: string;
-  comment: string;
+  comment?: string;
   totalKilometers: number;
-  timestamp?: string | null; // Added for compatibility with existing code
-  approval_status?: string;
-  approval_comment?: string;
+  vehicleId?: string;
+  driverId?: string;
+  plateNumber?: string;
+  driver?: string;
+  timestamp?: string | null;
 }
 
 export interface FuelLog {

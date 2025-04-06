@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,26 +80,20 @@ export function useAuthActions() {
         
         if (profileError) {
           console.error('Error creating super admin profile:', profileError);
-          throw profileError;
+          // Don't throw here, still try to complete the signup
+          toast({
+            variant: "warning",
+            title: "Warning",
+            description: "User created but profile setup encountered an issue. Please contact support.",
+          });
+        } else {
+          console.log('Super admin profile created successfully');
         }
-        
-        console.log('Super admin profile created successfully');
       }
 
-      toast({
-        title: "Success!",
-        description: "Account created successfully. Please sign in.",
-      });
-      
-      navigate('/signin');
       return data.user;
     } catch (error: any) {
       console.error('Signup error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to create account",
-      });
       throw error;
     } finally {
       authState.loading.set(false);
