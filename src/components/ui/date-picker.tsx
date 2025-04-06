@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -13,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-interface DatePickerProps {
+export interface DatePickerProps {
   date?: Date | null
   onDateChange?: (date: Date | null) => void
 }

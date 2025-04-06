@@ -24,6 +24,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TripLog } from "@/types/vehicle";
+
+export interface TripListProps {
+  filterType: "my-trips" | "pending-approval" | "all";
+  trips?: TripLog[];
+  onRefresh?: () => Promise<void>;
+}
 
 interface TripData {
   id: string;
@@ -51,11 +58,7 @@ interface TripData {
   };
 }
 
-interface TripListProps {
-  filterType: "my-trips" | "pending-approval" | "all";
-}
-
-export function TripList({ filterType }: TripListProps) {
+export function TripList({ filterType, trips: initialTrips, onRefresh }: TripListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -67,6 +70,10 @@ export function TripList({ filterType }: TripListProps) {
   const { data: trips, isLoading } = useQuery({
     queryKey: ["trips", filterType],
     queryFn: async () => {
+      if (initialTrips) {
+        return initialTrips;
+      }
+      
       let query = supabase
         .from("vehicle_logs")
         .select(`
@@ -135,7 +142,7 @@ export function TripList({ filterType }: TripListProps) {
       
       return transformedData || [];
     },
-    enabled: !!user,
+    enabled: !!user || !!initialTrips,
   });
   
   const { data: selectedTrip } = useQuery({
@@ -285,19 +292,20 @@ export function TripList({ filterType }: TripListProps) {
           {trips?.map((trip) => (
             <TableRow key={trip.id}>
               <TableCell>
-                {format(new Date(trip.start_time), "MMM dd, yyyy")}
+                {trip.date || (trip.start_time && format(new Date(trip.start_time), "MMM dd, yyyy"))}
               </TableCell>
               <TableCell>
-                {trip.vehicles.plate_number} - {trip.vehicles.make} {trip.vehicles.model}
+                {trip.plateNumber || (trip.vehicles?.plate_number || '')}
               </TableCell>
               <TableCell>
-                {trip.drivers.profiles.full_name}
+                {trip.driver || (trip.drivers?.profiles?.full_name || '')}
               </TableCell>
               <TableCell>{trip.purpose}</TableCell>
               <TableCell>
-                {trip.end_kilometers && trip.start_kilometers
-                  ? (trip.end_kilometers - trip.start_kilometers).toFixed(1)
-                  : "-"} km
+                {(typeof trip.totalKilometers === 'number' ? trip.totalKilometers : 
+                  trip.end_kilometers && trip.start_kilometers 
+                  ? (trip.end_kilometers - trip.start_kilometers)
+                  : 0).toFixed(1)} km
               </TableCell>
               <TableCell>{getStatusBadge(trip.approval_status)}</TableCell>
               <TableCell>
@@ -349,7 +357,7 @@ export function TripList({ filterType }: TripListProps) {
         </TableBody>
       </Table>
       
-      {trips?.length === 0 && (
+      {(!trips || trips.length === 0) && (
         <div className="text-center py-8 text-muted-foreground">
           No trips found
         </div>

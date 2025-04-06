@@ -1,135 +1,158 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { authState } from './AuthState';
+import { user, profile, loading } from './AuthState';
 
-export function useAuthActions() {
-  const { toast } = useToast();
+export const useAuthActions = () => {
+  const [loadingState, setLoadingState] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const getProfile = async (userId: string) => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      setLoadingState(true);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
       if (error) {
-        console.error('Error loading user profile:', error);
-        return;
+        throw error;
       }
-      
-      if (data) {
-        authState.profile.set({
-          id: data.id,
-          email: data.email,
-          role: data.role,
-          full_name: data.full_name || undefined,
-          company_id: data.company_id || undefined
+
+      if (data?.user) {
+        toast({
+          title: 'Success',
+          description: 'Signed in successfully.',
         });
+        
+        user.set(data.user);
+        loading.set(true);
+
+        // Fetch user profile data
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData) {
+          profile.set(profileData);
+        }
+
+        navigate('/dashboard');
       }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
+    } catch (error: any) {
+      console.error('Error signing in:', error.message);
+      toast({
+        variant: "destructive", // Changed from "warning" to "destructive"
+        title: 'Error',
+        description: error.message,
+      });
     } finally {
-      authState.loading.set(false);
+      setLoadingState(false);
+      loading.set(false);
     }
   };
 
-  const signUp = async (email: string, password: string, role: string, fullName: string, companyName?: string, subscriptionType?: string) => {
+  const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean) => {
     try {
-      authState.loading.set(true);
-      console.log('Signing up user with role:', role);
-      console.log('SignUp details:', { email, role, fullName, companyName, subscriptionType });
+      setLoadingState(true);
       
-      // Include metadata in signup that the trigger will use to create the profile
+      // Determine the role based on whether this is the first user
+      const role = isFirstUser ? 'super_admin' : 'company_admin';
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: role,
-            company_name: companyName,
-            subscription_type: subscriptionType
+            role: role, // This will be used by the handle_new_user trigger
           },
         },
       });
 
       if (error) {
-        console.error('Signup API error:', error);
         throw error;
       }
 
-      if (!data.user) {
-        console.error('No user returned from signup');
-        throw new Error("Failed to create user account");
-      }
+      toast({
+        title: 'Account created',
+        description: 'Your account has been created successfully. Please check your email for verification.',
+      });
 
-      console.log('User created successfully:', data.user.id);
-      
-      // For super_admin, we need to manually create the profile since there may not be database triggers yet
-      if (role === 'super_admin') {
-        console.log('Creating super admin profile manually');
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          email: email,
-          full_name: fullName,
-          role: role
-        });
+      // If this is the first user, they'll be automatically verified
+      if (isFirstUser && data.user) {
+        // Automatic login for first user
+        user.set(data.user);
         
-        if (profileError) {
-          console.error('Error creating super admin profile:', profileError);
-          // Don't throw here, still try to complete the signup
-          toast({
-            variant: "destructive",
-            title: "Warning",
-            description: "User created but profile setup encountered an issue. Please contact support.",
-          });
-        } else {
-          console.log('Super admin profile created successfully');
-        }
-      }
+        // Fetch user profile data
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      return data.user;
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData) {
+          profile.set(profileData);
+        }
+
+        navigate('/dashboard');
+      } else {
+        // For regular users, return to sign in page
+        navigate('/signin');
+      }
     } catch (error: any) {
-      console.error('Signup error:', error);
-      throw error;
+      console.error('Error signing up:', error.message);
+      toast({
+        variant: "destructive",
+        title: 'Error',
+        description: error.message,
+      });
     } finally {
-      authState.loading.set(false);
+      setLoadingState(false);
     }
   };
 
   const signOut = async () => {
     try {
-      authState.loading.set(true);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      setLoadingState(true);
+      await supabase.auth.signOut();
       
       // Clear the auth state
-      authState.user.set(null);
-      authState.profile.set(null);
+      user.set(null);
+      profile.set(null);
+      
+      navigate('/signin');
       
       toast({
-        title: "Signed out",
-        description: "Successfully signed out.",
+        title: 'Signed out',
+        description: 'You have been signed out successfully.',
       });
-      navigate('/signin');
     } catch (error: any) {
+      console.error('Error signing out:', error.message);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to sign out",
+        title: 'Error',
+        description: error.message,
       });
     } finally {
-      authState.loading.set(false);
+      setLoadingState(false);
     }
   };
 
   return {
-    getProfile,
+    signIn,
     signUp,
-    signOut
+    signOut,
+    loading: loadingState,
   };
-}
+};

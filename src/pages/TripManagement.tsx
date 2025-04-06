@@ -44,7 +44,9 @@ export default function TripManagement() {
           : null;
 
         // Calculate total kilometers
-        const totalKilometers = tripLog.end_kilometers - tripLog.start_kilometers;
+        const totalKilometers = tripLog.end_kilometers 
+          ? tripLog.end_kilometers - tripLog.start_kilometers 
+          : 0;
 
         return {
           id: tripLog.id,
@@ -55,7 +57,7 @@ export default function TripManagement() {
           endTime: tripLog.end_time ? format(new Date(tripLog.end_time), 'HH:mm') : '',
           date: tripLog.start_time ? format(new Date(tripLog.start_time), 'yyyy-MM-dd') : '',
           startKilometers: tripLog.start_kilometers,
-          endKilometers: tripLog.end_kilometers,
+          endKilometers: tripLog.end_kilometers || 0,
           totalKilometers: totalKilometers,
           plateNumber: tripLog.vehicles?.plate_number || 'Unknown',
           driver: tripLog.profiles?.full_name || 'Unknown',
@@ -100,7 +102,7 @@ export default function TripManagement() {
           </CardHeader>
           <CardContent>
             {trips.length > 0 ? (
-              <TripList trips={trips} onRefresh={fetchTrips} />
+              <TripList trips={trips} onRefresh={fetchTrips} filterType="all" />
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 No trips recorded yet. Click "New Trip" to add one.
