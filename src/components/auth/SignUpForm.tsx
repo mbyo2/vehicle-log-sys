@@ -91,8 +91,11 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         });
       }
       
-      // Navigate to signin page after successful signup
-      navigate('/signin');
+      // Navigate to signin page after successful signup with a short delay
+      // to ensure toasts are visible and state is updated
+      setTimeout(() => {
+        navigate('/signin');
+      }, 1000);
       
     } catch (error: any) {
       console.error('Form submission error:', error);
