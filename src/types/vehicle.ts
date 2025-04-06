@@ -42,12 +42,13 @@ export interface TripLog {
   purpose: string;
   comment?: string;
   totalKilometers: number;
-  // Additional properties for compatibility
-  vehicleId?: string;
-  driverId?: string;
-  plateNumber?: string;
-  driver?: string;
-  timestamp?: string | null;
+  
+  // Properties for compatibility with old code
+  vehicleId?: string; // alias for vehicle_id
+  driverId?: string; // alias for driver_id
+  plateNumber?: string; // Additional property for display in tables
+  driver?: string; // Additional property for display in tables
+  timestamp?: string | null; // Additional property for compatibility
 }
 
 export interface FuelLog {

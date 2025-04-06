@@ -1,270 +1,259 @@
 
-import { useState, useEffect } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { DriverSelector } from "./DriverSelector";
-import { AssignmentDatePicker } from "./AssignmentDatePicker";
-import { Textarea } from "@/components/ui/textarea";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { Vehicle } from '@/types/vehicle';
+import { DriverSelector } from './DriverSelector';
+import { AssignmentDatePicker } from './AssignmentDatePicker';
+import { format, addMonths, isAfter, isBefore, parseISO } from 'date-fns';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock } from 'lucide-react';
 
 interface VehicleAssignmentProps {
-  vehicleId: string;
-  onAssignmentComplete?: () => void;
+  vehicle: Vehicle;
+  onAssignmentUpdated: () => void;
 }
 
-interface CurrentAssignment {
-  driverId: string | null;
-  driverName: string | null;
-  startDate: Date | null;
-  endDate: Date | null;
-}
-
-// Define an interface for the vehicle data returned from the query
-interface VehicleData {
-  id: string;
-  assigned_to: string | null;
-  assignment_start_date: string | null;
-  assignment_end_date: string | null;
-  drivers: {
-    full_name: string;
-  } | null;
-}
-
-export function VehicleAssignment({ vehicleId, onAssignmentComplete }: VehicleAssignmentProps) {
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [notes, setNotes] = useState<string>("");
-  const [currentAssignment, setCurrentAssignment] = useState<CurrentAssignment | null>(null);
-  
+export function VehicleAssignment({ vehicle, onAssignmentUpdated }: VehicleAssignmentProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  // Fetch current vehicle assignment
-  const { data: vehicleData, isLoading: isLoadingVehicle } = useQuery({
-    queryKey: ['vehicle-assignment', vehicleId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('vehicles')
-        .select(`
-          id,
-          assigned_to,
-          assignment_start_date,
-          assignment_end_date,
-          drivers:profiles(full_name)
-        `)
-        .eq('id', vehicleId)
-        .single();
-
-      if (error) throw error;
-      
-      return data as unknown as VehicleData;
-    },
-  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedDriverId, setSelectedDriverId] = useState<string>(vehicle.assigned_to || '');
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    vehicle.assignment_start_date ? parseISO(vehicle.assignment_start_date) : new Date()
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    vehicle.assignment_end_date ? parseISO(vehicle.assignment_end_date) : addMonths(new Date(), 3)
+  );
+  const [driverName, setDriverName] = useState<string>('');
+  const [currentAssignment, setCurrentAssignment] = useState<{
+    driverId: string;
+    driverName: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+  } | null>(null);
 
   useEffect(() => {
-    if (vehicleData && vehicleData.assigned_to) {
-      setCurrentAssignment({
-        driverId: vehicleData.assigned_to,
-        driverName: vehicleData.drivers?.full_name || null,
-        startDate: vehicleData.assignment_start_date ? new Date(vehicleData.assignment_start_date) : null,
-        endDate: vehicleData.assignment_end_date ? new Date(vehicleData.assignment_end_date) : null
-      });
+    if (vehicle.assigned_to) {
+      fetchCurrentDriverDetails();
+      checkAssignmentStatus();
     }
-  }, [vehicleData]);
+  }, [vehicle]);
 
-  const assignVehicleMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDriverId || !startDate) {
-        throw new Error("Please select a driver and start date");
+  const fetchCurrentDriverDetails = async () => {
+    if (!vehicle.assigned_to) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', vehicle.assigned_to)
+        .single();
+
+      if (error) {
+        console.error('Error fetching driver details:', error);
+        return;
       }
+
+      if (data) {
+        setDriverName(data.full_name || 'Unknown');
+      }
+    } catch (error) {
+      console.error('Error fetching driver details:', error);
+    }
+  };
+
+  const checkAssignmentStatus = () => {
+    if (!vehicle.assigned_to || !vehicle.assignment_start_date) return;
+
+    const now = new Date();
+    const startDate = parseISO(vehicle.assignment_start_date);
+    const endDate = vehicle.assignment_end_date ? parseISO(vehicle.assignment_end_date) : null;
+
+    const isActive = isAfter(now, startDate) && (!endDate || isBefore(now, endDate));
+
+    setCurrentAssignment({
+      driverId: vehicle.assigned_to,
+      driverName: driverName || 'Loading...',
+      startDate: vehicle.assignment_start_date,
+      endDate: vehicle.assignment_end_date || 'Indefinite',
+      isActive
+    });
+  };
+
+  const handleAssign = async () => {
+    if (!selectedDriverId || !startDate) {
+      toast({
+        variant: "destructive",
+        title: "Required fields",
+        description: "Please select a driver and assignment dates."
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+      const formattedEndDate = endDate ? format(endDate, 'yyyy-MM-dd') : null;
 
       const { error } = await supabase
         .from('vehicles')
         .update({
           assigned_to: selectedDriverId,
-          assignment_start_date: startDate.toISOString(),
-          assignment_end_date: endDate?.toISOString() || null,
+          assignment_start_date: formattedStartDate,
+          assignment_end_date: formattedEndDate
         })
-        .eq('id', vehicleId);
+        .eq('id', vehicle.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Log the assignment in the audit log
-      await supabase.from('audit_logs').insert({
-        table_name: 'vehicles',
-        record_id: vehicleId,
-        action: 'vehicle_assignment',
-        new_data: {
-          driver_id: selectedDriverId,
-          start_date: startDate.toISOString(),
-          end_date: endDate?.toISOString() || null,
-          notes: notes
-        }
-      });
-    },
-    onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Vehicle assigned successfully",
+        title: "Vehicle assigned",
+        description: `The vehicle has been assigned successfully.`
       });
-      queryClient.invalidateQueries({ queryKey: ['vehicle-assignment'] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
-      onAssignmentComplete?.();
-    },
-    onError: (error) => {
+
+      onAssignmentUpdated();
+    } catch (error: any) {
+      console.error('Error assigning vehicle:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to assign vehicle."
       });
-    },
-  });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const unassignVehicleMutation = useMutation({
-    mutationFn: async () => {
+  const handleUnassign = async () => {
+    setIsLoading(true);
+
+    try {
       const { error } = await supabase
         .from('vehicles')
         .update({
           assigned_to: null,
-          assignment_end_date: new Date().toISOString()
+          assignment_start_date: null,
+          assignment_end_date: null
         })
-        .eq('id', vehicleId);
+        .eq('id', vehicle.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Log the unassignment in the audit log
-      await supabase.from('audit_logs').insert({
-        table_name: 'vehicles',
-        record_id: vehicleId,
-        action: 'vehicle_unassignment',
-        new_data: {
-          end_date: new Date().toISOString(),
-          notes: notes
-        }
-      });
-    },
-    onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Vehicle unassigned successfully",
+        title: "Vehicle unassigned",
+        description: `The vehicle has been unassigned successfully.`
       });
-      queryClient.invalidateQueries({ queryKey: ['vehicle-assignment'] });
-      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+
+      setSelectedDriverId('');
+      setStartDate(new Date());
+      setEndDate(addMonths(new Date(), 3));
       setCurrentAssignment(null);
-      onAssignmentComplete?.();
-    },
-    onError: (error) => {
+      onAssignmentUpdated();
+    } catch (error: any) {
+      console.error('Error unassigning vehicle:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to unassign vehicle."
       });
-    },
-  });
-
-  const handleAssign = () => {
-    assignVehicleMutation.mutate();
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const handleUnassign = () => {
-    unassignVehicleMutation.mutate();
-  };
-
-  if (isLoadingVehicle) {
-    return (
-      <div className="flex justify-center p-4">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
-    <Card>
+    <Card className="mb-6">
       <CardHeader>
-        <CardTitle>Assign Vehicle</CardTitle>
+        <CardTitle>Driver Assignment</CardTitle>
+        <CardDescription>Assign this vehicle to a driver</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {currentAssignment ? (
-          <div className="space-y-4">
-            <div className="bg-muted p-4 rounded-md">
-              <h3 className="font-medium mb-2">Current Assignment</h3>
-              <div className="space-y-2">
-                <p><span className="text-muted-foreground">Driver:</span> {currentAssignment.driverName}</p>
-                <p>
-                  <span className="text-muted-foreground">Start Date:</span> {
-                    currentAssignment.startDate ? 
-                    currentAssignment.startDate.toLocaleDateString() : 'N/A'
-                  }
-                </p>
-                <p>
-                  <span className="text-muted-foreground">End Date:</span> {
-                    currentAssignment.endDate ? 
-                    currentAssignment.endDate.toLocaleDateString() : 'Ongoing'
-                  }
-                </p>
+      <CardContent>
+        {currentAssignment && (
+          <>
+            <div className="mb-4 p-4 bg-muted rounded-lg">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium">Current Assignment</h3>
+                <Badge variant={currentAssignment.isActive ? "success" : "secondary"}>
+                  {currentAssignment.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              <p className="text-sm mb-1"><span className="font-medium">Driver:</span> {currentAssignment.driverName}</p>
+              <div className="flex flex-col space-y-1 text-sm">
+                <div className="flex items-center">
+                  <Calendar className="mr-2 h-3 w-3" />
+                  <span className="font-medium mr-2">Start:</span> 
+                  {format(parseISO(currentAssignment.startDate), 'PPP')}
+                </div>
+                {currentAssignment.endDate !== 'Indefinite' && (
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-3 w-3" />
+                    <span className="font-medium mr-2">End:</span> 
+                    {format(parseISO(currentAssignment.endDate), 'PPP')}
+                  </div>
+                )}
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add notes about this unassignment"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-            
-            <Button 
-              onClick={handleUnassign}
-              variant="destructive"
-              disabled={unassignVehicleMutation.isPending}
-              className="w-full"
-            >
-              {unassignVehicleMutation.isPending ? "Unassigning..." : "Unassign Vehicle"}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="driver">Driver</Label>
-              <DriverSelector
-                selectedDriverId={selectedDriverId}
-                onDriverSelect={setSelectedDriverId}
-              />
-            </div>
-
-            <AssignmentDatePicker
-              startDate={startDate}
-              endDate={endDate}
-              onStartDateChange={setStartDate}
-              onEndDateChange={setEndDate}
-            />
-
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                placeholder="Add notes about this assignment"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            <Button 
-              onClick={handleAssign}
-              disabled={!selectedDriverId || !startDate || assignVehicleMutation.isPending}
-              className="w-full"
-            >
-              {assignVehicleMutation.isPending ? "Assigning..." : "Assign Vehicle"}
-            </Button>
-          </div>
+            <Separator className="my-4" />
+          </>
         )}
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select Driver</label>
+            <DriverSelector 
+              value={selectedDriverId} 
+              onChange={setSelectedDriverId} 
+              disabled={isLoading} 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <AssignmentDatePicker 
+                date={startDate} 
+                onDateChange={setStartDate} 
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date (Optional)</label>
+              <AssignmentDatePicker 
+                date={endDate} 
+                onDateChange={setEndDate} 
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+          
+          <div className="flex space-x-2 pt-2">
+            <Button 
+              onClick={handleAssign} 
+              disabled={isLoading || !selectedDriverId}
+            >
+              {isLoading ? 'Assigning...' : 'Assign Vehicle'}
+            </Button>
+            
+            {currentAssignment && (
+              <Button 
+                variant="outline"
+                onClick={handleUnassign} 
+                disabled={isLoading}
+              >
+                Unassign
+              </Button>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

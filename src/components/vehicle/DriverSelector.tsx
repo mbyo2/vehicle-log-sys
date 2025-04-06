@@ -24,7 +24,7 @@ interface DriverOption {
   label: string;
 }
 
-interface DriverSelectorProps {
+export interface DriverSelectorProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
