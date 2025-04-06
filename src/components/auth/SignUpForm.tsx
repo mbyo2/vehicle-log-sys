@@ -78,6 +78,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       
       console.log("SignUp successful, user:", user?.id);
       
+      // Show success toast and navigate to signin page
       if (isFirstUser) {
         toast({
           title: "Super Admin Created",
@@ -90,8 +91,9 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         });
       }
       
-      // Navigate to signin page
+      // Navigate to signin page after successful signup
       navigate('/signin');
+      
     } catch (error: any) {
       console.error('Form submission error:', error);
       toast({

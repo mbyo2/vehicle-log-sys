@@ -82,7 +82,7 @@ export function useAuthActions() {
           console.error('Error creating super admin profile:', profileError);
           // Don't throw here, still try to complete the signup
           toast({
-            variant: "warning",
+            variant: "destructive",
             title: "Warning",
             description: "User created but profile setup encountered an issue. Please contact support.",
           });

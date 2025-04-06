@@ -1,3 +1,4 @@
+
 export interface Vehicle {
   id: string;
   plate_number: string;
@@ -41,6 +42,7 @@ export interface TripLog {
   purpose: string;
   comment?: string;
   totalKilometers: number;
+  // Additional properties for compatibility
   vehicleId?: string;
   driverId?: string;
   plateNumber?: string;
