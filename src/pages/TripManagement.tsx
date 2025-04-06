@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,11 +73,11 @@ export function TripManagement() {
   // Create a default trip log with required fields for the form
   const defaultTripLog: TripLog = {
     vehicle_id: tripLog.vehicle_id || '',
-    vehicleId: tripLog.vehicleId || '',
+    vehicleId: tripLog.vehicle_id || '',
     plateNumber: tripLog.plateNumber || '',
     driver: tripLog.driver || '',
     driver_id: tripLog.driver_id || '',
-    driverId: tripLog.driverId || '',
+    driverId: tripLog.driver_id || '',
     date: tripLog.date || new Date().toISOString().split('T')[0],
     startTime: tripLog.startTime || '',
     endTime: tripLog.endTime || '',
