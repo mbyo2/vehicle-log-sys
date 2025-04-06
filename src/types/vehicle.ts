@@ -1,3 +1,4 @@
+
 export interface Vehicle {
   id: string;
   plate_number: string;

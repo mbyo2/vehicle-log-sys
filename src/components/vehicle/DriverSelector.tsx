@@ -53,6 +53,7 @@ export function DriverSelector({
       return (data || []).map(driver => ({
         id: driver.id,
         man_number: driver.man_number,
+        // Ensure profiles is an object, not an array
         profiles: {
           full_name: driver.profiles?.full_name || 'Unknown'
         }
