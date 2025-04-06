@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,19 +47,19 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
 
   const watchRole = form.watch("role");
 
-  const handleFormSubmit = form.handleSubmit(async (values) => {
+  const handleFormSubmit = async (values: SignUpFormValues) => {
     console.log("Form submitted with values:", values);
     try {
       await onSubmit(values);
     } catch (error) {
       console.error("Error during form submission:", error);
     }
-  });
+  };
 
   return (
     <TooltipProvider>
       <Form {...form}>
-        <form onSubmit={handleFormSubmit} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
           <FormField
             control={form.control}
             name="email"

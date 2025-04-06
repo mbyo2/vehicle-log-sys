@@ -60,7 +60,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       
       console.log("Calling signUp function with params:", {
         email: values.email,
-        password: values.password.length,
+        password: values.password,
         role: isFirstUser ? 'super_admin' : values.role,
         fullName: values.fullName,
         companyName: values.companyName,

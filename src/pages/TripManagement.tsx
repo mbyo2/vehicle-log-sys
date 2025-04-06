@@ -30,7 +30,6 @@ export function TripManagement() {
   const { pendingOperations, isOnline, isSyncing, syncOfflineData, manualSync } = useOfflineSync();
   const { toast } = useToast();
   
-  // Auto-sync when coming back online
   useEffect(() => {
     const handleOnline = () => {
       if (pendingOperations.length > 0) {
@@ -38,7 +37,6 @@ export function TripManagement() {
           title: "Back Online",
           description: `You're back online. ${pendingOperations.length} trip logs ready to sync.`,
         });
-        // Auto-sync after a short delay
         const timer = setTimeout(() => {
           syncOfflineData ? syncOfflineData() : manualSync();
         }, 2000);
@@ -62,15 +60,12 @@ export function TripManagement() {
     }
   };
   
-  // Handle network status
   useEffect(() => {
     if (!isOnline && selectedTab === "analytics") {
-      // Auto-switch to my-trips tab when offline and on analytics
       setSelectedTab("my-trips");
     }
   }, [isOnline, selectedTab]);
   
-  // Create a default trip log with required fields for the form
   const defaultTripLog: TripLog = {
     vehicle_id: tripLog.vehicle_id || '',
     vehicleId: tripLog.vehicle_id || '',
