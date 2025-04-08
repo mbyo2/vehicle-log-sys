@@ -68,8 +68,8 @@ export default function TripManagement() {
           totalKilometers: totalKilometers,
           plateNumber: tripLog.vehicles?.plate_number || 'Unknown',
           driver: tripLog.profiles?.full_name || 'Unknown',
-          comment: tripLog.comments,
-          timestamp: timestamp,
+          comment: tripLog.comments || '',
+          timestamp: timestamp || '',
           // Add additional fields for backward compatibility
           vehicleId: tripLog.vehicle_id,
           driverId: tripLog.driver_id,

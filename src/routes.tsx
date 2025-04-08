@@ -115,11 +115,11 @@ export const router = createBrowserRouter([
                 element: <Trips />,
               },
               {
-                path: "trips/new",
+                path: "new-trip",
                 element: <NewTrip />,
               },
               {
-                path: "trips/new/:vehicleId",
+                path: "new-trip/:vehicleId",
                 element: <NewTrip />,
               },
               {
