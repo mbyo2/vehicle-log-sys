@@ -67,6 +67,25 @@ export const useAuthActions = () => {
       // Determine the role based on whether this is the first user
       const role = isFirstUser ? 'super_admin' : 'company_admin';
       
+      // If this is the first user, check if a super_admin already exists
+      if (isFirstUser) {
+        try {
+          const { count, error: countError } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'super_admin');
+            
+          if (!countError && count && count > 0) {
+            throw new Error("A super admin account already exists. Please sign in instead.");
+          }
+        } catch (countErr: any) {
+          // If the error is about the table not existing, we can proceed
+          if (!countErr.message?.includes("does not exist")) {
+            throw countErr;
+          }
+        }
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -117,6 +136,7 @@ export const useAuthActions = () => {
         title: 'Error',
         description: error.message,
       });
+      throw error; // Re-throw to allow the component to handle the error
     } finally {
       setLoadingState(false);
     }

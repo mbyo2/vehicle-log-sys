@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -16,6 +17,7 @@ interface SignUpFormProps {
 
 export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { signUp } = useAuthActions();
   const { toast } = useToast();
@@ -37,23 +39,29 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
     }
 
     setLoading(true);
+    setError(null);
     
     try {
       console.log('Creating account with role:', isFirstUser ? 'super_admin' : values.role);
       
-      // Check if the profiles table exists for super_admin
+      // Check if superadmin already exists when trying to create one
       if (isFirstUser) {
-        // Try to create the profiles table if it doesn't exist
-        try {
-          const { error: checkError } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .limit(1);
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'super_admin');
           
-          // If the table doesn't exist, we'll get an error, which is fine
-          console.log('Profiles table check:', checkError ? 'Table may not exist' : 'Table exists');
-        } catch (error) {
-          console.log('Error checking profiles table, likely does not exist yet');
+        if (countError) {
+          console.log('Error checking superadmin count:', countError);
+        } else if (count && count > 0) {
+          setError("A super admin account already exists. Please sign in instead.");
+          toast({
+            variant: "destructive",
+            title: "Super Admin Exists",
+            description: "A super admin account has already been created. Please sign in instead."
+          });
+          setTimeout(() => navigate('/signin'), 2000);
+          return;
         }
       }
       
@@ -94,6 +102,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       
     } catch (error: any) {
       console.error('Form submission error:', error);
+      setError(error.message || "Failed to create account");
       toast({
         variant: "destructive",
         title: "Registration Failed",
@@ -123,6 +132,11 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="bg-destructive/10 border border-destructive text-destructive p-3 rounded-md mb-4 text-sm">
+                {error}
+              </div>
+            )}
             <SignUpFormFields onSubmit={onSubmit} loading={loading} isFirstUser={isFirstUser} />
           </CardContent>
           {!isFirstUser && (
