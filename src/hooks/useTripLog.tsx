@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TripLog } from '@/types/vehicle';
@@ -30,13 +29,11 @@ export function useTripLog() {
   const [isOfflineSaved, setIsOfflineSaved] = useState(false);
 
   useEffect(() => {
-    // Reset offline saved state when back online
     if (navigator.onLine && isOfflineSaved) {
       setIsOfflineSaved(false);
     }
   }, [isOfflineSaved]);
 
-  // Add event listener for online status
   useEffect(() => {
     const handleOnline = () => {
       if (isOfflineSaved) {
@@ -53,7 +50,23 @@ export function useTripLog() {
   }, [isOfflineSaved, syncOfflineData, toast]);
 
   const updateTripLog = (updates: Partial<TripLog>) => {
-    setTripLog(prev => ({ ...prev, ...updates }));
+    if (updates.startKilometers && typeof updates.startKilometers === 'string') {
+      updates.startKilometers = parseFloat(updates.startKilometers) || 0;
+    }
+    
+    if (updates.endKilometers && typeof updates.endKilometers === 'string') {
+      updates.endKilometers = parseFloat(updates.endKilometers) || 0;
+    }
+    
+    setTripLog(prev => {
+      const updated = { ...prev, ...updates };
+      
+      if ('startKilometers' in updates || 'endKilometers' in updates) {
+        updated.totalKilometers = (updated.endKilometers || 0) - (updated.startKilometers || 0);
+      }
+      
+      return updated;
+    });
   };
 
   const saveOffline = async (tripData: TripLog) => {
@@ -124,9 +137,7 @@ export function useTripLog() {
     setIsSaving(true);
 
     try {
-      // Check if we're offline
       if (!navigator.onLine) {
-        // Save data offline
         await saveOffline(tripLog);
         
         toast({
@@ -136,7 +147,6 @@ export function useTripLog() {
         
         setIsOfflineSaved(true);
         
-        // Reset form
         setTripLog(prev => ({
           ...prev,
           date: new Date().toISOString().split('T')[0],
@@ -152,7 +162,6 @@ export function useTripLog() {
         return;
       }
 
-      // We're online, save directly to Supabase
       const { error } = await supabase
         .from('vehicle_logs')
         .insert({
@@ -174,7 +183,6 @@ export function useTripLog() {
         description: "Trip log saved successfully",
       });
 
-      // Reset form
       setTripLog(prev => ({
         ...prev,
         date: new Date().toISOString().split('T')[0],
@@ -189,7 +197,6 @@ export function useTripLog() {
     } catch (error: any) {
       console.error('Error saving trip log:', error);
       
-      // If there was an error with the online save, try saving offline
       if (!navigator.onLine) {
         try {
           await saveOffline(tripLog);
@@ -230,7 +237,6 @@ export function useTripLog() {
     try {
       await syncOfflineData();
       
-      // Reset offline saved state
       setIsOfflineSaved(false);
       
     } catch (error) {
