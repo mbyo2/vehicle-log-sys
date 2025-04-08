@@ -12,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { AlertCircle, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { TripFormHeader } from '@/components/vehicle/TripFormHeader';
+import { TripLog } from '@/types/vehicle';
 
 export default function NewTrip() {
   const { vehicleId } = useParams();
@@ -34,6 +35,12 @@ export default function NewTrip() {
       setSelectedVehicleId(vehicleId);
     }
   }, [vehicleId]);
+
+  useEffect(() => {
+    if (selectedVehicleId) {
+      handleTripLogChange({ vehicle_id: selectedVehicleId });
+    }
+  }, [selectedVehicleId, handleTripLogChange]);
 
   const handleVehicleChange = (value: string) => {
     setSelectedVehicleId(value);

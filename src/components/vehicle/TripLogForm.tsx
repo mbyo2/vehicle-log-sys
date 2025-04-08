@@ -77,7 +77,7 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
           // Update the trip log with driver information
           onTripLogChange({ 
             driver: driverData.man_number,
-            driverId: driverData.id
+            driver_id: driverData.id
           });
         }
       }
@@ -88,14 +88,14 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
   
   // Fetch vehicle details when selected
   const { data: selectedVehicle } = useQuery({
-    queryKey: ["vehicle", tripLog.vehicleId],
+    queryKey: ["vehicle", tripLog.vehicle_id],
     queryFn: async () => {
-      if (!tripLog.vehicleId) return null;
+      if (!tripLog.vehicle_id) return null;
       
       const { data, error } = await supabase
         .from("vehicles")
         .select("plate_number, current_kilometers")
-        .eq("id", tripLog.vehicleId)
+        .eq("id", tripLog.vehicle_id)
         .single();
         
       if (error) throw error;
@@ -110,7 +110,7 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
       
       return data;
     },
-    enabled: !!tripLog.vehicleId,
+    enabled: !!tripLog.vehicle_id,
   });
   
   const handleEndKilometersChange = (value: number) => {
@@ -148,8 +148,8 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
       <div>
         <Label htmlFor="vehicle">Vehicle</Label>
         <VehicleSelect
-          selectedId={tripLog.vehicleId}
-          onSelect={(id) => onTripLogChange({ vehicleId: id })}
+          selectedId={tripLog.vehicle_id}
+          onSelect={(id) => onTripLogChange({ vehicle_id: id })}
         />
       </div>
       

@@ -1,4 +1,3 @@
-
 // If the file doesn't exist, we'll create it with proper types
 export interface Vehicle {
   id: string;
@@ -47,6 +46,10 @@ export interface TripLog {
   driver?: string;
   plateNumber?: string;
   timestamp?: string | null;
+  start_location?: { latitude: number; longitude: number };
+  end_location?: { latitude: number; longitude: number };
+  approval_status?: 'pending' | 'approved' | 'rejected';
+  approval_comment?: string;
 }
 
 export interface VehicleAssignment {

@@ -3,34 +3,20 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface TripLog {
-  id?: string;
-  vehicle_id?: string;
-  driver_id?: string;
-  driver?: string;
-  date?: string;
-  startKilometers: number;
-  endKilometers?: number;
-  totalKilometers?: number;
-  startTime: string;
-  endTime: string;
-  purpose: string;
-  comment?: string;
-  start_location?: { latitude: number; longitude: number };
-  end_location?: { latitude: number; longitude: number };
-  approval_status?: 'pending' | 'approved' | 'rejected';
-  approval_comment?: string;
-}
+import { TripLog } from '@/types/vehicle';
 
 export function useTripLog(vehicleId?: string) {
   const [tripLog, setTripLog] = useState<TripLog>({
-    vehicle_id: vehicleId,
+    vehicle_id: vehicleId || '',
+    driver_id: '',
+    date: new Date().toISOString().split('T')[0],
     startKilometers: 0,
+    endKilometers: 0,
+    totalKilometers: 0,
     startTime: '',
     endTime: '',
     purpose: '',
-    date: new Date().toISOString().split('T')[0]
+    comment: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -81,6 +67,7 @@ export function useTripLog(vehicleId?: string) {
       if (data) {
         setTripLog(prev => ({
           ...prev,
+          vehicle_id: vehicleId || '',
           startKilometers: data.current_kilometers || 0
         }));
       }
@@ -244,12 +231,16 @@ export function useTripLog(vehicleId?: string) {
           
           // Reset form
           setTripLog({
-            vehicle_id: vehicleId,
+            vehicle_id: vehicleId || '',
+            driver_id: tripLog.driver_id,
             startKilometers: tripLog.endKilometers,
+            endKilometers: 0,
+            totalKilometers: 0,
             startTime: '',
             endTime: '',
             purpose: '',
             date: new Date().toISOString().split('T')[0],
+            comment: ''
           });
           
           return;
@@ -302,12 +293,16 @@ export function useTripLog(vehicleId?: string) {
         
         // Reset form with new start kilometers
         setTripLog({
-          vehicle_id: vehicleId,
+          vehicle_id: vehicleId || '',
+          driver_id: tripLog.driver_id,
           startKilometers: tripLog.endKilometers,
+          endKilometers: 0,
+          totalKilometers: 0,
           startTime: '',
           endTime: '',
           purpose: '',
           date: new Date().toISOString().split('T')[0],
+          comment: ''
         });
       }
     } catch (error: any) {

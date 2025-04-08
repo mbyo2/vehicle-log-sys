@@ -83,7 +83,7 @@ export function TripForm({ tripLog, onTripLogChange, tripPurposes = ['Business',
             id="startKilometers"
             type="number"
             value={tripLog.startKilometers}
-            onChange={(e) => handleChange('startKilometers', parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleChange('startKilometers', Number(e.target.value) || 0)}
           />
         </div>
         <div>
@@ -92,7 +92,7 @@ export function TripForm({ tripLog, onTripLogChange, tripPurposes = ['Business',
             id="endKilometers"
             type="number"
             value={tripLog.endKilometers}
-            onChange={(e) => handleChange('endKilometers', parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleChange('endKilometers', Number(e.target.value) || 0)}
           />
         </div>
       </div>

@@ -63,8 +63,8 @@ export default function TripManagement() {
           startTime: tripLog.start_time ? format(new Date(tripLog.start_time), 'HH:mm') : '',
           endTime: tripLog.end_time ? format(new Date(tripLog.end_time), 'HH:mm') : '',
           date: tripLog.start_time ? format(new Date(tripLog.start_time), 'yyyy-MM-dd') : '',
-          startKilometers: startKilometers,
-          endKilometers: endKilometers,
+          startKilometers: Number(startKilometers),
+          endKilometers: Number(endKilometers),
           totalKilometers: totalKilometers,
           plateNumber: tripLog.vehicles?.plate_number || 'Unknown',
           driver: tripLog.profiles?.full_name || 'Unknown',
@@ -97,7 +97,7 @@ export default function TripManagement() {
 
       {loading ? (
         <div className="flex justify-center items-center p-12">
-          <LoadingSpinner size="lg" />
+          <LoadingSpinner size={12} />
         </div>
       ) : (
         <Card>
