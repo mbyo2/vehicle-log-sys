@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { TripLog } from '@/types/vehicle';
@@ -12,17 +13,17 @@ export function useTripLog() {
   const { syncOfflineData } = useOfflineSync();
   const [tripLog, setTripLog] = useState<TripLog>({
     vehicleId: '',
-    plateNumber: '',
-    driver: '',
     driverId: '',
     date: new Date().toISOString().split('T')[0],
     startTime: '',
     endTime: '',
     startKilometers: 0,
     endKilometers: 0,
+    totalKilometers: 0,
     purpose: '',
     comment: '',
-    totalKilometers: 0,
+    plateNumber: '',
+    driver: '',
     timestamp: null
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -51,11 +52,11 @@ export function useTripLog() {
 
   const updateTripLog = (updates: Partial<TripLog>) => {
     if (updates.startKilometers && typeof updates.startKilometers === 'string') {
-      updates.startKilometers = parseFloat(updates.startKilometers) || 0;
+      updates.startKilometers = parseFloat(updates.startKilometers as any) || 0;
     }
     
     if (updates.endKilometers && typeof updates.endKilometers === 'string') {
-      updates.endKilometers = parseFloat(updates.endKilometers) || 0;
+      updates.endKilometers = parseFloat(updates.endKilometers as any) || 0;
     }
     
     setTripLog(prev => {

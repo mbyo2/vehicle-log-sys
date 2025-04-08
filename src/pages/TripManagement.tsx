@@ -52,8 +52,8 @@ export default function TripManagement() {
           ? parseFloat(tripLog.end_kilometers) 
           : tripLog.end_kilometers || 0;
 
-        // Calculate total kilometers
-        const totalKilometers = endKilometers - startKilometers;
+        // Calculate total kilometers - ensure it's a number
+        const totalKilometers = Number(endKilometers) - Number(startKilometers);
 
         return {
           id: tripLog.id,

@@ -11,10 +11,27 @@ export interface Vehicle {
   insurance_expiry?: string;
   road_tax_expiry?: string;
   fitness_cert_expiry?: string;
+  fitness_expiry?: string; // Added this property
+  last_service_kilometers?: number; // Added this property
   company_id?: string;
   assigned_to?: string;
   assignment_start_date?: string;
   assignment_end_date?: string;
+  // Add vehicle_services property
+  vehicle_services?: Array<{
+    id: string;
+    service_date: string;
+    kilometers: number;
+    service_type: string;
+    cost?: number;
+    description?: string;
+  }>;
+  // Add comments property
+  comments?: Array<{
+    id?: string;
+    text: string;
+    timestamp: string;
+  }>;
 }
 
 export interface TripLog {
@@ -32,7 +49,7 @@ export interface TripLog {
   driver?: string;
   plateNumber?: string;
   timestamp: string | null;
-  // Additional fields can be added here
+  // Additional fields for compatibility with NewTrip.tsx
   vehicle_id?: string; // For backward compatibility
   driver_id?: string; // For backward compatibility
 }

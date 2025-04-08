@@ -16,9 +16,10 @@ export default function NewTrip() {
   const { vehicleId } = useParams();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(vehicleId || '');
   const { vehicles, loading } = useVehicles();
-  const { tripLog, handleTripLogChange, submitTripLog, isSubmitting, isOnline, tripPurposes } = useTripLog(selectedVehicleId);
+  const { tripLog, updateTripLog, saveTripLog, isSaving, isOfflineSaved, syncOfflineTripLogs } = useTripLog();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const isOnline = navigator.onLine;
 
   useEffect(() => {
     if (vehicleId) {
@@ -26,13 +27,19 @@ export default function NewTrip() {
     }
   }, [vehicleId]);
 
+  useEffect(() => {
+    if (selectedVehicleId) {
+      updateTripLog({ vehicleId: selectedVehicleId, vehicle_id: selectedVehicleId });
+    }
+  }, [selectedVehicleId]);
+
   const handleVehicleChange = (value: string) => {
     setSelectedVehicleId(value);
-    handleTripLogChange({ vehicle_id: value });
+    updateTripLog({ vehicleId: value, vehicle_id: value });
   };
 
   const handleSave = async () => {
-    await submitTripLog();
+    await saveTripLog();
     if (isOnline) {
       navigate('/trips');
     }
@@ -45,8 +52,8 @@ export default function NewTrip() {
           <h1 className={`text-2xl md:text-3xl font-bold ${isMobile ? 'text-center mb-4' : ''}`}>
             New Trip Log
           </h1>
-          <Button onClick={handleSave} disabled={isSubmitting} className="flex gap-2 items-center">
-            {isSubmitting ? (
+          <Button onClick={handleSave} disabled={isSaving} className="flex gap-2 items-center">
+            {isSaving ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <Save className="h-4 w-4" />
@@ -74,7 +81,7 @@ export default function NewTrip() {
               <Select 
                 value={selectedVehicleId} 
                 onValueChange={handleVehicleChange}
-                disabled={loading || isSubmitting}
+                disabled={loading || isSaving}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a vehicle" />
@@ -90,9 +97,14 @@ export default function NewTrip() {
               
               {selectedVehicleId && (
                 <TripForm 
-                  tripLog={tripLog} 
-                  onTripLogChange={handleTripLogChange} 
-                  tripPurposes={tripPurposes}
+                  tripLog={{
+                    ...tripLog,
+                    vehicleId: tripLog.vehicleId || tripLog.vehicle_id || selectedVehicleId,
+                    driverId: tripLog.driverId || tripLog.driver_id || '',
+                    timestamp: tripLog.timestamp || null
+                  }} 
+                  onTripLogChange={updateTripLog} 
+                  tripPurposes={['Business', 'Personal', 'Maintenance']}
                 />
               )}
             </div>
