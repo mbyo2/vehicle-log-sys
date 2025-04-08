@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -61,22 +60,18 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       console.log("Calling signUp function with params:", {
         email: values.email,
         password: values.password,
-        role: isFirstUser ? 'super_admin' : values.role,
         fullName: values.fullName,
-        companyName: values.companyName,
-        subscriptionType: values.subscriptionType
+        isFirstUser,
       });
 
-      const user = await signUp(
+      await signUp(
         values.email,
         values.password,
-        isFirstUser ? 'super_admin' : values.role,
         values.fullName,
-        values.companyName,
-        values.subscriptionType
+        isFirstUser || false
       );
       
-      console.log("SignUp successful, user:", user?.id);
+      console.log("SignUp successful");
       
       // Show success toast and navigate to signin page
       if (isFirstUser) {

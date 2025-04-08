@@ -18,15 +18,24 @@ export interface AssignmentDatePickerProps {
   onStartDateChange?: (date: Date | null) => void
   onEndDateChange?: (date: Date | null) => void
   disabled?: boolean
+  // Add compatibility props for DatePicker interface
+  date?: Date | null
+  onDateChange?: (date: Date | null) => void
 }
 
 export function AssignmentDatePicker({ 
   startDate, 
   endDate, 
   onStartDateChange, 
-  onEndDateChange, 
+  onEndDateChange,
+  date, // Support DatePicker interface
+  onDateChange, // Support DatePicker interface
   disabled = false 
 }: AssignmentDatePickerProps) {
+  // If date and onDateChange are provided, use them for startDate and onStartDateChange
+  const effectiveStartDate = date || startDate;
+  const effectiveOnStartDateChange = onDateChange || onStartDateChange;
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -34,18 +43,18 @@ export function AssignmentDatePicker({
           variant={"outline"}
           className={cn(
             "w-full justify-start text-left font-normal",
-            !startDate && !endDate && "text-muted-foreground",
+            !effectiveStartDate && !endDate && "text-muted-foreground",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {startDate && endDate ? (
+          {effectiveStartDate && endDate ? (
             <span>
-              {format(startDate, "PPP")} - {format(endDate, "PPP")}
+              {format(effectiveStartDate, "PPP")} - {format(endDate, "PPP")}
             </span>
-          ) : startDate ? (
-            <span>From {format(startDate, "PPP")}</span>
+          ) : effectiveStartDate ? (
+            <span>From {format(effectiveStartDate, "PPP")}</span>
           ) : endDate ? (
             <span>Until {format(endDate, "PPP")}</span>
           ) : (
@@ -56,8 +65,8 @@ export function AssignmentDatePicker({
       <PopoverContent className="w-auto p-0" align="start">
         <Calendar
           mode="single"
-          selected={startDate || undefined}
-          onSelect={onStartDateChange}
+          selected={effectiveStartDate || undefined}
+          onSelect={effectiveOnStartDateChange}
           initialFocus
           disabled={disabled}
         />

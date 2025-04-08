@@ -43,10 +43,17 @@ export default function TripManagement() {
           ? format(new Date(tripLog.start_time), 'PPP p')
           : null;
 
+        // Ensure numeric values are properly converted
+        const startKilometers = typeof tripLog.start_kilometers === 'string' 
+          ? parseFloat(tripLog.start_kilometers) 
+          : tripLog.start_kilometers || 0;
+          
+        const endKilometers = typeof tripLog.end_kilometers === 'string' 
+          ? parseFloat(tripLog.end_kilometers) 
+          : tripLog.end_kilometers || 0;
+
         // Calculate total kilometers
-        const totalKilometers = tripLog.end_kilometers 
-          ? tripLog.end_kilometers - tripLog.start_kilometers 
-          : 0;
+        const totalKilometers = endKilometers - startKilometers;
 
         return {
           id: tripLog.id,
@@ -56,8 +63,8 @@ export default function TripManagement() {
           startTime: tripLog.start_time ? format(new Date(tripLog.start_time), 'HH:mm') : '',
           endTime: tripLog.end_time ? format(new Date(tripLog.end_time), 'HH:mm') : '',
           date: tripLog.start_time ? format(new Date(tripLog.start_time), 'yyyy-MM-dd') : '',
-          startKilometers: tripLog.start_kilometers,
-          endKilometers: tripLog.end_kilometers || 0,
+          startKilometers: startKilometers,
+          endKilometers: endKilometers,
           totalKilometers: totalKilometers,
           plateNumber: tripLog.vehicles?.plate_number || 'Unknown',
           driver: tripLog.profiles?.full_name || 'Unknown',

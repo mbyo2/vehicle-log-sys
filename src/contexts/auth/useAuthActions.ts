@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { user, profile, loading } from './AuthState';
+import { authState } from './AuthState';
 
 export const useAuthActions = () => {
   const [loadingState, setLoadingState] = useState<boolean>(false);
@@ -29,8 +29,8 @@ export const useAuthActions = () => {
           description: 'Signed in successfully.',
         });
         
-        user.set(data.user);
-        loading.set(true);
+        authState.user.set(data.user);
+        authState.loading.set(true);
 
         // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
@@ -42,7 +42,7 @@ export const useAuthActions = () => {
         if (profileError) {
           console.error('Error fetching profile:', profileError);
         } else if (profileData) {
-          profile.set(profileData);
+          authState.profile.set(profileData);
         }
 
         navigate('/dashboard');
@@ -50,13 +50,13 @@ export const useAuthActions = () => {
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       toast({
-        variant: "destructive", // Changed from "warning" to "destructive"
+        variant: "destructive",
         title: 'Error',
         description: error.message,
       });
     } finally {
       setLoadingState(false);
-      loading.set(false);
+      authState.loading.set(false);
     }
   };
 
@@ -90,7 +90,7 @@ export const useAuthActions = () => {
       // If this is the first user, they'll be automatically verified
       if (isFirstUser && data.user) {
         // Automatic login for first user
-        user.set(data.user);
+        authState.user.set(data.user);
         
         // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
@@ -102,7 +102,7 @@ export const useAuthActions = () => {
         if (profileError) {
           console.error('Error fetching profile:', profileError);
         } else if (profileData) {
-          profile.set(profileData);
+          authState.profile.set(profileData);
         }
 
         navigate('/dashboard');
@@ -128,8 +128,8 @@ export const useAuthActions = () => {
       await supabase.auth.signOut();
       
       // Clear the auth state
-      user.set(null);
-      profile.set(null);
+      authState.user.set(null);
+      authState.profile.set(null);
       
       navigate('/signin');
       

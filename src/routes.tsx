@@ -19,7 +19,7 @@ import DriverPortal from "./pages/DriverPortal";
 import { Advertisements } from "./pages/Advertisements";
 import { Analytics } from "./pages/Analytics";
 import { Reports } from "./pages/Reports";
-import { TripManagement } from "./pages/TripManagement";
+import TripManagement from "./pages/TripManagement";
 import { Users } from "./pages/Users";
 import { Integrations } from "./pages/Integrations";
 import App from "./App";
