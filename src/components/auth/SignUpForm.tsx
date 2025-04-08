@@ -46,22 +46,34 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       
       // Check if superadmin already exists when trying to create one
       if (isFirstUser) {
-        const { count, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'super_admin');
-          
-        if (countError) {
-          console.log('Error checking superadmin count:', countError);
-        } else if (count && count > 0) {
-          setError("A super admin account already exists. Please sign in instead.");
-          toast({
-            variant: "destructive",
-            title: "Super Admin Exists",
-            description: "A super admin account has already been created. Please sign in instead."
-          });
-          setTimeout(() => navigate('/signin'), 2000);
-          return;
+        try {
+          const { count, error: countError } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'super_admin');
+            
+          if (countError) {
+            console.log('Error checking superadmin count:', countError);
+            // If it's table doesn't exist, we can proceed
+            if (!countError.message?.includes("does not exist")) {
+              throw countError;
+            }
+          } else if (count && count > 0) {
+            setError("A super admin account already exists. Please sign in instead.");
+            toast({
+              variant: "destructive",
+              title: "Super Admin Exists",
+              description: "A super admin account has already been created. Please sign in instead."
+            });
+            setTimeout(() => navigate('/signin'), 2000);
+            return;
+          }
+        } catch (countErr: any) {
+          console.error('Error checking for existing superadmin:', countErr);
+          // Only throw if it's not about the table not existing
+          if (!countErr.message?.includes("does not exist")) {
+            throw countErr;
+          }
         }
       }
       
@@ -81,24 +93,22 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       
       console.log("SignUp successful");
       
-      // Show success toast and navigate to signin page
       if (isFirstUser) {
         toast({
           title: "Super Admin Created",
-          description: "You've created the super admin account. Please sign in."
+          description: "Your super admin account has been created successfully."
         });
+        // For first user (super admin), we'll be redirected automatically by the signUp function
       } else {
         toast({
           title: "Account Created",
           description: "Your account has been created. Please sign in."
         });
+        // Navigate to signin page after successful signup with a short delay
+        setTimeout(() => {
+          navigate('/signin');
+        }, 1000);
       }
-      
-      // Navigate to signin page after successful signup with a short delay
-      // to ensure toasts are visible and state is updated
-      setTimeout(() => {
-        navigate('/signin');
-      }, 1000);
       
     } catch (error: any) {
       console.error('Form submission error:', error);

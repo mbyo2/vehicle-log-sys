@@ -20,6 +20,7 @@ export default function SignUp() {
   // Use callback to prevent recreation of the function on each render
   const checkFirstUser = useCallback(async () => {
     if (locationIsFirstUser !== undefined) {
+      console.log("Using location state for first user:", locationIsFirstUser);
       setIsFirstUser(locationIsFirstUser);
       setCheckingFirstUser(false);
       return;

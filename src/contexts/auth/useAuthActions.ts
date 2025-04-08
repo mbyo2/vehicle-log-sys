@@ -63,6 +63,7 @@ export const useAuthActions = () => {
   const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean) => {
     try {
       setLoadingState(true);
+      console.log("useAuthActions: Starting signup process with isFirstUser =", isFirstUser);
       
       // Determine the role based on whether this is the first user
       const role = isFirstUser ? 'super_admin' : 'company_admin';
@@ -70,21 +71,26 @@ export const useAuthActions = () => {
       // If this is the first user, check if a super_admin already exists
       if (isFirstUser) {
         try {
+          console.log("Checking if super_admin exists in profiles table...");
           const { count, error: countError } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('role', 'super_admin');
             
           if (!countError && count && count > 0) {
+            console.error("A super admin account already exists");
             throw new Error("A super admin account already exists. Please sign in instead.");
           }
         } catch (countErr: any) {
+          console.log("Error checking for super_admin:", countErr);
           // If the error is about the table not existing, we can proceed
           if (!countErr.message?.includes("does not exist")) {
             throw countErr;
           }
         }
       }
+      
+      console.log("Creating account with role:", role);
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -98,37 +104,65 @@ export const useAuthActions = () => {
       });
 
       if (error) {
+        console.error("Signup error:", error);
         throw error;
       }
 
+      if (!data.user) {
+        console.error("No user returned from signUp");
+        throw new Error("Failed to create user account");
+      }
+
+      console.log("Account created successfully:", data.user.id);
+      
       toast({
         title: 'Account created',
-        description: 'Your account has been created successfully. Please check your email for verification.',
+        description: 'Your account has been created successfully.',
       });
 
-      // If this is the first user, they'll be automatically verified
+      // If this is the first user, they'll be automatically verified and logged in
       if (isFirstUser && data.user) {
-        // Automatic login for first user
-        authState.user.set(data.user);
+        console.log("First user created, logging in automatically");
         
-        // Fetch user profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        // For first user, attempt automatic login
+        try {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          
+          if (signInError) {
+            console.error("Auto login error:", signInError);
+            // Don't throw here, just log the error
+          } else if (signInData.user) {
+            // Set auth state for logged in user
+            authState.user.set(signInData.user);
+            
+            // Fetch user profile data
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', signInData.user.id)
+              .maybeSingle();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else if (profileData) {
-          authState.profile.set(profileData);
+            if (profileError) {
+              console.error('Error fetching profile:', profileError);
+            } else if (profileData) {
+              authState.profile.set(profileData);
+            }
+
+            console.log("Auto login successful, navigating to dashboard");
+            navigate('/dashboard');
+            return;
+          }
+        } catch (loginErr) {
+          console.error("Error during auto-login:", loginErr);
         }
-
-        navigate('/dashboard');
-      } else {
-        // For regular users, return to sign in page
-        navigate('/signin');
       }
+      
+      // If we didn't auto-login or it failed, go to signin page
+      navigate('/signin');
+      
     } catch (error: any) {
       console.error('Error signing up:', error.message);
       toast({
