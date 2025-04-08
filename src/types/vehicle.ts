@@ -11,13 +11,12 @@ export interface Vehicle {
   insurance_expiry?: string;
   road_tax_expiry?: string;
   fitness_cert_expiry?: string;
-  fitness_expiry?: string; // Added this property
-  last_service_kilometers?: number; // Added this property
+  fitness_expiry?: string;
+  last_service_kilometers?: number;
   company_id?: string;
   assigned_to?: string;
   assignment_start_date?: string;
   assignment_end_date?: string;
-  // Add vehicle_services property
   vehicle_services?: Array<{
     id: string;
     service_date: string;
@@ -26,7 +25,6 @@ export interface Vehicle {
     cost?: number;
     description?: string;
   }>;
-  // Add comments property
   comments?: Array<{
     id?: string;
     text: string;
@@ -36,22 +34,19 @@ export interface Vehicle {
 
 export interface TripLog {
   id?: string;
-  vehicleId: string;
-  driverId: string;
+  vehicle_id: string;
+  driver_id: string;
   date: string;
   startTime: string;
   endTime: string;
-  startKilometers: number; // Explicitly typed as number
-  endKilometers: number; // Explicitly typed as number
-  totalKilometers: number; // Explicitly typed as number
+  startKilometers: number;
+  endKilometers: number;
+  totalKilometers: number;
   purpose: string;
   comment: string;
   driver?: string;
   plateNumber?: string;
-  timestamp: string | null;
-  // Additional fields for compatibility with NewTrip.tsx
-  vehicle_id?: string; // For backward compatibility
-  driver_id?: string; // For backward compatibility
+  timestamp?: string | null;
 }
 
 export interface VehicleAssignment {

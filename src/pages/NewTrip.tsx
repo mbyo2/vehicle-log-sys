@@ -11,15 +11,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { AlertCircle, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { TripFormHeader } from '@/components/vehicle/TripFormHeader';
 
 export default function NewTrip() {
   const { vehicleId } = useParams();
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(vehicleId || '');
   const { vehicles, loading } = useVehicles();
-  const { tripLog, updateTripLog, saveTripLog, isSaving, isOfflineSaved, syncOfflineTripLogs } = useTripLog();
+  const { 
+    tripLog, 
+    handleTripLogChange, 
+    submitTripLog, 
+    isSubmitting, 
+    isOnline,
+    tripPurposes 
+  } = useTripLog(selectedVehicleId);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const isOnline = navigator.onLine;
+  const pendingRecords = 0; // This would come from your offline sync system
 
   useEffect(() => {
     if (vehicleId) {
@@ -27,19 +35,12 @@ export default function NewTrip() {
     }
   }, [vehicleId]);
 
-  useEffect(() => {
-    if (selectedVehicleId) {
-      updateTripLog({ vehicleId: selectedVehicleId, vehicle_id: selectedVehicleId });
-    }
-  }, [selectedVehicleId]);
-
   const handleVehicleChange = (value: string) => {
     setSelectedVehicleId(value);
-    updateTripLog({ vehicleId: value, vehicle_id: value });
   };
 
   const handleSave = async () => {
-    await saveTripLog();
+    await submitTripLog();
     if (isOnline) {
       navigate('/trips');
     }
@@ -52,8 +53,8 @@ export default function NewTrip() {
           <h1 className={`text-2xl md:text-3xl font-bold ${isMobile ? 'text-center mb-4' : ''}`}>
             New Trip Log
           </h1>
-          <Button onClick={handleSave} disabled={isSaving} className="flex gap-2 items-center">
-            {isSaving ? (
+          <Button onClick={handleSave} disabled={isSubmitting} className="flex gap-2 items-center">
+            {isSubmitting ? (
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
             ) : (
               <Save className="h-4 w-4" />
@@ -61,6 +62,13 @@ export default function NewTrip() {
             Save Trip Log
           </Button>
         </div>
+
+        <TripFormHeader 
+          isOnline={isOnline}
+          isSyncing={isSubmitting}
+          pendingRecords={pendingRecords}
+          syncOfflineData={() => {}}
+        />
 
         {!isOnline && (
           <Alert variant="default" className="bg-yellow-50 text-yellow-900 border-yellow-200">
@@ -81,7 +89,7 @@ export default function NewTrip() {
               <Select 
                 value={selectedVehicleId} 
                 onValueChange={handleVehicleChange}
-                disabled={loading || isSaving}
+                disabled={loading || isSubmitting}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a vehicle" />
@@ -97,14 +105,9 @@ export default function NewTrip() {
               
               {selectedVehicleId && (
                 <TripForm 
-                  tripLog={{
-                    ...tripLog,
-                    vehicleId: tripLog.vehicleId || tripLog.vehicle_id || selectedVehicleId,
-                    driverId: tripLog.driverId || tripLog.driver_id || '',
-                    timestamp: tripLog.timestamp || null
-                  }} 
-                  onTripLogChange={updateTripLog} 
-                  tripPurposes={['Business', 'Personal', 'Maintenance']}
+                  tripLog={tripLog} 
+                  onTripLogChange={handleTripLogChange} 
+                  tripPurposes={tripPurposes}
                 />
               )}
             </div>
