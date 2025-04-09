@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/ui/icons';
-import { RefreshCw } from 'lucide-react'; // Import RefreshCw from lucide-react
+import { RefreshCw } from 'lucide-react';
 
 export default function SignUp() {
   const { user, loading } = useAuth();
@@ -34,21 +34,24 @@ export default function SignUp() {
       // Add a small delay to ensure Supabase connection is ready
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const { count, error } = await supabase
+      const { count, error: queryError } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
       
-      if (error) {
-        console.error("Error checking profiles:", error);
-        setError(`Error checking if you're the first user: ${error.message}`);
+      if (queryError) {
+        console.error("Error checking profiles:", queryError);
         
-        // If there's an error, let's check if it's because the table doesn't exist
-        if (error.message.includes("does not exist")) {
+        // Check if error message is empty and provide a more specific one
+        const errorMessage = queryError.message || "Unable to connect to the database";
+        setError(`Error checking if you're the first user: ${errorMessage}`);
+        
+        // If error suggests table doesn't exist, handle appropriately
+        if (queryError.message?.includes("does not exist") || queryError.code === "42P01") {
           console.log("Profiles table doesn't exist, assuming first user");
           setIsFirstUser(true);
         } else {
-          // For other errors, assume it's not the first user for safety
-          setIsFirstUser(false);
+          // For other errors, let the user decide what to do
+          setIsFirstUser(null);
         }
       } else {
         // Convert count to number
@@ -76,9 +79,16 @@ export default function SignUp() {
       }
     } catch (err: any) {
       console.error("Error checking profiles:", err);
-      setError(`Error checking user status: ${err instanceof Error ? err.message : String(err)}`);
-      // Assume first user if we can't check
-      setIsFirstUser(true);
+      
+      // Provide a meaningful error message even if err is not an Error object
+      const errorMessage = err instanceof Error ? err.message : 
+                          (typeof err === 'string' ? err : "Unknown error occurred");
+      
+      setError(`Error checking user status: ${errorMessage}`);
+      
+      // Don't automatically assume first user for all errors
+      // Let the user make that decision through the UI
+      setIsFirstUser(null);
     } finally {
       setCheckingFirstUser(false);
     }
