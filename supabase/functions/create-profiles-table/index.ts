@@ -2,39 +2,195 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+// CORS headers for browser requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  // Create a Supabase client with the service role key
-  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  // Get Supabase credentials from environment variables
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('Missing environment variables')
+    return new Response(
+      JSON.stringify({
+        error: 'Server configuration error - missing credentials'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    )
+  }
 
   try {
-    // Run SQL as service role to create profiles table if it doesn't exist
-    const { error } = await supabase.rpc('create_profiles_table_if_not_exists')
+    console.log('Creating Supabase client')
+    // Create a Supabase client with the service role key
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+
+    console.log('Checking if profiles table exists')
+    // First, try to query if the profiles table exists
+    const { error: checkError } = await supabase.from('profiles').select('count(*)', { count: 'exact', head: true })
     
-    if (error) {
-      console.error('Error creating profiles table:', error)
-      return new Response(JSON.stringify({ error: error.message }), {
-        headers: { 'Content-Type': 'application/json' },
-        status: 500
-      })
+    if (checkError) {
+      console.log('Profiles table does not exist or other error:', checkError.message)
+      
+      // If the table doesn't exist, create it directly (not through RPC)
+      console.log('Creating profiles table')
+      const { error: createError } = await supabase.rpc('create_profiles_table_if_not_exists')
+      
+      if (createError) {
+        console.error('Error creating profiles table through RPC:', createError)
+        
+        // If RPC fails, try direct SQL execution
+        const { error: sqlError } = await supabase.auth.admin.executeSql(`
+          CREATE TABLE IF NOT EXISTS public.profiles (
+            id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+            email TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'driver',
+            full_name TEXT,
+            company_id UUID,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+          );
+          
+          DO $$
+          BEGIN
+            IF NOT EXISTS (
+              SELECT 1 FROM pg_type 
+              WHERE typname = 'user_role'
+            ) THEN
+              CREATE TYPE public.user_role AS ENUM (
+                'super_admin', 
+                'company_admin', 
+                'supervisor', 
+                'driver'
+              );
+              
+              -- Update the column type after creating the enum
+              ALTER TABLE public.profiles 
+              ALTER COLUMN role TYPE public.user_role 
+              USING role::public.user_role;
+            END IF;
+          END
+          $$;
+          
+          -- Enable RLS
+          ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+        `)
+        
+        if (sqlError) {
+          console.error('Error creating profiles table with direct SQL:', sqlError)
+          return new Response(
+            JSON.stringify({ error: 'Failed to create database tables: ' + sqlError.message }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500
+            }
+          )
+        }
+        
+        console.log('Profiles table created successfully with direct SQL')
+      }
+    } else {
+      console.log('Profiles table already exists')
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 200
-    })
+    // Create a function to handle new users if it doesn't exist
+    console.log('Creating handle_new_user function')
+    const { error: functionError } = await supabase.auth.admin.executeSql(`
+      -- Create function to handle new user creation
+      CREATE OR REPLACE FUNCTION public.handle_new_user()
+      RETURNS TRIGGER
+      LANGUAGE plpgsql
+      SECURITY DEFINER
+      SET search_path = public
+      AS $$
+      BEGIN
+        INSERT INTO public.profiles (
+          id,
+          email,
+          role,
+          full_name,
+          company_id
+        )
+        VALUES (
+          NEW.id,
+          NEW.email,
+          CASE 
+            WHEN NOT EXISTS (SELECT 1 FROM profiles) THEN 'super_admin'::user_role
+            WHEN NEW.raw_app_meta_data->>'role' IS NOT NULL THEN (NEW.raw_app_meta_data->>'role')::user_role
+            ELSE 'driver'::user_role
+          END,
+          COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+          CASE 
+            WHEN NEW.raw_app_meta_data->>'company_id' IS NOT NULL 
+            THEN (NEW.raw_app_meta_data->>'company_id')::uuid
+            ELSE NULL
+          END
+        );
+        RETURN NEW;
+      END;
+      $$;
+    `)
+    
+    if (functionError) {
+      console.error('Error creating handle_new_user function:', functionError)
+    } else {
+      console.log('handle_new_user function created or updated successfully')
+    }
+    
+    // Create a trigger for new user signup if it doesn't exist
+    console.log('Creating auth trigger')
+    const { error: triggerError } = await supabase.auth.admin.executeSql(`
+      -- Drop trigger if exists
+      DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+      
+      -- Create trigger for handling new users
+      CREATE TRIGGER on_auth_user_created
+        AFTER INSERT ON auth.users
+        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+    `)
+    
+    if (triggerError) {
+      console.error('Error creating trigger:', triggerError)
+    } else {
+      console.log('Trigger created or updated successfully')
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: 'Database setup completed successfully'
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
+    )
   } catch (err) {
     console.error('Unexpected error:', err)
-    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500
-    })
+    return new Response(
+      JSON.stringify({ 
+        error: 'An unexpected error occurred: ' + (err.message || String(err)) 
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
+      }
+    )
   }
 })

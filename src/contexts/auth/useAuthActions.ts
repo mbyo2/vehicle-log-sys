@@ -71,6 +71,34 @@ export const useAuthActions = () => {
       setLoadingState(true);
       console.log("useAuthActions: Starting signup process with isFirstUser =", isFirstUser);
       
+      // If this is the first user setup, try to create the profiles table first
+      if (isFirstUser) {
+        console.log("Attempting to create profiles table for first user...");
+        try {
+          // Call the edge function to set up the database
+          const createProfilesResponse = await fetch(
+            `${supabase.supabaseUrl}/functions/v1/create-profiles-table`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabase.supabaseKey}`
+              }
+            }
+          );
+          
+          const result = await createProfilesResponse.json();
+          console.log("Create profiles table result:", result);
+          
+          if (!createProfilesResponse.ok) {
+            console.warn("Warning: Database setup might not be complete, but continuing with signup");
+          }
+        } catch (setupErr) {
+          console.error("Error during database setup:", setupErr);
+          // Continue despite errors - we'll try to create the user anyway
+        }
+      }
+      
       // Determine the role based on whether this is the first user
       const role = isFirstUser ? 'super_admin' : 'company_admin';
       
@@ -142,12 +170,8 @@ export const useAuthActions = () => {
         console.log("Attempting to handle first user setup manually if needed");
         
         try {
-          // Try to create the profiles table if it doesn't exist
-          const { error: createTableError } = await supabase.rpc('create_profiles_table_if_not_exists');
-          
-          if (createTableError && !createTableError.message.includes('does not exist')) {
-            console.error("Error creating profiles table:", createTableError);
-          }
+          // Wait a moment for the database trigger to run
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Try to insert the profile manually if needed
           const { error: insertError } = await supabase

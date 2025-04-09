@@ -22,6 +22,58 @@ export default function SignUp() {
   
   const locationIsFirstUser = location.state?.isFirstUser;
 
+  // Function to manually set up database tables
+  const setupDatabase = async () => {
+    try {
+      setCheckingFirstUser(true);
+      
+      console.log("Setting up database tables...");
+      const response = await fetch(
+        `${supabase.supabaseUrl}/functions/v1/create-profiles-table`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabase.supabaseKey}`
+          }
+        }
+      );
+      
+      const result = await response.json();
+      console.log("Setup result:", result);
+      
+      if (!response.ok) {
+        console.warn("Warning: Database setup completed with issues:", result.error);
+        toast({
+          variant: "warning",
+          title: "Database Setup Warning",
+          description: "Setup completed with issues: " + (result.error || "Unknown error")
+        });
+      } else {
+        toast({
+          title: "Database Setup Completed",
+          description: "Database tables have been set up successfully."
+        });
+      }
+      
+      // Always set first user true if we're doing a manual setup
+      setIsFirstUser(true);
+      setError(null);
+    } catch (err) {
+      console.error("Error setting up database:", err);
+      toast({
+        variant: "destructive",
+        title: "Database Setup Failed",
+        description: "Failed to set up database tables. Proceeding as first user anyway."
+      });
+      // Even if setup fails, continue as first user
+      setIsFirstUser(true);
+      setError(null);
+    } finally {
+      setCheckingFirstUser(false);
+    }
+  };
+
   // Use callback to prevent recreation of the function on each render
   const checkFirstUser = useCallback(async () => {
     if (locationIsFirstUser !== undefined) {
@@ -189,6 +241,15 @@ export default function SignUp() {
           </Button>
           
           <Button 
+            onClick={setupDatabase} 
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            <Database className="h-4 w-4" />
+            Setup Database
+          </Button>
+          
+          <Button 
             onClick={() => { 
               setError(null);
               setIsFirstUser(true);
@@ -230,6 +291,13 @@ export default function SignUp() {
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
+          </button>
+          <button 
+            onClick={setupDatabase} 
+            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 flex items-center"
+          >
+            <Database className="mr-2 h-4 w-4" />
+            Setup Database
           </button>
           <button 
             onClick={() => { 
