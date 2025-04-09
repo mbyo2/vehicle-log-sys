@@ -84,30 +84,41 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         isFirstUser,
       });
 
-      await signUp(
+      const result = await signUp(
         values.email,
         values.password,
         values.fullName,
         isFirstUser || false
       );
       
-      console.log("SignUp successful");
+      console.log("SignUp result:", result);
       
-      if (isFirstUser) {
+      if (result && result.success) {
+        console.log("SignUp successful");
+        
+        if (isFirstUser) {
+          toast({
+            title: "Super Admin Created",
+            description: "Your super admin account has been created successfully."
+          });
+          // For first user (super admin), we'll be redirected automatically by the signUp function
+        } else {
+          toast({
+            title: "Account Created",
+            description: "Your account has been created. Please sign in."
+          });
+          // Navigate to signin page after successful signup with a short delay
+          setTimeout(() => {
+            navigate('/signin');
+          }, 1000);
+        }
+      } else if (result && result.error) {
+        setError(result.error);
         toast({
-          title: "Super Admin Created",
-          description: "Your super admin account has been created successfully."
+          variant: "destructive",
+          title: "Registration Failed",
+          description: result.error
         });
-        // For first user (super admin), we'll be redirected automatically by the signUp function
-      } else {
-        toast({
-          title: "Account Created",
-          description: "Your account has been created. Please sign in."
-        });
-        // Navigate to signin page after successful signup with a short delay
-        setTimeout(() => {
-          navigate('/signin');
-        }, 1000);
       }
       
     } catch (error: any) {

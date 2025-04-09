@@ -5,6 +5,12 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { authState } from './AuthState';
 
+interface AuthResult {
+  success: boolean;
+  error?: string;
+  user?: any;
+}
+
 export const useAuthActions = () => {
   const [loadingState, setLoadingState] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -60,7 +66,7 @@ export const useAuthActions = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean) => {
+  const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean): Promise<AuthResult> => {
     try {
       setLoadingState(true);
       console.log("useAuthActions: Starting signup process with isFirstUser =", isFirstUser);
@@ -79,13 +85,19 @@ export const useAuthActions = () => {
             
           if (!countError && count && count > 0) {
             console.error("A super admin account already exists");
-            throw new Error("A super admin account already exists. Please sign in instead.");
+            return {
+              success: false,
+              error: "A super admin account already exists. Please sign in instead."
+            };
           }
         } catch (countErr: any) {
           console.log("Error checking for super_admin:", countErr);
           // If the error is about the table not existing, we can proceed
           if (!countErr.message?.includes("does not exist")) {
-            throw countErr;
+            return {
+              success: false,
+              error: countErr.message
+            };
           }
         }
       }
@@ -105,12 +117,18 @@ export const useAuthActions = () => {
 
       if (error) {
         console.error("Signup error:", error);
-        throw error;
+        return {
+          success: false,
+          error: error.message
+        };
       }
 
       if (!data.user) {
         console.error("No user returned from signUp");
-        throw new Error("Failed to create user account");
+        return {
+          success: false,
+          error: "Failed to create user account"
+        };
       }
 
       console.log("Account created successfully:", data.user.id);
@@ -153,15 +171,24 @@ export const useAuthActions = () => {
 
             console.log("Auto login successful, navigating to dashboard");
             navigate('/dashboard');
-            return;
+            return {
+              success: true,
+              user: signInData.user
+            };
           }
-        } catch (loginErr) {
+        } catch (loginErr: any) {
           console.error("Error during auto-login:", loginErr);
+          return {
+            success: false,
+            error: `Account created but auto-login failed: ${loginErr.message}`
+          };
         }
       }
       
-      // If we didn't auto-login or it failed, go to signin page
-      navigate('/signin');
+      // If we didn't auto-login or it failed, return success but without user
+      return {
+        success: true
+      };
       
     } catch (error: any) {
       console.error('Error signing up:', error.message);
@@ -170,7 +197,10 @@ export const useAuthActions = () => {
         title: 'Error',
         description: error.message,
       });
-      throw error; // Re-throw to allow the component to handle the error
+      return {
+        success: false,
+        error: error.message
+      };
     } finally {
       setLoadingState(false);
     }

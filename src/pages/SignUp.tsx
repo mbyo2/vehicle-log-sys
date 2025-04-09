@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import { Icons } from '@/components/ui/icons';
 
 export default function SignUp() {
   const { user, loading } = useAuth();
@@ -14,6 +15,7 @@ export default function SignUp() {
   const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
   const [checkingFirstUser, setCheckingFirstUser] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   
   const locationIsFirstUser = location.state?.isFirstUser;
 
@@ -28,6 +30,9 @@ export default function SignUp() {
     
     try {
       console.log("Checking if first user exists...");
+      // Add a small delay to ensure Supabase connection is ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const { count, error } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -68,7 +73,7 @@ export default function SignUp() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error checking profiles:", err);
       setError(`Error checking user status: ${err instanceof Error ? err.message : String(err)}`);
       // Assume first user if we can't check
@@ -76,7 +81,7 @@ export default function SignUp() {
     } finally {
       setCheckingFirstUser(false);
     }
-  }, [locationIsFirstUser, toast]);
+  }, [locationIsFirstUser, toast, retryCount]);
 
   // Effect to run the check only once on mount
   useEffect(() => {
@@ -108,14 +113,33 @@ export default function SignUp() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
         <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-md mb-4 max-w-md">
           <h2 className="font-semibold mb-2">Error</h2>
-          <p>{error}</p>
+          <p className="mb-2">{error}</p>
+          <p className="text-sm text-muted-foreground">
+            This could be due to a connection issue with the database or because the database tables haven't been set up yet.
+          </p>
         </div>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
-        >
-          Try Again
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => {
+              setError(null);
+              setCheckingFirstUser(true);
+              setRetryCount(prev => prev + 1);
+            }} 
+            className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 flex items-center"
+          >
+            <Icons.refresh className="mr-2 h-4 w-4" />
+            Try Again
+          </button>
+          <button 
+            onClick={() => { 
+              setError(null);
+              setIsFirstUser(true);
+            }} 
+            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
+          >
+            Continue as First User
+          </button>
+        </div>
       </div>
     );
   }
