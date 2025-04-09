@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/ui/icons';
+import { RefreshCw } from 'lucide-react'; // Import RefreshCw from lucide-react
 
 export default function SignUp() {
   const { user, loading } = useAuth();
@@ -127,7 +128,7 @@ export default function SignUp() {
             }} 
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 flex items-center"
           >
-            <Icons.refresh className="mr-2 h-4 w-4" />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </button>
           <button 
