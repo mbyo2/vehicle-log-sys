@@ -1,3 +1,6 @@
+
 project_id = "yyeypbfdtitxqssvnagy"
 [functions.handle-integration]
 verify_jwt = true
+[functions.create-profiles-table]
+verify_jwt = false

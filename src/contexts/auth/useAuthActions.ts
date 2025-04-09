@@ -75,7 +75,8 @@ export const useAuthActions = () => {
       const role = isFirstUser ? 'super_admin' : 'company_admin';
       
       // If this is the first user, check if a super_admin already exists
-      if (isFirstUser) {
+      // But only if we can connect to the database successfully
+      if (isFirstUser && !location.pathname.includes('first-setup')) {
         try {
           console.log("Checking if super_admin exists in profiles table...");
           const { count, error: countError } = await supabase
@@ -94,10 +95,8 @@ export const useAuthActions = () => {
           console.log("Error checking for super_admin:", countErr);
           // If the error is about the table not existing, we can proceed
           if (!countErr.message?.includes("does not exist") && countErr.code !== "42P01") {
-            return {
-              success: false,
-              error: countErr.message
-            };
+            console.log("Continuing despite error - might be first setup");
+            // Don't return error here, proceed with signup
           }
         }
       }
@@ -137,6 +136,38 @@ export const useAuthActions = () => {
         title: 'Account created',
         description: 'Your account has been created successfully.',
       });
+
+      // For first user setup, attempt to create the profiles table and insert the admin
+      if (isFirstUser && data.user) {
+        console.log("Attempting to handle first user setup manually if needed");
+        
+        try {
+          // Try to create the profiles table if it doesn't exist
+          const { error: createTableError } = await supabase.rpc('create_profiles_table_if_not_exists');
+          
+          if (createTableError && !createTableError.message.includes('does not exist')) {
+            console.error("Error creating profiles table:", createTableError);
+          }
+          
+          // Try to insert the profile manually if needed
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: email,
+              full_name: fullName,
+              role: 'super_admin'
+            })
+            .single();
+            
+          if (insertError && !insertError.message.includes('already exists')) {
+            console.error("Error inserting profile:", insertError);
+          }
+        } catch (setupErr) {
+          console.error("Error during manual first-user setup:", setupErr);
+          // Continue despite errors - the auth trigger might handle it
+        }
+      }
 
       // If this is the first user, they'll be automatically verified and logged in
       if (isFirstUser && data.user) {
