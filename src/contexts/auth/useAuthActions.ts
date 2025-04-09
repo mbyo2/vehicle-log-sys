@@ -93,7 +93,7 @@ export const useAuthActions = () => {
         } catch (countErr: any) {
           console.log("Error checking for super_admin:", countErr);
           // If the error is about the table not existing, we can proceed
-          if (!countErr.message?.includes("does not exist")) {
+          if (!countErr.message?.includes("does not exist") && countErr.code !== "42P01") {
             return {
               success: false,
               error: countErr.message
@@ -163,7 +163,7 @@ export const useAuthActions = () => {
               .eq('id', signInData.user.id)
               .maybeSingle();
 
-            if (profileError) {
+            if (profileError && !profileError.message?.includes("does not exist")) {
               console.error('Error fetching profile:', profileError);
             } else if (profileData) {
               authState.profile.set(profileData);

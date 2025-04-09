@@ -32,53 +32,59 @@ export default function SignUp() {
     try {
       console.log("Checking if first user exists...");
       // Add a small delay to ensure Supabase connection is ready
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const { count, error: queryError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-      
-      if (queryError) {
-        console.error("Error checking profiles:", queryError);
+      try {
+        const { count, error: queryError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
         
-        // Check if error message is empty and provide a more specific one
-        const errorMessage = queryError.message || "Unable to connect to the database";
-        setError(`Error checking if you're the first user: ${errorMessage}`);
-        
-        // If error suggests table doesn't exist, handle appropriately
-        if (queryError.message?.includes("does not exist") || queryError.code === "42P01") {
-          console.log("Profiles table doesn't exist, assuming first user");
-          setIsFirstUser(true);
-        } else {
-          // For other errors, let the user decide what to do
-          setIsFirstUser(null);
-        }
-      } else {
-        // Convert count to number
-        const profileCount = count === null ? 0 : Number(count);
-        console.log("Profile count:", profileCount);
-        setIsFirstUser(profileCount === 0);
-        
-        // If there's already a superadmin, show a message
-        if (profileCount > 0) {
-          const { data: superAdminData, error: superAdminError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('role', 'super_admin')
-            .maybeSingle();
+        if (queryError) {
+          console.error("Error checking profiles:", queryError);
           
-          if (!superAdminError && superAdminData) {
-            console.log("Super admin already exists");
-            toast({
-              title: "Super Admin Already Exists",
-              description: "A super admin account has already been created. Please sign in instead.",
-              variant: "default"
-            });
+          // Check if error message is empty and provide a more specific one
+          const errorMessage = queryError.message || "Unable to connect to the database";
+          setError(`Error checking if you're the first user: ${errorMessage}`);
+          
+          // If error suggests table doesn't exist, handle appropriately
+          if (queryError.message?.includes("does not exist") || queryError.code === "42P01") {
+            console.log("Profiles table doesn't exist, assuming first user");
+            setIsFirstUser(true);
+          } else {
+            // For other errors, let the user decide what to do
+            setIsFirstUser(null);
+          }
+        } else {
+          // Convert count to number
+          const profileCount = count === null ? 0 : Number(count);
+          console.log("Profile count:", profileCount);
+          setIsFirstUser(profileCount === 0);
+          
+          // If there's already a superadmin, show a message
+          if (profileCount > 0) {
+            const { data: superAdminData, error: superAdminError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('role', 'super_admin')
+              .maybeSingle();
+            
+            if (!superAdminError && superAdminData) {
+              console.log("Super admin already exists");
+              toast({
+                title: "Super Admin Already Exists",
+                description: "A super admin account has already been created. Please sign in instead.",
+                variant: "default"
+              });
+            }
           }
         }
+      } catch (supabaseError) {
+        console.error("Supabase query error:", supabaseError);
+        setError("Error connecting to database. Please check your connection and try again.");
+        setIsFirstUser(null);
       }
     } catch (err: any) {
-      console.error("Error checking profiles:", err);
+      console.error("General error checking profiles:", err);
       
       // Provide a meaningful error message even if err is not an Error object
       const errorMessage = err instanceof Error ? err.message : 

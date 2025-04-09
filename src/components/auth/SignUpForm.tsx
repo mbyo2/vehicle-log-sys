@@ -10,6 +10,8 @@ import type { SignUpFormValues } from "./schemas/signUpSchema";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 import { ConnectionStatus } from "@/components/ui/connection-status";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 interface SignUpFormProps {
   isFirstUser?: boolean;
@@ -18,6 +20,7 @@ interface SignUpFormProps {
 export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const { signUp } = useAuthActions();
   const { toast } = useToast();
@@ -40,6 +43,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
 
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
     
     try {
       console.log('Creating account with role:', isFirstUser ? 'super_admin' : values.role);
@@ -55,7 +59,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           if (countError) {
             console.log('Error checking superadmin count:', countError);
             // If it's table doesn't exist, we can proceed
-            if (!countError.message?.includes("does not exist")) {
+            if (!countError.message?.includes("does not exist") && countError.code !== "42P01") {
               throw countError;
             }
           } else if (count && count > 0) {
@@ -71,7 +75,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         } catch (countErr: any) {
           console.error('Error checking for existing superadmin:', countErr);
           // Only throw if it's not about the table not existing
-          if (!countErr.message?.includes("does not exist")) {
+          if (!countErr.message?.includes("does not exist") && countErr.code !== "42P01") {
             throw countErr;
           }
         }
@@ -97,12 +101,14 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         console.log("SignUp successful");
         
         if (isFirstUser) {
+          setSuccessMessage("Super admin account created successfully! Redirecting to dashboard...");
           toast({
             title: "Super Admin Created",
             description: "Your super admin account has been created successfully."
           });
           // For first user (super admin), we'll be redirected automatically by the signUp function
         } else {
+          setSuccessMessage("Account created successfully! You can now sign in.");
           toast({
             title: "Account Created",
             description: "Your account has been created. Please sign in."
@@ -110,7 +116,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           // Navigate to signin page after successful signup with a short delay
           setTimeout(() => {
             navigate('/signin');
-          }, 1000);
+          }, 2000);
         }
       } else if (result && result.error) {
         setError(result.error);
@@ -154,9 +160,15 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           </CardHeader>
           <CardContent>
             {error && (
-              <div className="bg-destructive/10 border border-destructive text-destructive p-3 rounded-md mb-4 text-sm">
-                {error}
-              </div>
+              <Alert variant="destructive" className="mb-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            {successMessage && (
+              <Alert className="mb-4 bg-green-50 border-green-200 text-green-800">
+                <AlertDescription>{successMessage}</AlertDescription>
+              </Alert>
             )}
             <SignUpFormFields onSubmit={onSubmit} loading={loading} isFirstUser={isFirstUser} />
           </CardContent>
