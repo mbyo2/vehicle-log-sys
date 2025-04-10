@@ -29,12 +29,12 @@ export default function SignUp() {
       
       console.log("Setting up database tables...");
       const response = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/create-profiles-table`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabase.supabaseKey}`
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
           }
         }
       );
@@ -45,7 +45,7 @@ export default function SignUp() {
       if (!response.ok) {
         console.warn("Warning: Database setup completed with issues:", result.error);
         toast({
-          variant: "warning",
+          variant: "default",
           title: "Database Setup Warning",
           description: "Setup completed with issues: " + (result.error || "Unknown error")
         });

@@ -77,12 +77,12 @@ export const useAuthActions = () => {
         try {
           // Call the edge function to set up the database
           const createProfilesResponse = await fetch(
-            `${supabase.supabaseUrl}/functions/v1/create-profiles-table`,
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabase.supabaseKey}`
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
               }
             }
           );
