@@ -87,47 +87,30 @@ export const useAuthActions = () => {
             }
           );
           
-          const result = await createProfilesResponse.json();
-          console.log("Create profiles table result:", result);
-          
           if (!createProfilesResponse.ok) {
-            console.warn("Warning: Database setup might not be complete, but continuing with signup");
+            const result = await createProfilesResponse.json();
+            console.warn("Warning: Database setup might not be complete:", result);
+            toast({
+              variant: "default",
+              title: 'Database Setup',
+              description: 'Setup operation completed with potential issues. Continuing with signup.',
+            });
+          } else {
+            console.log("Database setup successful");
           }
         } catch (setupErr) {
           console.error("Error during database setup:", setupErr);
+          toast({
+            variant: "default",
+            title: 'Database Setup',
+            description: 'Unable to connect to setup service. Continuing with signup.',
+          });
           // Continue despite errors - we'll try to create the user anyway
         }
       }
       
       // Determine the role based on whether this is the first user
       const role = isFirstUser ? 'super_admin' : 'company_admin';
-      
-      // If this is the first user, check if a super_admin already exists
-      // But only if we can connect to the database successfully
-      if (isFirstUser && !location.pathname.includes('first-setup')) {
-        try {
-          console.log("Checking if super_admin exists in profiles table...");
-          const { count, error: countError } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('role', 'super_admin');
-            
-          if (!countError && count && count > 0) {
-            console.error("A super admin account already exists");
-            return {
-              success: false,
-              error: "A super admin account already exists. Please sign in instead."
-            };
-          }
-        } catch (countErr: any) {
-          console.log("Error checking for super_admin:", countErr);
-          // If the error is about the table not existing, we can proceed
-          if (!countErr.message?.includes("does not exist") && countErr.code !== "42P01") {
-            console.log("Continuing despite error - might be first setup");
-            // Don't return error here, proceed with signup
-          }
-        }
-      }
       
       console.log("Creating account with role:", role);
       
@@ -206,8 +189,21 @@ export const useAuthActions = () => {
           
           if (signInError) {
             console.error("Auto login error:", signInError);
-            // Don't throw here, just log the error
-          } else if (signInData.user) {
+            toast({
+              variant: "default",
+              title: 'Account Created',
+              description: 'Your account was created, but automatic login failed. Please sign in manually.',
+            });
+            
+            // Navigate to sign in page
+            setTimeout(() => navigate('/signin'), 1500);
+            
+            return {
+              success: true
+            };
+          } 
+          
+          if (signInData.user) {
             // Set auth state for logged in user
             authState.user.set(signInData.user);
             
@@ -225,6 +221,12 @@ export const useAuthActions = () => {
             }
 
             console.log("Auto login successful, navigating to dashboard");
+            
+            toast({
+              title: 'Welcome',
+              description: 'You have been logged in as the Super Admin.',
+            });
+            
             navigate('/dashboard');
             return {
               success: true,
@@ -234,8 +236,8 @@ export const useAuthActions = () => {
         } catch (loginErr: any) {
           console.error("Error during auto-login:", loginErr);
           return {
-            success: false,
-            error: `Account created but auto-login failed: ${loginErr.message}`
+            success: true,
+            error: `Account created but auto-login failed. Please sign in manually.`
           };
         }
       }

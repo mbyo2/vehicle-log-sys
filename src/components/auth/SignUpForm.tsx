@@ -8,10 +8,9 @@ import { SignUpFormFields } from "./SignUpFormFields";
 import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
-import { ConnectionStatus } from "@/components/ui/connection-status";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { ConnectionStatus } from "@/components/ui/connection-status";
 
 interface SignUpFormProps {
   isFirstUser?: boolean;
@@ -48,46 +47,6 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
     try {
       console.log('Creating account with role:', isFirstUser ? 'super_admin' : values.role);
       
-      // Check if superadmin already exists when trying to create one
-      if (isFirstUser) {
-        try {
-          const { count, error: countError } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('role', 'super_admin');
-            
-          if (countError) {
-            console.log('Error checking superadmin count:', countError);
-            // If it's table doesn't exist, we can proceed
-            if (!countError.message?.includes("does not exist") && countError.code !== "42P01") {
-              throw countError;
-            }
-          } else if (count && count > 0) {
-            setError("A super admin account already exists. Please sign in instead.");
-            toast({
-              variant: "destructive",
-              title: "Super Admin Exists",
-              description: "A super admin account has already been created. Please sign in instead."
-            });
-            setTimeout(() => navigate('/signin'), 2000);
-            return;
-          }
-        } catch (countErr: any) {
-          console.error('Error checking for existing superadmin:', countErr);
-          // Only throw if it's not about the table not existing
-          if (!countErr.message?.includes("does not exist") && countErr.code !== "42P01") {
-            throw countErr;
-          }
-        }
-      }
-      
-      console.log("Calling signUp function with params:", {
-        email: values.email,
-        password: values.password,
-        fullName: values.fullName,
-        isFirstUser,
-      });
-
       const result = await signUp(
         values.email,
         values.password,
@@ -166,7 +125,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
               </Alert>
             )}
             {successMessage && (
-              <Alert className="mb-4 bg-green-50 border-green-200 text-green-800">
+              <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200">
                 <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}
