@@ -9,7 +9,7 @@ import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import type { SignUpFormValues } from "./schemas/signUpSchema";
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle } from "lucide-react";
 import { ConnectionStatus } from "@/components/ui/connection-status";
 
 interface SignUpFormProps {
@@ -101,12 +101,12 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
 
   return (
     <ErrorBoundary>
-      <div className="container relative flex h-screen w-screen flex-col items-center justify-center">
+      <div className="container relative flex flex-col items-center justify-center w-full max-w-md">
         <div className="absolute right-4 top-4 flex items-center gap-2">
           <ConnectionStatus showDetails={false} />
           <ThemeToggle />
         </div>
-        <Card className="w-full max-w-[450px] shadow-lg">
+        <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
               {isFirstUser ? 'Create Super Admin Account' : 'Create Account'}
@@ -126,6 +126,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
             )}
             {successMessage && (
               <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}

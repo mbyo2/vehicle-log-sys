@@ -77,12 +77,12 @@ export const useAuthActions = () => {
         try {
           // Call the edge function to set up the database
           const createProfilesResponse = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
+            `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`
               }
             }
           );

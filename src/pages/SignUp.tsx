@@ -25,13 +25,14 @@ export default function SignUp() {
       setSettingUpDatabase(true);
       
       console.log("Setting up database tables...");
+      // Use the full Supabase URL to call the edge function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
+        `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`
           }
         }
       );
@@ -79,8 +80,12 @@ export default function SignUp() {
       setCheckingFirstUser(false);
     } else {
       // Default to true for first user if we can't determine
+      console.log("Defaulting to first user setup");
       setIsFirstUser(true);
       setCheckingFirstUser(false);
+      
+      // Try to run database setup automatically
+      setupDatabase();
     }
   }, [locationIsFirstUser]);
 
@@ -138,7 +143,32 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md mb-6">
+        <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-4">
+          <h2 className="text-lg font-semibold mb-2">Welcome to Fleet Manager</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            You're setting up the application for the first time. Create a super admin account to get started.
+          </p>
+          <Button
+            onClick={setupDatabase}
+            disabled={settingUpDatabase}
+            variant="outline"
+            className="w-full"
+          >
+            {settingUpDatabase ? 
+              <>
+                <LoadingSpinner size={16} className="mr-2" />
+                Setting up database...
+              </> : 
+              <>
+                <Database className="mr-2 h-4 w-4" />
+                Setup Database Tables
+              </>
+            }
+          </Button>
+        </div>
+      </div>
       <SignUpForm isFirstUser={isFirstUser || false} />
     </div>
   );
