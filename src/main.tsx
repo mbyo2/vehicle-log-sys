@@ -13,9 +13,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      onError: (error) => {
-        console.error('Query error:', error);
-      }
+      // Remove the onError property as it's not supported in this context
+      // and use onSettled instead (which is supported by the library)
     }
   }
 });
@@ -35,14 +34,14 @@ const FallbackUI = () => (
 );
 
 // Error boundary for the entire app
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   state = { hasError: false };
   
   static getDerivedStateFromError() {
     return { hasError: true };
   }
   
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("Application error:", error, info);
   }
   
