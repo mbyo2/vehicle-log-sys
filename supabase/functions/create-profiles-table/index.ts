@@ -78,6 +78,48 @@ serve(async (req) => {
       
       -- Enable RLS
       ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+      
+      -- Create policy for profiles table if it doesn't exist
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies 
+          WHERE tablename = 'profiles' AND policyname = 'Profiles are viewable by everyone'
+        ) THEN
+          CREATE POLICY "Profiles are viewable by everyone"
+            ON public.profiles
+            FOR SELECT
+            USING (true);
+        END IF;
+      END $$;
+      
+      -- Create policy for insertion if it doesn't exist
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies 
+          WHERE tablename = 'profiles' AND policyname = 'Users can insert their own profile'
+        ) THEN
+          CREATE POLICY "Users can insert their own profile"
+            ON public.profiles
+            FOR INSERT
+            WITH CHECK (auth.uid() = id);
+        END IF;
+      END $$;
+      
+      -- Create policy for update if it doesn't exist
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policies 
+          WHERE tablename = 'profiles' AND policyname = 'Users can update their own profile'
+        ) THEN
+          CREATE POLICY "Users can update their own profile"
+            ON public.profiles
+            FOR UPDATE
+            USING (auth.uid() = id);
+        END IF;
+      END $$;
     `)
     
     if (tableError) {
@@ -123,7 +165,14 @@ serve(async (req) => {
             THEN (NEW.raw_app_meta_data->>'company_id')::uuid
             ELSE NULL
           END
-        );
+        )
+        ON CONFLICT (id) DO UPDATE
+        SET
+          email = EXCLUDED.email,
+          role = EXCLUDED.role,
+          full_name = EXCLUDED.full_name,
+          company_id = EXCLUDED.company_id,
+          updated_at = now();
         RETURN NEW;
       END;
       $$;
@@ -161,6 +210,22 @@ serve(async (req) => {
           status: 500
         }
       )
+    }
+
+    // Try to create a default super admin if no users exist
+    try {
+      console.log('Checking if we need to create a default super admin')
+      const { count, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        
+      if (countError) {
+        console.error('Error checking profile count:', countError)
+      } else if (count === 0) {
+        console.log('No profiles found - database setup complete and ready for first user')
+      }
+    } catch (err) {
+      console.error('Error checking profiles:', err)
     }
 
     return new Response(
