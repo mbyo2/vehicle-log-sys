@@ -18,7 +18,6 @@ import {
   FileText,
   Wrench,
   LineChart,
-  MessageSquare,
 } from 'lucide-react';
 
 interface NavItem {
@@ -54,19 +53,19 @@ export function Sidebar() {
       title: 'Users',
       href: '/users',
       icon: <Users className="mr-2 h-4 w-4" />,
-      roles: ['company_admin'],
+      roles: ['company_admin', 'supervisor'],
     },
     {
       title: 'Documents',
       href: '/documents',
       icon: <FileText className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['company_admin', 'supervisor', 'driver'],
     },
     {
       title: 'Trip Management',
       href: '/trip-management',
       icon: <Map className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor', 'driver'],
+      roles: ['company_admin', 'supervisor'],
     },
     {
       title: 'Trip Approvals',
@@ -75,7 +74,7 @@ export function Sidebar() {
       roles: ['supervisor'],
     },
     {
-      title: 'Trips',
+      title: 'My Trips',
       href: '/trips',
       icon: <Map className="mr-2 h-4 w-4" />,
       roles: ['driver'],
@@ -102,7 +101,7 @@ export function Sidebar() {
       title: 'Settings',
       href: '/settings',
       icon: <Settings className="mr-2 h-4 w-4" />,
-      roles: ['company_admin'],
+      roles: ['company_admin', 'super_admin'],
     },
     {
       title: 'Profile',
@@ -113,10 +112,14 @@ export function Sidebar() {
 
   // Get the actual value of profile.role using .get()
   const userRole = profile?.get()?.role;
+  const currentUser = user?.get();
+
+  if (!currentUser || !userRole) {
+    return null;
+  }
 
   const filteredNavItems = navItems.filter((item) => {
     if (!item.roles) return true; // Items without roles are shown to everyone
-    if (!userRole) return false; // If user role is not available, don't show role-specific items
     return item.roles.includes(userRole);
   });
 

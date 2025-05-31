@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { authState } from './AuthState';
-import { getSupabaseConfig } from '@/lib/supabase-config';
+import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
 
 interface AuthResult {
   success: boolean;
@@ -20,6 +20,7 @@ export const useAuthActions = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoadingState(true);
+      console.log('Attempting to sign in user:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -31,36 +32,68 @@ export const useAuthActions = () => {
       }
 
       if (data?.user) {
+        console.log('Sign in successful for user:', data.user.id);
+        authState.user.set(data.user);
+        authState.loading.set(true);
+
+        // Fetch user profile data with retry
+        let retries = 3;
+        let profileData = null;
+        
+        while (retries > 0) {
+          try {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+
+            if (profileError) {
+              console.error('Error fetching profile:', profileError);
+              if (retries === 1) {
+                throw new Error('Profile not found. Please contact support.');
+              }
+            } else if (profile) {
+              console.log('Profile loaded for role:', profile.role);
+              profileData = profile;
+              authState.profile.set(profile);
+              break;
+            }
+            
+            retries--;
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          } catch (err) {
+            retries--;
+            if (retries === 0) {
+              throw err;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+
+        if (profileData) {
+          const defaultRoute = DEFAULT_ROUTES[profileData.role] || '/dashboard';
+          console.log('Navigating to default route:', defaultRoute);
+          navigate(defaultRoute);
+        } else {
+          throw new Error('Unable to load user profile');
+        }
+
         toast({
           title: 'Success',
           description: 'Signed in successfully.',
         });
-        
-        authState.user.set(data.user);
-        authState.loading.set(true);
-
-        // Fetch user profile data
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else if (profileData) {
-          authState.profile.set(profileData);
-        }
-
-        navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Error signing in:', error.message);
       toast({
         variant: "destructive",
-        title: 'Error',
-        description: error.message,
+        title: 'Sign In Error',
+        description: error.message || 'Failed to sign in. Please check your credentials.',
       });
+      throw error;
     } finally {
       setLoadingState(false);
       authState.loading.set(false);
@@ -72,43 +105,19 @@ export const useAuthActions = () => {
       setLoadingState(true);
       console.log("useAuthActions: Starting signup process with isFirstUser =", isFirstUser);
       
-      // If this is the first user setup, try to create the profiles table first
+      // If this is the first user setup, ensure database is ready
       if (isFirstUser) {
-        console.log("Attempting to create profiles table for first user...");
+        console.log("Setting up database for first user...");
         try {
-          const config = getSupabaseConfig();
+          const { error: setupError } = await supabase.functions.invoke('create-profiles-table', {
+            body: { force_setup: true }
+          });
           
-          // Call the edge function to set up the database
-          const createProfilesResponse = await fetch(
-            `${config.functionsUrl}/create-profiles-table`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.anonKey}`
-              }
-            }
-          );
-          
-          if (!createProfilesResponse.ok) {
-            const result = await createProfilesResponse.json();
-            console.warn("Warning: Database setup might not be complete:", result);
-            toast({
-              variant: "default",
-              title: 'Database Setup',
-              description: 'Setup operation completed with potential issues. Continuing with signup.',
-            });
-          } else {
-            console.log("Database setup successful");
+          if (setupError) {
+            console.warn("Database setup warning:", setupError);
           }
         } catch (setupErr) {
-          console.error("Error during database setup:", setupErr);
-          toast({
-            variant: "default",
-            title: 'Database Setup',
-            description: 'Unable to connect to setup service. Continuing with signup.',
-          });
-          // Continue despite errors - we'll try to create the user anyway
+          console.warn("Database setup failed, continuing with signup:", setupErr);
         }
       }
       
@@ -123,7 +132,7 @@ export const useAuthActions = () => {
         options: {
           data: {
             full_name: fullName,
-            role: role, // This will be used by the handle_new_user trigger
+            role: role,
           },
         },
       });
@@ -146,45 +155,14 @@ export const useAuthActions = () => {
 
       console.log("Account created successfully:", data.user.id);
       
-      toast({
-        title: 'Account created',
-        description: 'Your account has been created successfully.',
-      });
-
-      // For first user setup, attempt to create the profiles table and insert the admin
+      // For first user setup, attempt automatic login
       if (isFirstUser && data.user) {
-        console.log("Attempting to handle first user setup manually if needed");
+        console.log("First user created, attempting automatic login");
         
         try {
-          // Wait a moment for the database trigger to run
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Wait a moment for the database trigger to create the profile
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          // Try to insert the profile manually if needed
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: email,
-              full_name: fullName,
-              role: 'super_admin'
-            })
-            .single();
-            
-          if (insertError && !insertError.message.includes('already exists')) {
-            console.error("Error inserting profile:", insertError);
-          }
-        } catch (setupErr) {
-          console.error("Error during manual first-user setup:", setupErr);
-          // Continue despite errors - the auth trigger might handle it
-        }
-      }
-
-      // If this is the first user, they'll be automatically verified and logged in
-      if (isFirstUser && data.user) {
-        console.log("First user created, logging in automatically");
-        
-        // For first user, attempt automatic login
-        try {
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
             password
@@ -193,17 +171,12 @@ export const useAuthActions = () => {
           if (signInError) {
             console.error("Auto login error:", signInError);
             toast({
-              variant: "default",
               title: 'Account Created',
-              description: 'Your account was created, but automatic login failed. Please sign in manually.',
+              description: 'Your account was created successfully. Please sign in.',
             });
             
-            // Navigate to sign in page
             setTimeout(() => navigate('/signin'), 1500);
-            
-            return {
-              success: true
-            };
+            return { success: true };
           } 
           
           if (signInData.user) {
@@ -215,47 +188,59 @@ export const useAuthActions = () => {
               .from('profiles')
               .select('*')
               .eq('id', signInData.user.id)
-              .maybeSingle();
+              .single();
 
-            if (profileError && !profileError.message?.includes("does not exist")) {
-              console.error('Error fetching profile:', profileError);
+            if (profileError) {
+              console.error('Error fetching profile after signup:', profileError);
+              toast({
+                title: 'Account Created',
+                description: 'Account created but profile loading failed. Please sign in.',
+              });
+              navigate('/signin');
+              return { success: true };
             } else if (profileData) {
               authState.profile.set(profileData);
+              console.log("Auto login successful, navigating to default route");
+              
+              const defaultRoute = DEFAULT_ROUTES[profileData.role] || '/dashboard';
+              navigate(defaultRoute);
+              
+              toast({
+                title: 'Welcome!',
+                description: `You have been logged in as ${profileData.role.replace('_', ' ')}.`,
+              });
+              
+              return {
+                success: true,
+                user: signInData.user
+              };
             }
-
-            console.log("Auto login successful, navigating to dashboard");
-            
-            toast({
-              title: 'Welcome',
-              description: 'You have been logged in as the Super Admin.',
-            });
-            
-            navigate('/dashboard');
-            return {
-              success: true,
-              user: signInData.user
-            };
           }
         } catch (loginErr: any) {
           console.error("Error during auto-login:", loginErr);
-          return {
-            success: true,
-            error: `Account created but auto-login failed. Please sign in manually.`
-          };
+          toast({
+            title: 'Account Created',
+            description: 'Account created successfully. Please sign in.',
+          });
+          navigate('/signin');
+          return { success: true };
         }
       }
       
-      // If we didn't auto-login or it failed, return success but without user
-      return {
-        success: true
-      };
+      // For non-first users or if auto-login failed
+      toast({
+        title: 'Account created',
+        description: 'Your account has been created successfully. Please sign in.',
+      });
+      
+      return { success: true };
       
     } catch (error: any) {
       console.error('Error signing up:', error.message);
       toast({
         variant: "destructive",
-        title: 'Error',
-        description: error.message,
+        title: 'Registration Error',
+        description: error.message || 'Failed to create account.',
       });
       return {
         success: false,

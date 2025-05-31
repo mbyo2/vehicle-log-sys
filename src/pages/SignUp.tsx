@@ -25,7 +25,9 @@ export default function SignUp() {
       
       console.log("Setting up database tables...");
       
-      const { data, error } = await supabase.functions.invoke('create-profiles-table');
+      const { data, error } = await supabase.functions.invoke('create-profiles-table', {
+        body: { force_setup: true }
+      });
       
       if (error) {
         console.error("Database setup error:", error);
@@ -57,17 +59,42 @@ export default function SignUp() {
   };
 
   useEffect(() => {
-    if (locationIsFirstUser !== undefined) {
-      console.log("Using location state for first user:", locationIsFirstUser);
-      setIsFirstUser(locationIsFirstUser);
-      setCheckingFirstUser(false);
-    } else {
-      console.log("Defaulting to first user setup");
-      setIsFirstUser(true);
-      setCheckingFirstUser(false);
-      // Automatically try to set up database
-      setupDatabase();
-    }
+    const checkFirstUserStatus = async () => {
+      if (locationIsFirstUser !== undefined) {
+        console.log("Using location state for first user:", locationIsFirstUser);
+        setIsFirstUser(locationIsFirstUser);
+        setCheckingFirstUser(false);
+        return;
+      }
+      
+      try {
+        // Check if any profiles exist
+        const { count, error } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+          
+        if (error) {
+          console.error("Error checking profiles:", error);
+          // If error suggests table doesn't exist, assume first user
+          if (error.message?.includes('relation "profiles" does not exist')) {
+            setIsFirstUser(true);
+          } else {
+            // For other errors, assume not first user but allow setup
+            setIsFirstUser(false);
+          }
+        } else {
+          const profileCount = count === null ? 0 : Number(count);
+          setIsFirstUser(profileCount === 0);
+        }
+      } catch (err) {
+        console.error("Error in first user check:", err);
+        setIsFirstUser(true); // Default to first user on error
+      } finally {
+        setCheckingFirstUser(false);
+      }
+    };
+
+    checkFirstUserStatus();
   }, [locationIsFirstUser]);
 
   const isUserLoading = loading.get();
@@ -82,39 +109,43 @@ export default function SignUp() {
   if (checkingFirstUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner />
-        <span className="ml-2 text-muted-foreground">Checking application status...</span>
+        <div className="text-center">
+          <LoadingSpinner className="mb-4" />
+          <span className="ml-2 text-muted-foreground">Checking application status...</span>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md mb-6">
-        <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-4">
-          <h2 className="text-lg font-semibold mb-2">Welcome to Fleet Manager</h2>
-          <p className="text-sm text-muted-foreground mb-3">
-            You're setting up the application for the first time. Create a super admin account to get started.
-          </p>
-          <Button
-            onClick={setupDatabase}
-            disabled={settingUpDatabase}
-            variant="outline"
-            className="w-full"
-          >
-            {settingUpDatabase ? 
-              <>
-                <LoadingSpinner size={16} className="mr-2" />
-                Setting up database...
-              </> : 
-              <>
-                <Database className="mr-2 h-4 w-4" />
-                Setup Database Tables
-              </>
-            }
-          </Button>
+      {isFirstUser && (
+        <div className="w-full max-w-md mb-6">
+          <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-4">
+            <h2 className="text-lg font-semibold mb-2">Welcome to Fleet Manager</h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              You're setting up the application for the first time. Create a super admin account to get started.
+            </p>
+            <Button
+              onClick={setupDatabase}
+              disabled={settingUpDatabase}
+              variant="outline"
+              className="w-full"
+            >
+              {settingUpDatabase ? 
+                <>
+                  <LoadingSpinner size={16} className="mr-2" />
+                  Setting up database...
+                </> : 
+                <>
+                  <Database className="mr-2 h-4 w-4" />
+                  Setup Database Tables
+                </>
+              }
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
       <SignUpForm isFirstUser={isFirstUser || false} />
     </div>
   );

@@ -46,12 +46,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth...');
+        authState.loading.set(true);
         
-        // Get current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Get current session with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error('Session check timeout')), 10000);
+        });
+        
+        const { data: { session }, error: sessionError } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any;
+        
+        clearTimeout(timeoutId);
         
         if (sessionError) {
           console.error('Session error:', sessionError);
@@ -65,31 +78,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Found existing session for user:', session.user.id);
           authState.user.set(session.user);
           
-          // Fetch profile with better error handling
-          try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
+          // Fetch profile with retry logic
+          let retries = 3;
+          let profileData = null;
           
-            if (profileError) {
-              console.error('Error fetching profile:', profileError);
-              // Don't throw error, just log it
-            } else if (profileData) {
-              console.log('Profile found:', profileData.role);
-              authState.profile.set(profileData);
-            } else {
-              console.warn('No profile found for user:', session.user.id);
+          while (retries > 0 && !profileData) {
+            try {
+              const { data, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+            
+              if (profileError) {
+                console.error('Error fetching profile:', profileError);
+                if (retries === 1) {
+                  // Last retry failed, continue without profile
+                  break;
+                }
+              } else if (data) {
+                console.log('Profile found:', data.role);
+                profileData = data;
+                authState.profile.set(data);
+                break;
+              } else {
+                console.warn('No profile found for user:', session.user.id);
+                break;
+              }
+              
+              retries--;
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
+            } catch (profileError) {
+              console.error('Failed to fetch profile:', profileError);
+              retries--;
+              if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+              }
             }
-          } catch (profileError) {
-            console.error('Failed to fetch profile:', profileError);
           }
         } else {
           console.log('No session found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        clearTimeout(timeoutId);
       } finally {
         authState.loading.set(false);
         authState.initialized.set(true);
@@ -102,6 +136,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.id);
+      
+      if (event === 'SIGNED_OUT') {
+        authState.user.set(null);
+        authState.profile.set(null);
+        return;
+      }
       
       authState.user.set(session?.user ?? null);
 
@@ -135,6 +175,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
+      clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
   }, [navigate]);

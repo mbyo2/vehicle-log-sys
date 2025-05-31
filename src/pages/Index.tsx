@@ -7,8 +7,7 @@ import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Database, AlertTriangle, RefreshCw } from 'lucide-react';
-import { getSupabaseConfig } from '@/lib/supabase-config';
+import { Database, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -16,6 +15,7 @@ export default function Index() {
   const [error, setError] = useState<string | null>(null);
   const [isCheckingDb, setIsCheckingDb] = useState(false);
   const [isSettingUpDb, setIsSettingUpDb] = useState(false);
+  const [dbSetupComplete, setDbSetupComplete] = useState(false);
   
   const setupDatabase = async () => {
     try {
@@ -24,7 +24,9 @@ export default function Index() {
       
       console.log("Setting up database tables...");
       
-      const { data, error } = await supabase.functions.invoke('create-profiles-table');
+      const { data, error } = await supabase.functions.invoke('create-profiles-table', {
+        body: { force_setup: true }
+      });
       
       if (error) {
         console.error("Database setup error:", error);
@@ -32,9 +34,12 @@ export default function Index() {
       }
       
       console.log("Database setup successful:", data);
+      setDbSetupComplete(true);
       
-      // Navigate to signup page after database is set up
-      navigate('/signup', { state: { isFirstUser: true }, replace: true });
+      // Wait a moment then navigate to signup
+      setTimeout(() => {
+        navigate('/signup', { state: { isFirstUser: true }, replace: true });
+      }, 2000);
     } catch (err: any) {
       console.error("Error setting up database:", err);
       setError(`Failed to set up database: ${err.message || 'Unknown error'}`);
@@ -45,10 +50,13 @@ export default function Index() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Wait for auth to initialize
-      if (loading.get()) {
+      // Wait for auth to initialize with timeout
+      const maxWaitTime = 10000; // 10 seconds
+      const startTime = Date.now();
+      
+      while (loading.get() && (Date.now() - startTime) < maxWaitTime) {
         console.log("Auth is still loading, waiting...");
-        return;
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       const currentUser = user.get();
@@ -71,7 +79,7 @@ export default function Index() {
       // If user is authenticated but no profile, there might be a setup issue
       if (currentUser && !currentProfile) {
         console.log("User authenticated but no profile found, checking database");
-        setError("Authentication issue: User account found but profile missing. Please contact support.");
+        setError("Authentication issue: User account found but profile missing. Please contact support or try setting up the database again.");
         return;
       }
       
@@ -90,9 +98,10 @@ export default function Index() {
           // If table doesn't exist or connection issues, offer to set up database
           if (countError.message?.includes('relation "profiles" does not exist') || 
               countError.message?.includes('connection') ||
-              countError.message === '') {
+              countError.message === '' ||
+              countError.code === 'PGRST116') {
             console.log("Database setup needed");
-            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            setError("Database tables need to be set up. Click 'Setup Database' to initialize the application.");
             return;
           }
           
@@ -112,17 +121,40 @@ export default function Index() {
       } catch (err: any) {
         console.error("Error during database check:", err);
         const errorMessage = err.message || 'Unknown database error';
-        setError(`Database connection issue: ${errorMessage}`);
+        setError(`Database connection issue: ${errorMessage}. Please try setting up the database.`);
       } finally {
         setIsCheckingDb(false);
       }
     };
 
-    // Add a small delay to ensure auth state is properly initialized
-    const timeoutId = setTimeout(initializeApp, 500);
-    
-    return () => clearTimeout(timeoutId);
+    // Only initialize if auth loading is complete or timed out
+    if (!loading.get()) {
+      initializeApp();
+    } else {
+      // Set a fallback timeout
+      const timeoutId = setTimeout(() => {
+        console.log("Auth loading timeout, proceeding with initialization");
+        initializeApp();
+      }, 5000);
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [navigate, user, profile, loading]);
+
+  if (dbSetupComplete) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-md text-center">
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <AlertDescription className="mt-2 text-green-800">
+              Database setup completed successfully! Redirecting to create your admin account...
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
