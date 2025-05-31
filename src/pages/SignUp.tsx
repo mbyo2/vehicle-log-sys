@@ -7,6 +7,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Button } from '@/components/ui/button';
 import { Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function SignUp() {
   const { user, loading } = useAuth();
@@ -14,82 +15,61 @@ export default function SignUp() {
   const { toast } = useToast();
   const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
   const [checkingFirstUser, setCheckingFirstUser] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [settingUpDatabase, setSettingUpDatabase] = useState(false);
   
   const locationIsFirstUser = location.state?.isFirstUser;
 
-  // Function to manually set up database tables
   const setupDatabase = async () => {
     try {
       setSettingUpDatabase(true);
       
       console.log("Setting up database tables...");
-      // Use the full Supabase URL to call the edge function
-      const response = await fetch(
-        `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`
-          }
-        }
-      );
       
-      const result = await response.json();
-      console.log("Setup result:", result);
+      const { data, error } = await supabase.functions.invoke('create-profiles-table');
       
-      if (!response.ok) {
-        console.warn("Warning: Database setup completed with issues:", result.error);
+      if (error) {
+        console.error("Database setup error:", error);
         toast({
-          variant: "default",
-          title: "Database Setup Warning",
-          description: "Setup completed with issues: " + (result.error || "Unknown error")
+          variant: "destructive",
+          title: "Database Setup Failed",
+          description: error.message || "Failed to set up database tables"
         });
-      } else {
-        toast({
-          title: "Database Setup Completed",
-          description: "Database tables have been set up successfully."
-        });
+        return;
       }
       
-      // Always set first user true if we're doing a manual setup
+      console.log("Database setup successful:", data);
+      toast({
+        title: "Database Setup Completed",
+        description: "Database tables have been set up successfully."
+      });
+      
       setIsFirstUser(true);
-      setError(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error setting up database:", err);
       toast({
         variant: "destructive",
         title: "Database Setup Failed",
-        description: "Failed to set up database tables. Proceeding as first user anyway."
+        description: err.message || "Failed to set up database tables"
       });
-      // Even if setup fails, continue as first user
-      setIsFirstUser(true);
-      setError(null);
     } finally {
       setSettingUpDatabase(false);
     }
   };
 
-  // Effect to set the isFirstUser state from location data
   useEffect(() => {
     if (locationIsFirstUser !== undefined) {
       console.log("Using location state for first user:", locationIsFirstUser);
       setIsFirstUser(locationIsFirstUser);
       setCheckingFirstUser(false);
     } else {
-      // Default to true for first user if we can't determine
       console.log("Defaulting to first user setup");
       setIsFirstUser(true);
       setCheckingFirstUser(false);
-      
-      // Try to run database setup automatically
+      // Automatically try to set up database
       setupDatabase();
     }
   }, [locationIsFirstUser]);
 
-  // Store these values in variables to avoid using hooks in conditionals
   const isUserLoading = loading.get();
   const currentUser = user.get();
 
@@ -104,40 +84,6 @@ export default function SignUp() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <LoadingSpinner />
         <span className="ml-2 text-muted-foreground">Checking application status...</span>
-      </div>
-    );
-  }
-
-  // If there's a connection error but we decided to proceed
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="bg-destructive/10 border border-destructive text-destructive p-4 rounded-md mb-4 max-w-md">
-          <h2 className="font-semibold mb-2">Error</h2>
-          <p className="mb-2">{error}</p>
-          <p className="text-sm text-muted-foreground">
-            This could be due to a connection issue with the database or because the database tables haven't been set up yet.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button 
-            onClick={setupDatabase} 
-            disabled={settingUpDatabase}
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 flex items-center"
-          >
-            {settingUpDatabase ? <LoadingSpinner size={16} className="mr-2" /> : <Database className="mr-2 h-4 w-4" />}
-            {settingUpDatabase ? "Setting Up..." : "Setup Database"}
-          </Button>
-          <Button 
-            onClick={() => { 
-              setError(null);
-              setIsFirstUser(true);
-            }} 
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
-          >
-            Continue as First User
-          </Button>
-        </div>
       </div>
     );
   }

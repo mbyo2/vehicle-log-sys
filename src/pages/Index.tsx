@@ -23,40 +23,29 @@ export default function Index() {
       setError(null);
       
       console.log("Setting up database tables...");
-      const config = getSupabaseConfig();
       
-      const response = await fetch(
-        `${config.functionsUrl}/create-profiles-table`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json', 
-            'Authorization': `Bearer ${config.anonKey}`
-          }
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('create-profiles-table');
       
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Unknown error");
+      if (error) {
+        console.error("Database setup error:", error);
+        throw error;
       }
       
-      const result = await response.json();
-      console.log("Database setup successful:", result);
+      console.log("Database setup successful:", data);
       
       // Navigate to signup page after database is set up
       navigate('/signup', { state: { isFirstUser: true }, replace: true });
     } catch (err: any) {
       console.error("Error setting up database:", err);
-      setError(`Failed to set up database: ${err.message}`);
+      setError(`Failed to set up database: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSettingUpDb(false);
     }
   };
 
   useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      // If authentication is still loading, we wait
+    const initializeApp = async () => {
+      // Wait for auth to initialize
       if (loading.get()) {
         console.log("Auth is still loading, waiting...");
         return;
@@ -79,53 +68,58 @@ export default function Index() {
         return;
       }
       
+      // If user is authenticated but no profile, there might be a setup issue
+      if (currentUser && !currentProfile) {
+        console.log("User authenticated but no profile found, checking database");
+        setError("Authentication issue: User account found but profile missing. Please contact support.");
+        return;
+      }
+      
       // Check if any users exist in the system
       try {
         setIsCheckingDb(true);
         console.log("Checking if any profiles exist...");
         
-        try {
-          // Using a more explicit type conversion to number for the count
-          const { count, error } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        if (countError) {
+          console.error("Error checking profiles:", countError);
           
-          if (error) {
-            console.error("Error checking profiles:", error);
-            
-            // If table doesn't exist, set up database
-            if (error.message.includes('relation "profiles" does not exist')) {
-              navigate('/signup', { state: { isFirstUser: true }, replace: true });
-              return;
-            }
-            
-            throw error;
-          }
-          
-          // Convert count to number before comparing
-          const profileCount = count === null ? 0 : Number(count);
-          console.log("Profile count:", profileCount);
-          
-          if (profileCount === 0) {
-            console.log("No profiles found, directing to first user signup");
+          // If table doesn't exist or connection issues, offer to set up database
+          if (countError.message?.includes('relation "profiles" does not exist') || 
+              countError.message?.includes('connection') ||
+              countError.message === '') {
+            console.log("Database setup needed");
             navigate('/signup', { state: { isFirstUser: true }, replace: true });
-          } else {
-            console.log("Profiles exist, directing to signin");
-            navigate('/signin', { replace: true });
+            return;
           }
-        } catch (err: any) {
-          console.error("Error checking profiles:", err);
           
-          // Show error but don't redirect so user can try to fix
-          setError(`Failed to check database: ${err.message}`);
+          throw countError;
+        }
+        
+        const profileCount = count === null ? 0 : Number(count);
+        console.log("Profile count:", profileCount);
+        
+        if (profileCount === 0) {
+          console.log("No profiles found, directing to first user signup");
+          navigate('/signup', { state: { isFirstUser: true }, replace: true });
+        } else {
+          console.log("Profiles exist, directing to signin");
+          navigate('/signin', { replace: true });
         }
       } catch (err: any) {
-        console.error("General error:", err);
-        setError(`Application error: ${err.message}`);
+        console.error("Error during database check:", err);
+        const errorMessage = err.message || 'Unknown database error';
+        setError(`Database connection issue: ${errorMessage}`);
       } finally {
         setIsCheckingDb(false);
       }
-    }, 1000);
+    };
+
+    // Add a small delay to ensure auth state is properly initialized
+    const timeoutId = setTimeout(initializeApp, 500);
     
     return () => clearTimeout(timeoutId);
   }, [navigate, user, profile, loading]);
@@ -176,7 +170,7 @@ export default function Index() {
         <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
       </div>
       <p className="text-muted-foreground text-center max-w-md">
-        Initializing your application and checking database status...
+        {isCheckingDb ? "Checking database status..." : "Initializing your application..."}
       </p>
     </div>
   );
