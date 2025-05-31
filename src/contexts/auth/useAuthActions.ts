@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { authState } from './AuthState';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 interface AuthResult {
   success: boolean;
@@ -75,14 +76,16 @@ export const useAuthActions = () => {
       if (isFirstUser) {
         console.log("Attempting to create profiles table for first user...");
         try {
+          const config = getSupabaseConfig();
+          
           // Call the edge function to set up the database
           const createProfilesResponse = await fetch(
-            `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`,
+            `${config.functionsUrl}/create-profiles-table`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`
+                'Authorization': `Bearer ${config.anonKey}`
               }
             }
           );

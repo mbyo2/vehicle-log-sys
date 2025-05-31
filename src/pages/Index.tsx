@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Database, AlertTriangle, RefreshCw } from 'lucide-react';
+import { getSupabaseConfig } from '@/lib/supabase-config';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -22,14 +23,15 @@ export default function Index() {
       setError(null);
       
       console.log("Setting up database tables...");
-      // Use the full Supabase URL to call the edge function
+      const config = getSupabaseConfig();
+      
       const response = await fetch(
-        `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`,
+        `${config.functionsUrl}/create-profiles-table`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json', 
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`
+            'Authorization': `Bearer ${config.anonKey}`
           }
         }
       );

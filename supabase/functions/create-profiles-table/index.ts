@@ -41,10 +41,11 @@ serve(async (req) => {
       }
     })
 
-    // Create the user_role type if it doesn't exist
-    console.log('Creating user_role type if not exists')
-    try {
-      await supabase.auth.admin.executeSql(`
+    console.log('Creating profiles table if not exists')
+    // Create the profiles table if it doesn't exist using the rpc method
+    const { error: tableError } = await supabase.rpc('exec_sql', {
+      sql: `
+        -- Create user_role enum if it doesn't exist
         DO $$
         BEGIN
           IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
@@ -57,70 +58,31 @@ serve(async (req) => {
           END IF;
         END
         $$;
-      `)
-    } catch (typeErr) {
-      console.log('Error checking/creating role type:', typeErr)
-      // Continue anyway
-    }
 
-    console.log('Creating profiles table if not exists')
-    // Create the profiles table if it doesn't exist
-    const { error: tableError } = await supabase.auth.admin.executeSql(`
-      CREATE TABLE IF NOT EXISTS public.profiles (
-        id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-        email TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'driver',
-        full_name TEXT,
-        company_id UUID,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-      );
-      
-      -- Enable RLS
-      ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-      
-      -- Create policy for profiles table if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies 
-          WHERE tablename = 'profiles' AND policyname = 'Profiles are viewable by everyone'
-        ) THEN
-          CREATE POLICY "Profiles are viewable by everyone"
-            ON public.profiles
-            FOR SELECT
-            USING (true);
-        END IF;
-      END $$;
-      
-      -- Create policy for insertion if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies 
-          WHERE tablename = 'profiles' AND policyname = 'Users can insert their own profile'
-        ) THEN
-          CREATE POLICY "Users can insert their own profile"
-            ON public.profiles
-            FOR INSERT
-            WITH CHECK (auth.uid() = id);
-        END IF;
-      END $$;
-      
-      -- Create policy for update if it doesn't exist
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM pg_policies 
-          WHERE tablename = 'profiles' AND policyname = 'Users can update their own profile'
-        ) THEN
-          CREATE POLICY "Users can update their own profile"
-            ON public.profiles
-            FOR UPDATE
-            USING (auth.uid() = id);
-        END IF;
-      END $$;
-    `)
+        -- Create the profiles table if it doesn't exist
+        CREATE TABLE IF NOT EXISTS public.profiles (
+          id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+          email TEXT NOT NULL,
+          role user_role NOT NULL DEFAULT 'driver',
+          full_name TEXT,
+          company_id UUID,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+        
+        -- Enable RLS if not already enabled
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_tables 
+            WHERE tablename = 'profiles' 
+            AND rowsecurity = true
+          ) THEN
+            ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+          END IF;
+        END $$;
+      `
+    })
     
     if (tableError) {
       console.error('Error creating profiles table:', tableError)
@@ -133,50 +95,57 @@ serve(async (req) => {
       )
     }
 
-    // Create a function to handle new users if it doesn't exist
+    // Create or replace the handle_new_user function
     console.log('Creating handle_new_user function')
-    const { error: functionError } = await supabase.auth.admin.executeSql(`
-      -- Create function to handle new user creation
-      CREATE OR REPLACE FUNCTION public.handle_new_user()
-      RETURNS TRIGGER
-      LANGUAGE plpgsql
-      SECURITY DEFINER
-      SET search_path = public
-      AS $$
-      BEGIN
-        INSERT INTO public.profiles (
-          id,
-          email,
-          role,
-          full_name,
-          company_id
-        )
-        VALUES (
-          NEW.id,
-          NEW.email,
-          CASE 
-            WHEN NOT EXISTS (SELECT 1 FROM profiles) THEN 'super_admin'
-            WHEN NEW.raw_app_meta_data->>'role' IS NOT NULL THEN (NEW.raw_app_meta_data->>'role')
-            ELSE 'driver'
-          END,
-          COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-          CASE 
-            WHEN NEW.raw_app_meta_data->>'company_id' IS NOT NULL 
-            THEN (NEW.raw_app_meta_data->>'company_id')::uuid
-            ELSE NULL
-          END
-        )
-        ON CONFLICT (id) DO UPDATE
-        SET
-          email = EXCLUDED.email,
-          role = EXCLUDED.role,
-          full_name = EXCLUDED.full_name,
-          company_id = EXCLUDED.company_id,
-          updated_at = now();
-        RETURN NEW;
-      END;
-      $$;
-    `)
+    const { error: functionError } = await supabase.rpc('exec_sql', {
+      sql: `
+        -- Create function to handle new user creation
+        CREATE OR REPLACE FUNCTION public.handle_new_user()
+        RETURNS TRIGGER
+        LANGUAGE plpgsql
+        SECURITY DEFINER
+        SET search_path = public
+        AS $$
+        DECLARE
+          user_role text;
+          user_company_id uuid;
+        BEGIN
+          -- Determine role and company
+          IF NOT EXISTS (SELECT 1 FROM profiles WHERE role = 'super_admin') THEN
+            user_role := 'super_admin';
+            user_company_id := NULL;
+          ELSE
+            user_role := COALESCE(NEW.raw_app_meta_data->>'role', 'driver');
+            user_company_id := (NEW.raw_app_meta_data->>'company_id')::uuid;
+          END IF;
+
+          INSERT INTO public.profiles (
+            id,
+            email,
+            role,
+            full_name,
+            company_id
+          )
+          VALUES (
+            NEW.id,
+            NEW.email,
+            user_role::user_role,
+            COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+            user_company_id
+          )
+          ON CONFLICT (id) DO UPDATE
+          SET
+            email = EXCLUDED.email,
+            role = EXCLUDED.role,
+            full_name = EXCLUDED.full_name,
+            company_id = EXCLUDED.company_id,
+            updated_at = now();
+            
+          RETURN NEW;
+        END;
+        $$;
+      `
+    })
     
     if (functionError) {
       console.error('Error creating handle_new_user function:', functionError)
@@ -191,15 +160,17 @@ serve(async (req) => {
     
     // Create a trigger for new user signup if it doesn't exist
     console.log('Creating auth trigger')
-    const { error: triggerError } = await supabase.auth.admin.executeSql(`
-      -- Drop trigger if exists
-      DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-      
-      -- Create trigger for handling new users
-      CREATE TRIGGER on_auth_user_created
-        AFTER INSERT ON auth.users
-        FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-    `)
+    const { error: triggerError } = await supabase.rpc('exec_sql', {
+      sql: `
+        -- Drop trigger if exists
+        DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+        
+        -- Create trigger for handling new users
+        CREATE TRIGGER on_auth_user_created
+          AFTER INSERT ON auth.users
+          FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+      `
+    })
     
     if (triggerError) {
       console.error('Error creating trigger:', triggerError)
