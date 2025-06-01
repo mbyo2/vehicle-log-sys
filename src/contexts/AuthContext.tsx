@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const signOut = async () => {
     try {
@@ -45,140 +46,141 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchUserProfile = async (userId: string, maxRetries = 3) => {
+    let attempts = 0;
+    
+    while (attempts < maxRetries) {
+      try {
+        console.log(`Fetching profile for user ${userId}, attempt ${attempts + 1}`);
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+      
+        if (error) {
+          console.error('Profile fetch error:', error);
+          if (attempts === maxRetries - 1) {
+            console.error('Max retries reached for profile fetch');
+            return null;
+          }
+        } else if (data) {
+          console.log('Profile loaded successfully:', data.role);
+          return data;
+        } else {
+          console.warn('No profile found for user:', userId);
+          return null;
+        }
+        
+        attempts++;
+        if (attempts < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
+      } catch (err) {
+        console.error('Profile fetch attempt failed:', err);
+        attempts++;
+        if (attempts < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
+      }
+    }
+    
+    return null;
+  };
+
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    let mounted = true;
+    let sessionTimeout: NodeJS.Timeout;
     
     const initializeAuth = async () => {
+      if (!mounted) return;
+      
       try {
-        console.log('Initializing auth...');
+        console.log('Initializing auth system...');
         authState.loading.set(true);
         
-        // Get current session with timeout
+        // Set a timeout for session check
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('Session check timeout')), 10000);
+          sessionTimeout = setTimeout(() => reject(new Error('Session check timeout')), 8000);
         });
         
-        const { data: { session }, error: sessionError } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as any;
+        const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
         
-        clearTimeout(timeoutId);
+        if (sessionTimeout) clearTimeout(sessionTimeout);
+        
+        const { data: { session }, error: sessionError } = result;
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          authState.loading.set(false);
-          authState.initialized.set(true);
-          setInitialized(true);
-          return;
-        }
-        
-        if (session?.user) {
+        } else if (session?.user && mounted) {
           console.log('Found existing session for user:', session.user.id);
           authState.user.set(session.user);
           
-          // Fetch profile with retry logic
-          let retries = 3;
-          let profileData = null;
-          
-          while (retries > 0 && !profileData) {
-            try {
-              const { data, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .maybeSingle();
-            
-              if (profileError) {
-                console.error('Error fetching profile:', profileError);
-                if (retries === 1) {
-                  // Last retry failed, continue without profile
-                  break;
-                }
-              } else if (data) {
-                console.log('Profile found:', data.role);
-                profileData = data;
-                authState.profile.set(data);
-                break;
-              } else {
-                console.warn('No profile found for user:', session.user.id);
-                break;
-              }
-              
-              retries--;
-              if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              }
-            } catch (profileError) {
-              console.error('Failed to fetch profile:', profileError);
-              retries--;
-              if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              }
-            }
+          // Fetch profile
+          const profileData = await fetchUserProfile(session.user.id);
+          if (mounted) {
+            authState.profile.set(profileData);
           }
         } else {
-          console.log('No session found');
+          console.log('No existing session found');
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
-        clearTimeout(timeoutId);
+        console.error('Auth initialization error:', error);
+        if (retryCount < 2) {
+          console.log('Retrying auth initialization...');
+          setRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            if (mounted) initializeAuth();
+          }, 2000);
+          return;
+        }
       } finally {
-        authState.loading.set(false);
-        authState.initialized.set(true);
-        setInitialized(true);
+        if (mounted) {
+          authState.loading.set(false);
+          authState.initialized.set(true);
+          setInitialized(true);
+        }
+        if (sessionTimeout) clearTimeout(sessionTimeout);
       }
     };
 
-    initializeAuth();
-
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
+      if (!mounted) return;
       
-      if (event === 'SIGNED_OUT') {
+      console.log('Auth state changed:', event, session?.user?.id || 'no user');
+      
+      if (event === 'SIGNED_OUT' || !session) {
         authState.user.set(null);
         authState.profile.set(null);
         return;
       }
       
-      authState.user.set(session?.user ?? null);
+      authState.user.set(session.user);
 
-      if (session?.user) {
-        // Use setTimeout to prevent potential issues with auth state change
+      if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        // Defer profile fetch to avoid blocking auth state change
         setTimeout(async () => {
-          try {
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            if (error) {
-              console.error('Error fetching profile during auth change:', error);
-              authState.profile.set(null);
-            } else {
-              authState.profile.set(profileData ?? null);
-              if (profileData) {
-                console.log('Profile loaded during auth change:', profileData.role);
-              }
-            }
-          } catch (error) {
-            console.error('Error in auth state change handler:', error);
-            authState.profile.set(null);
+          if (!mounted) return;
+          
+          const profileData = await fetchUserProfile(session.user.id);
+          if (mounted) {
+            authState.profile.set(profileData);
           }
         }, 100);
-      } else {
-        authState.profile.set(null);
       }
     });
 
+    initializeAuth();
+
     return () => {
-      clearTimeout(timeoutId);
+      mounted = false;
+      if (sessionTimeout) clearTimeout(sessionTimeout);
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [retryCount]);
 
   return (
     <AuthContext.Provider 

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +15,7 @@ export default function Index() {
   const [isCheckingDb, setIsCheckingDb] = useState(false);
   const [isSettingUpDb, setIsSettingUpDb] = useState(false);
   const [dbSetupComplete, setDbSetupComplete] = useState(false);
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
   
   const setupDatabase = async () => {
     try {
@@ -50,25 +50,29 @@ export default function Index() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Wait for auth to initialize with timeout
-      const maxWaitTime = 10000; // 10 seconds
-      const startTime = Date.now();
+      console.log('Starting app initialization...');
       
-      while (loading.get() && (Date.now() - startTime) < maxWaitTime) {
-        console.log("Auth is still loading, waiting...");
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for auth to stabilize with a reasonable timeout
+      let authTimeout = 0;
+      const maxAuthWait = 8000; // 8 seconds
+      
+      while (loading.get() && authTimeout < maxAuthWait) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        authTimeout += 200;
       }
+      
+      setAuthCheckComplete(true);
       
       const currentUser = user.get();
       const currentProfile = profile.get();
       
-      console.log("Index page - Current auth state:", { 
+      console.log("Auth check complete:", { 
         hasUser: !!currentUser, 
         hasProfile: !!currentProfile,
         loading: loading.get()
       });
       
-      // User is authenticated with a profile
+      // User is authenticated with a profile - redirect to appropriate page
       if (currentUser && currentProfile) {
         console.log("User authenticated, navigating to default route for role:", currentProfile.role);
         const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
@@ -76,40 +80,43 @@ export default function Index() {
         return;
       }
       
-      // If user is authenticated but no profile, there might be a setup issue
+      // User authenticated but no profile - potential issue
       if (currentUser && !currentProfile) {
-        console.log("User authenticated but no profile found, checking database");
-        setError("Authentication issue: User account found but profile missing. Please contact support or try setting up the database again.");
+        console.log("User authenticated but no profile found");
+        setError("Account setup incomplete. Please contact support or try setting up the database again.");
         return;
       }
       
-      // Check if any users exist in the system
+      // No user - check if this is a fresh installation
       try {
         setIsCheckingDb(true);
-        console.log("Checking if any profiles exist...");
+        console.log("Checking database status...");
         
+        // Try to check if profiles table exists and has data
         const { count, error: countError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
         
         if (countError) {
-          console.error("Error checking profiles:", countError);
+          console.error("Database check error:", countError);
           
-          // If table doesn't exist or connection issues, offer to set up database
+          // Common database setup issues
           if (countError.message?.includes('relation "profiles" does not exist') || 
-              countError.message?.includes('connection') ||
-              countError.message === '' ||
-              countError.code === 'PGRST116') {
-            console.log("Database setup needed");
-            setError("Database tables need to be set up. Click 'Setup Database' to initialize the application.");
+              countError.message?.includes('permission denied') ||
+              countError.code === 'PGRST116' ||
+              countError.message === '') {
+            console.log("Database needs setup");
+            setError("Database setup required. Click 'Setup Database' to initialize the application.");
             return;
           }
           
-          throw countError;
+          // Other connection issues
+          setError(`Database connection issue: ${countError.message || 'Unable to connect'}. Please try again.`);
+          return;
         }
         
-        const profileCount = count === null ? 0 : Number(count);
-        console.log("Profile count:", profileCount);
+        const profileCount = count || 0;
+        console.log("Found profiles in database:", profileCount);
         
         if (profileCount === 0) {
           console.log("No profiles found, directing to first user signup");
@@ -118,29 +125,19 @@ export default function Index() {
           console.log("Profiles exist, directing to signin");
           navigate('/signin', { replace: true });
         }
+        
       } catch (err: any) {
-        console.error("Error during database check:", err);
-        const errorMessage = err.message || 'Unknown database error';
-        setError(`Database connection issue: ${errorMessage}. Please try setting up the database.`);
+        console.error("Unexpected error during database check:", err);
+        setError(`Application initialization failed: ${err.message || 'Unknown error'}. Please try setting up the database.`);
       } finally {
         setIsCheckingDb(false);
       }
     };
 
-    // Only initialize if auth loading is complete or timed out
-    if (!loading.get()) {
-      initializeApp();
-    } else {
-      // Set a fallback timeout
-      const timeoutId = setTimeout(() => {
-        console.log("Auth loading timeout, proceeding with initialization");
-        initializeApp();
-      }, 5000);
-      
-      return () => clearTimeout(timeoutId);
-    }
+    initializeApp();
   }, [navigate, user, profile, loading]);
 
+  // Show completion message
   if (dbSetupComplete) {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 bg-background">
@@ -156,6 +153,7 @@ export default function Index() {
     );
   }
 
+  // Show error state with action buttons
   if (error) {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 bg-background">
@@ -172,7 +170,7 @@ export default function Index() {
               className="flex items-center"
             >
               {isSettingUpDb ? (
-                <LoadingSpinner className="mr-2" />
+                <LoadingSpinner className="mr-2" size={16} />
               ) : (
                 <Database className="mr-2 h-4 w-4" />
               )}
@@ -186,7 +184,7 @@ export default function Index() {
               className="flex items-center"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Try Again
+              Refresh
             </Button>
           </div>
         </div>
@@ -194,7 +192,7 @@ export default function Index() {
     );
   }
 
-  // Simple loading screen while we determine where to navigate
+  // Show loading screen
   return (
     <div className="flex h-screen flex-col items-center justify-center bg-background">
       <div className="flex items-center mb-6">
@@ -202,7 +200,11 @@ export default function Index() {
         <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
       </div>
       <p className="text-muted-foreground text-center max-w-md">
-        {isCheckingDb ? "Checking database status..." : "Initializing your application..."}
+        {!authCheckComplete 
+          ? "Initializing authentication..." 
+          : isCheckingDb 
+          ? "Checking database status..." 
+          : "Setting up your application..."}
       </p>
     </div>
   );

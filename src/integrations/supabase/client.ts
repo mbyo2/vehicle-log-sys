@@ -26,8 +26,30 @@ export const supabase = createClient(
     global: {
       headers: {
         'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+        'Prefer': 'return=minimal'
+      }
+    },
+    db: {
+      schema: 'public'
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
       }
     }
   }
 );
+
+// Test connection on initialization
+supabase.from('profiles').select('count', { count: 'exact', head: true })
+  .then(({ error }) => {
+    if (error) {
+      console.warn('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection established successfully');
+    }
+  })
+  .catch((err) => {
+    console.warn('Supabase connection test error:', err);
+  });

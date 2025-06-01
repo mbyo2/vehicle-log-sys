@@ -103,18 +103,20 @@ export const useAuthActions = () => {
   const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean): Promise<AuthResult> => {
     try {
       setLoadingState(true);
-      console.log("useAuthActions: Starting signup process with isFirstUser =", isFirstUser);
+      console.log("Starting signup process with isFirstUser =", isFirstUser);
       
       // If this is the first user setup, ensure database is ready
       if (isFirstUser) {
         console.log("Setting up database for first user...");
         try {
-          const { error: setupError } = await supabase.functions.invoke('create-profiles-table', {
+          const { data: setupData, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
             body: { force_setup: true }
           });
           
           if (setupError) {
             console.warn("Database setup warning:", setupError);
+          } else {
+            console.log("Database setup confirmed:", setupData);
           }
         } catch (setupErr) {
           console.warn("Database setup failed, continuing with signup:", setupErr);
@@ -160,8 +162,8 @@ export const useAuthActions = () => {
         console.log("First user created, attempting automatic login");
         
         try {
-          // Wait a moment for the database trigger to create the profile
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Wait for the database trigger to create the profile
+          await new Promise(resolve => setTimeout(resolve, 3000));
           
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
@@ -183,23 +185,40 @@ export const useAuthActions = () => {
             // Set auth state for logged in user
             authState.user.set(signInData.user);
             
-            // Fetch user profile data
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', signInData.user.id)
-              .single();
+            // Fetch user profile data with retries
+            let profileData = null;
+            let retries = 5;
+            
+            while (retries > 0 && !profileData) {
+              try {
+                const { data: profile, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', signInData.user.id)
+                  .single();
 
-            if (profileError) {
-              console.error('Error fetching profile after signup:', profileError);
-              toast({
-                title: 'Account Created',
-                description: 'Account created but profile loading failed. Please sign in.',
-              });
-              navigate('/signin');
-              return { success: true };
-            } else if (profileData) {
-              authState.profile.set(profileData);
+                if (profileError) {
+                  console.error('Error fetching profile after signup:', profileError);
+                  retries--;
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                  }
+                } else if (profile) {
+                  profileData = profile;
+                  authState.profile.set(profile);
+                  break;
+                }
+              } catch (err) {
+                console.error('Profile fetch error:', err);
+                retries--;
+                if (retries > 0) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+            }
+
+            if (profileData) {
               console.log("Auto login successful, navigating to default route");
               
               const defaultRoute = DEFAULT_ROUTES[profileData.role] || '/dashboard';
@@ -214,6 +233,13 @@ export const useAuthActions = () => {
                 success: true,
                 user: signInData.user
               };
+            } else {
+              toast({
+                title: 'Account Created',
+                description: 'Account created but profile setup incomplete. Please sign in.',
+              });
+              navigate('/signin');
+              return { success: true };
             }
           }
         } catch (loginErr: any) {
