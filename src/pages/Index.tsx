@@ -15,6 +15,7 @@ export default function Index() {
   const [isSettingUpDb, setIsSettingUpDb] = useState(false);
   const [dbSetupComplete, setDbSetupComplete] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   const setupDatabase = async () => {
     try {
@@ -23,27 +24,16 @@ export default function Index() {
       
       console.log("Setting up database tables automatically...");
       
-      // Use the correct project URL for edge functions
-      const functionUrl = `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`;
-      
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
-        body: JSON.stringify({ force_setup: true })
+      const { data, error } = await supabase.functions.invoke('create-profiles-table', {
+        body: { force_setup: true }
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      if (error) {
+        throw error;
       }
       
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Setup failed');
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Setup failed');
       }
       
       console.log("Database setup successful:", data);
@@ -55,19 +45,22 @@ export default function Index() {
       }, 2000);
     } catch (err: any) {
       console.error("Error setting up database:", err);
-      setError(`Failed to set up database automatically: ${err.message || 'Unknown error'}`);
+      setError(`Failed to set up database: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSettingUpDb(false);
     }
   };
 
   useEffect(() => {
+    if (hasInitialized) return;
+    
     const initializeApp = async () => {
       console.log('Starting app initialization...');
+      setHasInitialized(true);
       
       // Wait for auth to stabilize
       let authTimeout = 0;
-      const maxAuthWait = 8000;
+      const maxAuthWait = 5000;
       
       while (loading.get() && authTimeout < maxAuthWait) {
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -120,7 +113,7 @@ export default function Index() {
             return;
           }
           
-          setError(`Database connection issue: ${countError.message || 'Unable to connect'}. Please try refreshing the page.`);
+          setError(`Database connection issue. Please refresh the page.`);
           return;
         }
         
@@ -137,12 +130,12 @@ export default function Index() {
         
       } catch (err: any) {
         console.error("Unexpected error during database check:", err);
-        setError(`Application initialization failed: ${err.message || 'Unknown error'}. Please refresh the page.`);
+        setError(`Application initialization failed. Please refresh the page.`);
       }
     };
 
     initializeApp();
-  }, [navigate, user, profile, loading]);
+  }, [navigate, user, profile, loading, hasInitialized]);
 
   // Show completion message
   if (dbSetupComplete) {

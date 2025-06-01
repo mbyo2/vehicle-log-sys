@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
 
   const signOut = async () => {
     try {
@@ -46,52 +45,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const fetchUserProfile = async (userId: string, maxRetries = 3) => {
-    let attempts = 0;
-    
-    while (attempts < maxRetries) {
-      try {
-        console.log(`Fetching profile for user ${userId}, attempt ${attempts + 1}`);
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log(`Fetching profile for user ${userId}`);
       
-        if (error) {
-          console.error('Profile fetch error:', error);
-          if (attempts === maxRetries - 1) {
-            console.error('Max retries reached for profile fetch');
-            return null;
-          }
-        } else if (data) {
-          console.log('Profile loaded successfully:', data.role);
-          return data;
-        } else {
-          console.warn('No profile found for user:', userId);
-          return null;
-        }
-        
-        attempts++;
-        if (attempts < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-        }
-      } catch (err) {
-        console.error('Profile fetch attempt failed:', err);
-        attempts++;
-        if (attempts < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
-        }
-      }
-    }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
     
-    return null;
+      if (error) {
+        console.error('Profile fetch error:', error);
+        return null;
+      }
+      
+      if (data) {
+        console.log('Profile loaded successfully:', data.role);
+        return data;
+      }
+      
+      console.warn('No profile found for user:', userId);
+      return null;
+    } catch (err) {
+      console.error('Profile fetch failed:', err);
+      return null;
+    }
   };
 
   useEffect(() => {
+    if (initialized) return;
+    
     let mounted = true;
-    let sessionTimeout: NodeJS.Timeout;
     
     const initializeAuth = async () => {
       if (!mounted) return;
@@ -100,17 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Initializing auth system...');
         authState.loading.set(true);
         
-        // Set a timeout for session check
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => {
-          sessionTimeout = setTimeout(() => reject(new Error('Session check timeout')), 8000);
-        });
-        
-        const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
-        
-        if (sessionTimeout) clearTimeout(sessionTimeout);
-        
-        const { data: { session }, error: sessionError } = result;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
           console.error('Session error:', sessionError);
@@ -128,21 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
-        if (retryCount < 2) {
-          console.log('Retrying auth initialization...');
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            if (mounted) initializeAuth();
-          }, 2000);
-          return;
-        }
       } finally {
         if (mounted) {
           authState.loading.set(false);
           authState.initialized.set(true);
           setInitialized(true);
         }
-        if (sessionTimeout) clearTimeout(sessionTimeout);
       }
     };
 
@@ -161,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authState.user.set(session.user);
 
       if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-        // Defer profile fetch to avoid blocking auth state change
+        // Fetch profile with delay to avoid blocking
         setTimeout(async () => {
           if (!mounted) return;
           
@@ -177,10 +143,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
-      if (sessionTimeout) clearTimeout(sessionTimeout);
       subscription.unsubscribe();
     };
-  }, [retryCount]);
+  }, [initialized]);
 
   return (
     <AuthContext.Provider 

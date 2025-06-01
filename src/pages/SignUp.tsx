@@ -35,7 +35,7 @@ export default function SignUp() {
           if (error.message?.includes('relation "profiles" does not exist')) {
             setIsFirstUser(true);
           } else {
-            // For other errors, assume not first user but allow setup
+            // For other errors, assume not first user
             setIsFirstUser(false);
           }
         } else {

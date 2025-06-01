@@ -163,7 +163,7 @@ export const useAuthActions = () => {
         
         try {
           // Wait for the database trigger to create the profile
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email,
