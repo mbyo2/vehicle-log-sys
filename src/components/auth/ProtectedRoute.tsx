@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 export const DEFAULT_ROUTES: Record<UserRole, string> = {
-  super_admin: '/companies',
+  super_admin: '/dashboard',
   company_admin: '/dashboard',
   supervisor: '/dashboard',
   driver: '/dashboard'
@@ -67,9 +67,8 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   }
 
   if (allowedRoles && !allowedRoles.includes(currentProfile.role)) {
-    console.log(`User role ${currentProfile.role} not allowed, redirecting to default route`);
-    const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
-    return <Navigate to={defaultRoute} replace />;
+    console.log(`User role ${currentProfile.role} not allowed, redirecting to dashboard`);
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;

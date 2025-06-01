@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types/auth";
@@ -13,28 +13,33 @@ const navigation = {
   super_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Companies', href: '/companies', icon: Building2 },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Users', href: '/users', icon: Users },
+    { name: 'Settings', href: '/settings', icon: Settings },
   ],
   company_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Fleet Management', href: '/fleet', icon: Car },
     { name: 'User Management', href: '/users', icon: Users },
-    { name: 'Vehicle Fleet', href: '/fleet', icon: Car },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
+    { name: 'Documents', href: '/documents', icon: FileText },
     { name: 'Settings', href: '/settings', icon: Settings },
   ],
   supervisor: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Vehicle Fleet', href: '/fleet', icon: Car },
-    { name: 'Trip Approvals', href: '/trip-approvals', icon: FileText },
+    { name: 'Fleet Overview', href: '/fleet', icon: Car },
+    { name: 'Trip Approvals', href: '/trip-approvals', icon: ClipboardCheck },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
+    { name: 'Documents', href: '/documents', icon: FileText },
   ],
   driver: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Driver Portal', href: '/driver', icon: LayoutDashboard },
+    { name: 'Driver Portal', href: '/driver-portal', icon: LayoutDashboard },
     { name: 'My Trips', href: '/trips', icon: Car },
     { name: 'Vehicle Status', href: '/vehicle-status', icon: Wrench },
     { name: 'Messages', href: '/driver/messages', icon: MessageSquare },
-    { name: 'Certifications', href: '/driver/trainings', icon: GraduationCap },
+    { name: 'Training', href: '/driver/trainings', icon: GraduationCap },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
   ],
 };
@@ -86,7 +91,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden w-64 flex-col border-r px-4 py-6 md:flex">
         <div className="flex flex-1 flex-col gap-4">
           <div className="flex h-14 items-center border-b px-4 font-semibold">
-            Vehicle Management
+            Fleet Manager
           </div>
           <nav className="flex flex-1 flex-col gap-2">
             <NavLinks />
@@ -118,7 +123,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <SheetContent side="left" className="w-64 p-0">
           <div className="flex h-full flex-col px-4 py-6">
             <div className="flex h-14 items-center border-b px-4 font-semibold">
-              Vehicle Management
+              Fleet Manager
             </div>
             <nav className="flex flex-1 flex-col gap-2 py-4">
               <NavLinks />
