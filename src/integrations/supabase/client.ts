@@ -42,14 +42,15 @@ export const supabase = createClient(
 );
 
 // Test connection on initialization
-supabase.from('profiles').select('count', { count: 'exact', head: true })
-  .then(({ error }) => {
+(async () => {
+  try {
+    const { error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
     if (error) {
       console.warn('Supabase connection test failed:', error);
     } else {
       console.log('Supabase connection established successfully');
     }
-  })
-  .catch((err) => {
+  } catch (err) {
     console.warn('Supabase connection test error:', err);
-  });
+  }
+})();
