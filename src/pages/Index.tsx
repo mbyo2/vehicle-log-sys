@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,13 +25,27 @@ export default function Index() {
       
       console.log("Setting up database tables...");
       
-      const { data, error } = await supabase.functions.invoke('create-profiles-table', {
-        body: { force_setup: true }
+      // Use the correct project URL for edge functions
+      const functionUrl = `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`;
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ force_setup: true })
       });
       
-      if (error) {
-        console.error("Database setup error:", error);
-        throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Setup failed');
       }
       
       console.log("Database setup successful:", data);
@@ -52,9 +67,9 @@ export default function Index() {
     const initializeApp = async () => {
       console.log('Starting app initialization...');
       
-      // Wait for auth to stabilize with a reasonable timeout
+      // Wait for auth to stabilize
       let authTimeout = 0;
-      const maxAuthWait = 8000; // 8 seconds
+      const maxAuthWait = 8000;
       
       while (loading.get() && authTimeout < maxAuthWait) {
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -72,7 +87,7 @@ export default function Index() {
         loading: loading.get()
       });
       
-      // User is authenticated with a profile - redirect to appropriate page
+      // User is authenticated with a profile
       if (currentUser && currentProfile) {
         console.log("User authenticated, navigating to default route for role:", currentProfile.role);
         const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
@@ -80,19 +95,18 @@ export default function Index() {
         return;
       }
       
-      // User authenticated but no profile - potential issue
+      // User authenticated but no profile
       if (currentUser && !currentProfile) {
         console.log("User authenticated but no profile found");
         setError("Account setup incomplete. Please contact support or try setting up the database again.");
         return;
       }
       
-      // No user - check if this is a fresh installation
+      // No user - check database status
       try {
         setIsCheckingDb(true);
         console.log("Checking database status...");
         
-        // Try to check if profiles table exists and has data
         const { count, error: countError } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true });
@@ -100,7 +114,6 @@ export default function Index() {
         if (countError) {
           console.error("Database check error:", countError);
           
-          // Common database setup issues
           if (countError.message?.includes('relation "profiles" does not exist') || 
               countError.message?.includes('permission denied') ||
               countError.code === 'PGRST116' ||
@@ -110,7 +123,6 @@ export default function Index() {
             return;
           }
           
-          // Other connection issues
           setError(`Database connection issue: ${countError.message || 'Unable to connect'}. Please try again.`);
           return;
         }
