@@ -6,14 +6,12 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Database, AlertTriangle, RefreshCw, CheckCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle } from 'lucide-react';
 
 export default function Index() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [isCheckingDb, setIsCheckingDb] = useState(false);
   const [isSettingUpDb, setIsSettingUpDb] = useState(false);
   const [dbSetupComplete, setDbSetupComplete] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
@@ -23,7 +21,7 @@ export default function Index() {
       setIsSettingUpDb(true);
       setError(null);
       
-      console.log("Setting up database tables...");
+      console.log("Setting up database tables automatically...");
       
       // Use the correct project URL for edge functions
       const functionUrl = `https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table`;
@@ -57,7 +55,7 @@ export default function Index() {
       }, 2000);
     } catch (err: any) {
       console.error("Error setting up database:", err);
-      setError(`Failed to set up database: ${err.message || 'Unknown error'}`);
+      setError(`Failed to set up database automatically: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSettingUpDb(false);
     }
@@ -98,13 +96,12 @@ export default function Index() {
       // User authenticated but no profile
       if (currentUser && !currentProfile) {
         console.log("User authenticated but no profile found");
-        setError("Account setup incomplete. Please contact support or try setting up the database again.");
+        setError("Account setup incomplete. Please contact support.");
         return;
       }
       
       // No user - check database status
       try {
-        setIsCheckingDb(true);
         console.log("Checking database status...");
         
         const { count, error: countError } = await supabase
@@ -118,12 +115,12 @@ export default function Index() {
               countError.message?.includes('permission denied') ||
               countError.code === 'PGRST116' ||
               countError.message === '') {
-            console.log("Database needs setup");
-            setError("Database setup required. Click 'Setup Database' to initialize the application.");
+            console.log("Database needs setup, setting up automatically...");
+            await setupDatabase();
             return;
           }
           
-          setError(`Database connection issue: ${countError.message || 'Unable to connect'}. Please try again.`);
+          setError(`Database connection issue: ${countError.message || 'Unable to connect'}. Please try refreshing the page.`);
           return;
         }
         
@@ -140,9 +137,7 @@ export default function Index() {
         
       } catch (err: any) {
         console.error("Unexpected error during database check:", err);
-        setError(`Application initialization failed: ${err.message || 'Unknown error'}. Please try setting up the database.`);
-      } finally {
-        setIsCheckingDb(false);
+        setError(`Application initialization failed: ${err.message || 'Unknown error'}. Please refresh the page.`);
       }
     };
 
@@ -165,7 +160,7 @@ export default function Index() {
     );
   }
 
-  // Show error state with action buttons
+  // Show error state
   if (error) {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 bg-background">
@@ -174,31 +169,6 @@ export default function Index() {
             <AlertTriangle className="h-5 w-5" />
             <AlertDescription className="mt-2">{error}</AlertDescription>
           </Alert>
-          
-          <div className="flex flex-col gap-3">
-            <Button 
-              onClick={setupDatabase} 
-              disabled={isSettingUpDb}
-              className="flex items-center"
-            >
-              {isSettingUpDb ? (
-                <LoadingSpinner className="mr-2" size={16} />
-              ) : (
-                <Database className="mr-2 h-4 w-4" />
-              )}
-              {isSettingUpDb ? "Setting Up..." : "Setup Database"}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.reload()} 
-              disabled={isCheckingDb || isSettingUpDb}
-              className="flex items-center"
-            >
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-          </div>
         </div>
       </div>
     );
@@ -214,8 +184,8 @@ export default function Index() {
       <p className="text-muted-foreground text-center max-w-md">
         {!authCheckComplete 
           ? "Initializing authentication..." 
-          : isCheckingDb 
-          ? "Checking database status..." 
+          : isSettingUpDb 
+          ? "Setting up database automatically..." 
           : "Setting up your application..."}
       </p>
     </div>
