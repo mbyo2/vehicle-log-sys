@@ -21,31 +21,33 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const { user, profile, loading } = useAuth();
   const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(true);
-  const [attempts, setAttempts] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const maxAttempts = 3;
       const isLoading = loading.get();
+      const currentUser = user.get();
+      const currentProfile = profile.get();
       
-      if (isLoading && attempts < maxAttempts) {
-        setAttempts(prev => prev + 1);
-        // Wait a bit more for auth to complete
-        setTimeout(() => {
-          setIsVerifying(isLoading);
-        }, 1000);
-      } else {
+      // If not loading and we have user data, we can proceed
+      if (!isLoading) {
         setIsVerifying(false);
+        return;
       }
+      
+      // Give auth some time to initialize
+      setTimeout(() => {
+        setIsVerifying(false);
+      }, 2000);
     };
 
     checkAuth();
-  }, [loading, attempts]);
+  }, [loading, user, profile]);
 
   const currentUser = user.get();
   const currentProfile = profile.get();
+  const isLoading = loading.get();
 
-  if (isVerifying && attempts < 3) {
+  if (isVerifying || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">

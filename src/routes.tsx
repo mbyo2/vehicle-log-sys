@@ -142,6 +142,18 @@ export const router = createBrowserRouter([
                 element: <DriverPortal />,
               },
               {
+                path: "driver",
+                element: <DriverPortal />,
+              },
+              {
+                path: "driver/messages",
+                element: <DriverPortal />,
+              },
+              {
+                path: "driver/trainings",
+                element: <DriverPortal />,
+              },
+              {
                 path: "advertisements",
                 element: <Advertisements />,
               },

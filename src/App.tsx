@@ -2,8 +2,6 @@
 import { Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
-import { HelpCenter } from "@/components/onboarding/HelpCenter";
 import { AppLoadingScreen } from "@/components/ui/AppLoadingScreen";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import "./App.css";

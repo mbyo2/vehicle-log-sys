@@ -4,14 +4,13 @@ import { DriverDashboard } from "@/components/driver/DriverDashboard";
 import { MessageList } from "@/components/driver/MessageList";
 import { TrainingList } from "@/components/driver/TrainingList";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { LayoutDashboard, MessageSquare, GraduationCap } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function DriverPortal() {
   const location = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   
   // Extract tab from URL path or default to dashboard
@@ -24,26 +23,14 @@ export default function DriverPortal() {
   
   const [activeTab, setActiveTab] = useState(getTabFromPath());
   
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    
-    // Update URL based on selected tab
-    switch (value) {
-      case 'messages':
-        navigate('/driver/messages');
-        break;
-      case 'trainings':
-        navigate('/driver/trainings');
-        break;
-      default:
-        navigate('/driver');
-        break;
-    }
-  };
+  // Update active tab when location changes
+  useEffect(() => {
+    setActiveTab(getTabFromPath());
+  }, [location.pathname]);
   
   return (
     <DashboardLayout>
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={`${isMobile ? 'mb-4 w-full grid grid-cols-3' : 'mb-8'}`}>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />

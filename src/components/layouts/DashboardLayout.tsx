@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Bell, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3 } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types/auth";
@@ -51,7 +51,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
 
   const currentProfile = profile.get();
-  const userNavigation = currentProfile ? navigation[currentProfile.role as UserRole] : [];
+  const userNavigation = currentProfile ? navigation[currentProfile.role as UserRole] || [] : [];
 
   // Close mobile menu when changing route
   useEffect(() => {
@@ -62,16 +62,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <>
       {userNavigation.map((item) => {
         const Icon = item.icon;
+        const isActive = location.pathname === item.href ||
+          (item.href === '/driver-portal' && location.pathname.startsWith('/driver')) ||
+          (item.href === '/driver/messages' && location.pathname === '/driver/messages') ||
+          (item.href === '/driver/trainings' && location.pathname === '/driver/trainings');
+          
         return (
           <Link
             key={item.name}
             to={item.href}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50",
-              location.pathname === item.href ||
-              (item.href === '/driver' && location.pathname.startsWith('/driver/')) ||
-              (item.href === '/driver/messages' && location.pathname === '/driver/messages') ||
-              (item.href === '/driver/trainings' && location.pathname === '/driver/trainings')
+              isActive
                 ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
                 : ""
             )}
