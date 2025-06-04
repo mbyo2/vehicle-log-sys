@@ -19,10 +19,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+let authInitialized = false;
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [initialized, setInitialized] = useState(false);
 
   const signOut = async () => {
     try {
@@ -49,23 +50,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log(`Fetching profile for user ${userId}`);
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-    
-      if (error) {
-        console.error('Profile fetch error:', error);
-        return null;
+      // Add retries for profile fetching
+      let retries = 3;
+      while (retries > 0) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+      
+        if (error) {
+          console.error('Profile fetch error:', error);
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          return null;
+        }
+        
+        if (data) {
+          console.log('Profile loaded successfully:', data.role);
+          return data;
+        }
+        
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
       
-      if (data) {
-        console.log('Profile loaded successfully:', data.role);
-        return data;
-      }
-      
-      console.warn('No profile found for user:', userId);
+      console.warn('No profile found for user after retries:', userId);
       return null;
     } catch (err) {
       console.error('Profile fetch failed:', err);
@@ -74,15 +89,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (initialized) return;
+    if (authInitialized) {
+      console.log('Auth already initialized, skipping...');
+      return;
+    }
     
     let mounted = true;
     
     const initializeAuth = async () => {
-      if (!mounted) return;
+      if (!mounted || authInitialized) return;
       
       try {
         console.log('Initializing auth system...');
+        authInitialized = true;
         authState.loading.set(true);
         
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -93,11 +112,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Found existing session for user:', session.user.id);
           authState.user.set(session.user);
           
-          // Fetch profile
-          const profileData = await fetchUserProfile(session.user.id);
-          if (mounted) {
-            authState.profile.set(profileData);
-          }
+          // Fetch profile with delay to avoid race conditions
+          setTimeout(async () => {
+            if (!mounted) return;
+            const profileData = await fetchUserProfile(session.user.id);
+            if (mounted) {
+              authState.profile.set(profileData);
+            }
+          }, 500);
         } else {
           console.log('No existing session found');
         }
@@ -107,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           authState.loading.set(false);
           authState.initialized.set(true);
-          setInitialized(true);
         }
       }
     };
@@ -135,7 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (mounted) {
             authState.profile.set(profileData);
           }
-        }, 100);
+        }, 200);
       }
     });
 
@@ -145,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [initialized]);
+  }, []);
 
   return (
     <AuthContext.Provider 

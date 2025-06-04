@@ -1,16 +1,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl) {
-  throw new Error('VITE_SUPABASE_URL is not defined in environment variables');
-}
-
-if (!supabaseAnonKey) {
-  throw new Error('VITE_SUPABASE_ANON_KEY is not defined in environment variables');
-}
+const supabaseUrl = 'https://yyeypbfdtitxqssvnagy.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As';
 
 export const supabase = createClient(
   supabaseUrl,
@@ -41,11 +33,11 @@ export const supabase = createClient(
   }
 );
 
-// Test connection on initialization
+// Test connection on initialization with better error handling
 (async () => {
   try {
     const { error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
-    if (error) {
+    if (error && !error.message?.includes('relation "profiles" does not exist')) {
       console.warn('Supabase connection test failed:', error);
     } else {
       console.log('Supabase connection established successfully');

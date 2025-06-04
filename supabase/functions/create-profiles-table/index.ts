@@ -30,36 +30,37 @@ serve(async (req) => {
       }
     });
 
-    // Create user_role enum if it doesn't exist
+    // First, create the enums if they don't exist
     console.log('Creating user_role enum...');
-    try {
-      await supabaseAdmin.rpc('exec_sql', {
-        sql: `
-          DO $$ BEGIN
+    const { error: userRoleError } = await supabaseAdmin.rpc('exec_sql', {
+      sql: `
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
             CREATE TYPE user_role AS ENUM ('super_admin', 'company_admin', 'supervisor', 'driver');
-            EXCEPTION
-              WHEN duplicate_object THEN null;
-          END $$;
-        `
-      });
-    } catch (enumError) {
-      console.log('Enum creation handled:', enumError);
+          END IF;
+        END $$;
+      `
+    });
+
+    if (userRoleError) {
+      console.log('User role enum creation handled:', userRoleError);
     }
 
-    // Create subscription_type enum if it doesn't exist
     console.log('Creating subscription_type enum...');
-    try {
-      await supabaseAdmin.rpc('exec_sql', {
-        sql: `
-          DO $$ BEGIN
+    const { error: subscriptionTypeError } = await supabaseAdmin.rpc('exec_sql', {
+      sql: `
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'subscription_type') THEN
             CREATE TYPE subscription_type AS ENUM ('trial', 'basic', 'premium', 'enterprise');
-            EXCEPTION
-              WHEN duplicate_object THEN null;
-          END $$;
-        `
-      });
-    } catch (subscriptionEnumError) {
-      console.log('Subscription enum creation handled:', subscriptionEnumError);
+          END IF;
+        END $$;
+      `
+    });
+
+    if (subscriptionTypeError) {
+      console.log('Subscription type enum creation handled:', subscriptionTypeError);
     }
 
     // Check if profiles table exists
@@ -69,100 +70,97 @@ serve(async (req) => {
       .select('id')
       .limit(1);
 
-    if (checkError && (checkError.message?.includes('relation "profiles" does not exist') || checkError.code === 'PGRST116')) {
+    if (checkError && checkError.message?.includes('relation "profiles" does not exist')) {
       console.log('Profiles table does not exist, creating...');
       
       // Create profiles table
-      try {
-        await supabaseAdmin.rpc('exec_sql', {
-          sql: `
-            CREATE TABLE IF NOT EXISTS public.profiles (
-              id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-              email TEXT NOT NULL,
-              full_name TEXT,
-              role user_role NOT NULL DEFAULT 'driver',
-              company_id UUID,
-              two_factor_enabled BOOLEAN DEFAULT FALSE,
-              two_factor_method TEXT DEFAULT 'email',
-              two_factor_secret TEXT,
-              created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('utc'::text, NOW()),
-              updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('utc'::text, NOW()),
-              PRIMARY KEY (id)
-            );
-          `
-        });
-        console.log('Profiles table created successfully');
-      } catch (tableError) {
+      const { error: tableError } = await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          CREATE TABLE IF NOT EXISTS public.profiles (
+            id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+            email TEXT NOT NULL,
+            full_name TEXT,
+            role user_role NOT NULL DEFAULT 'driver',
+            company_id UUID,
+            two_factor_enabled BOOLEAN DEFAULT FALSE,
+            two_factor_method TEXT DEFAULT 'email',
+            two_factor_secret TEXT,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('utc'::text, NOW()),
+            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT TIMEZONE('utc'::text, NOW()),
+            PRIMARY KEY (id)
+          );
+        `
+      });
+
+      if (tableError) {
         console.error('Table creation error:', tableError);
         throw new Error(`Failed to create profiles table: ${tableError.message}`);
       }
 
       // Enable RLS and create policies
-      try {
-        await supabaseAdmin.rpc('exec_sql', {
-          sql: `
-            ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+      const { error: rlsError } = await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+          
+          DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+          DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+          
+          CREATE POLICY "Users can view own profile" ON public.profiles
+            FOR SELECT USING (auth.uid() = id);
             
-            DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
-            DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-            
-            CREATE POLICY "Users can view own profile" ON public.profiles
-              FOR SELECT USING (auth.uid() = id);
-              
-            CREATE POLICY "Users can update own profile" ON public.profiles
-              FOR UPDATE USING (auth.uid() = id);
-          `
-        });
-        console.log('RLS policies created successfully');
-      } catch (rlsError) {
+          CREATE POLICY "Users can update own profile" ON public.profiles
+            FOR UPDATE USING (auth.uid() = id);
+        `
+      });
+
+      if (rlsError) {
         console.log('RLS setup handled:', rlsError);
       }
 
-      // Create trigger function
-      try {
-        await supabaseAdmin.rpc('exec_sql', {
-          sql: `
-            CREATE OR REPLACE FUNCTION public.handle_new_user()
-            RETURNS TRIGGER
-            LANGUAGE plpgsql
-            SECURITY DEFINER SET search_path = ''
-            AS $$
-            BEGIN
-              INSERT INTO public.profiles (
-                id,
-                email,
-                role,
-                full_name,
-                company_id
-              )
-              VALUES (
-                NEW.id,
-                NEW.email,
-                CASE 
-                  WHEN NOT EXISTS (SELECT 1 FROM public.profiles) THEN 'super_admin'::user_role
-                  WHEN NEW.raw_app_meta_data->>'role' IS NOT NULL THEN (NEW.raw_app_meta_data->>'role')::user_role
-                  ELSE 'driver'::user_role
-                END,
-                COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-                CASE 
-                  WHEN NEW.raw_app_meta_data->>'company_id' IS NOT NULL 
-                  THEN (NEW.raw_app_meta_data->>'company_id')::uuid
-                  ELSE NULL
-                END
-              );
-              RETURN NEW;
-            END;
-            $$;
+      // Create trigger function and trigger
+      const { error: triggerError } = await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          CREATE OR REPLACE FUNCTION public.handle_new_user()
+          RETURNS TRIGGER
+          LANGUAGE plpgsql
+          SECURITY DEFINER SET search_path = ''
+          AS $$
+          BEGIN
+            INSERT INTO public.profiles (
+              id,
+              email,
+              role,
+              full_name,
+              company_id
+            )
+            VALUES (
+              NEW.id,
+              NEW.email,
+              CASE 
+                WHEN NOT EXISTS (SELECT 1 FROM public.profiles) THEN 'super_admin'::user_role
+                WHEN NEW.raw_app_meta_data->>'role' IS NOT NULL THEN (NEW.raw_app_meta_data->>'role')::user_role
+                ELSE 'driver'::user_role
+              END,
+              COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+              CASE 
+                WHEN NEW.raw_app_meta_data->>'company_id' IS NOT NULL 
+                THEN (NEW.raw_app_meta_data->>'company_id')::uuid
+                ELSE NULL
+              END
+            );
+            RETURN NEW;
+          END;
+          $$;
 
-            DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-            
-            CREATE TRIGGER on_auth_user_created
-              AFTER INSERT ON auth.users
-              FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-          `
-        });
-        console.log('Trigger created successfully');
-      } catch (triggerError) {
+          DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+          
+          CREATE TRIGGER on_auth_user_created
+            AFTER INSERT ON auth.users
+            FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+        `
+      });
+
+      if (triggerError) {
         console.log('Trigger setup handled:', triggerError);
       }
 

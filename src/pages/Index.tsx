@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 
+let initializationInProgress = false;
+
 export default function Index() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
@@ -15,22 +17,33 @@ export default function Index() {
   const [isSettingUpDb, setIsSettingUpDb] = useState(false);
   const [dbSetupComplete, setDbSetupComplete] = useState(false);
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
-  const [hasInitialized, setHasInitialized] = useState(false);
   
   const setupDatabase = async () => {
     try {
       setIsSettingUpDb(true);
       setError(null);
       
-      console.log("Setting up database tables automatically...");
+      console.log("Setting up database automatically...");
       
-      const { data, error } = await supabase.functions.invoke('create-profiles-table', {
-        body: { force_setup: true }
-      });
+      // Use direct fetch to call the edge function
+      const response = await fetch(
+        'https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As'
+          },
+          body: JSON.stringify({ force_setup: true })
+        }
+      );
       
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
+      const data = await response.json();
       
       if (!data || !data.success) {
         throw new Error(data?.error || 'Setup failed');
@@ -52,90 +65,97 @@ export default function Index() {
   };
 
   useEffect(() => {
-    if (hasInitialized) return;
+    if (initializationInProgress) {
+      console.log('Initialization already in progress, skipping...');
+      return;
+    }
     
     const initializeApp = async () => {
       console.log('Starting app initialization...');
-      setHasInitialized(true);
+      initializationInProgress = true;
       
-      // Wait for auth to stabilize
-      let authTimeout = 0;
-      const maxAuthWait = 5000;
-      
-      while (loading.get() && authTimeout < maxAuthWait) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        authTimeout += 200;
-      }
-      
-      setAuthCheckComplete(true);
-      
-      const currentUser = user.get();
-      const currentProfile = profile.get();
-      
-      console.log("Auth check complete:", { 
-        hasUser: !!currentUser, 
-        hasProfile: !!currentProfile,
-        loading: loading.get()
-      });
-      
-      // User is authenticated with a profile
-      if (currentUser && currentProfile) {
-        console.log("User authenticated, navigating to default route for role:", currentProfile.role);
-        const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
-        navigate(defaultRoute, { replace: true });
-        return;
-      }
-      
-      // User authenticated but no profile
-      if (currentUser && !currentProfile) {
-        console.log("User authenticated but no profile found");
-        setError("Account setup incomplete. Please contact support.");
-        return;
-      }
-      
-      // No user - check database status
       try {
-        console.log("Checking database status...");
+        // Wait for auth to stabilize
+        let authTimeout = 0;
+        const maxAuthWait = 3000;
         
-        const { count, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+        while (loading.get() && authTimeout < maxAuthWait) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          authTimeout += 200;
+        }
         
-        if (countError) {
-          console.error("Database check error:", countError);
-          
-          if (countError.message?.includes('relation "profiles" does not exist') || 
-              countError.message?.includes('permission denied') ||
-              countError.code === 'PGRST116' ||
-              countError.message === '') {
-            console.log("Database needs setup, setting up automatically...");
-            await setupDatabase();
-            return;
-          }
-          
-          setError(`Database connection issue. Please refresh the page.`);
+        setAuthCheckComplete(true);
+        
+        const currentUser = user.get();
+        const currentProfile = profile.get();
+        
+        console.log("Auth check complete:", { 
+          hasUser: !!currentUser, 
+          hasProfile: !!currentProfile,
+          loading: loading.get()
+        });
+        
+        // User is authenticated with a profile
+        if (currentUser && currentProfile) {
+          console.log("User authenticated, navigating to default route for role:", currentProfile.role);
+          const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
+          navigate(defaultRoute, { replace: true });
           return;
         }
         
-        const profileCount = count || 0;
-        console.log("Found profiles in database:", profileCount);
-        
-        if (profileCount === 0) {
-          console.log("No profiles found, directing to first user signup");
-          navigate('/signup', { state: { isFirstUser: true }, replace: true });
-        } else {
-          console.log("Profiles exist, directing to signin");
-          navigate('/signin', { replace: true });
+        // User authenticated but no profile
+        if (currentUser && !currentProfile) {
+          console.log("User authenticated but no profile found");
+          setError("Account setup incomplete. Please contact support.");
+          return;
         }
         
-      } catch (err: any) {
-        console.error("Unexpected error during database check:", err);
-        setError(`Application initialization failed. Please refresh the page.`);
+        // No user - check database status
+        try {
+          console.log("Checking database status...");
+          
+          const { count, error: countError } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+          
+          if (countError) {
+            console.error("Database check error:", countError);
+            
+            if (countError.message?.includes('relation "profiles" does not exist') || 
+                countError.message?.includes('permission denied') ||
+                countError.code === 'PGRST116' ||
+                countError.message === '') {
+              console.log("Database needs setup, setting up automatically...");
+              await setupDatabase();
+              return;
+            }
+            
+            setError(`Database connection issue: ${countError.message || 'Unknown error'}`);
+            return;
+          }
+          
+          const profileCount = count || 0;
+          console.log("Found profiles in database:", profileCount);
+          
+          if (profileCount === 0) {
+            console.log("No profiles found, directing to first user signup");
+            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+          } else {
+            console.log("Profiles exist, directing to signin");
+            navigate('/signin', { replace: true });
+          }
+          
+        } catch (err: any) {
+          console.error("Unexpected error during database check:", err);
+          setError(`Application initialization failed: ${err.message || 'Unknown error'}`);
+        }
+      } finally {
+        initializationInProgress = false;
       }
     };
 
     initializeApp();
-  }, [navigate, user, profile, loading, hasInitialized]);
+  }, [navigate, user, profile, loading]);
 
   // Show completion message
   if (dbSetupComplete) {
