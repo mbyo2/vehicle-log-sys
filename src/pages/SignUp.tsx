@@ -24,27 +24,61 @@ export default function SignUp() {
       }
       
       try {
-        // Check if any profiles exist
-        const { count, error } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
-          
-        if (error) {
-          console.error("Error checking profiles:", error);
-          // If error suggests table doesn't exist, assume first user
-          if (error.message?.includes('relation "profiles" does not exist')) {
-            setIsFirstUser(true);
-          } else {
-            // For other errors, assume not first user
-            setIsFirstUser(false);
+        console.log("Checking if first user...");
+        
+        // Check if any profiles exist with retry logic
+        let retries = 3;
+        let profileCount = 0;
+        
+        while (retries > 0) {
+          try {
+            const { count, error } = await supabase
+              .from('profiles')
+              .select('*', { count: 'exact', head: true });
+              
+            if (error) {
+              console.error("Error checking profiles:", error);
+              
+              if (error.message?.includes('relation "profiles" does not exist') || 
+                  error.code === 'PGRST116') {
+                console.log("Profiles table doesn't exist, assuming first user");
+                setIsFirstUser(true);
+                setCheckingFirstUser(false);
+                return;
+              }
+              
+              retries--;
+              if (retries === 0) {
+                // On final retry failure, assume not first user
+                console.warn("Failed to check profiles after retries, assuming not first user");
+                setIsFirstUser(false);
+                break;
+              }
+              
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              continue;
+            }
+            
+            profileCount = count || 0;
+            break;
+          } catch (err) {
+            retries--;
+            if (retries === 0) {
+              console.error("Final retry failed:", err);
+              setIsFirstUser(false);
+              break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
-        } else {
-          const profileCount = count === null ? 0 : Number(count);
-          setIsFirstUser(profileCount === 0);
         }
-      } catch (err) {
-        console.error("Error in first user check:", err);
-        setIsFirstUser(true); // Default to first user on error
+        
+        console.log("Profile count determined:", profileCount);
+        setIsFirstUser(profileCount === 0);
+        
+      } catch (err: any) {
+        console.error("Unexpected error during first user check:", err);
+        // Default to not first user to be safe
+        setIsFirstUser(false);
       } finally {
         setCheckingFirstUser(false);
       }

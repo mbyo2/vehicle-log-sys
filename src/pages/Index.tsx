@@ -8,96 +8,35 @@ import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
 
-let initializationInProgress = false;
-
 export default function Index() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [isSettingUpDb, setIsSettingUpDb] = useState(false);
-  const [dbSetupComplete, setDbSetupComplete] = useState(false);
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   
-  const setupDatabase = async () => {
-    try {
-      setIsSettingUpDb(true);
-      setError(null);
-      
-      console.log("Setting up database automatically...");
-      
-      // Use direct fetch to call the edge function
-      const response = await fetch(
-        'https://yyeypbfdtitxqssvnagy.supabase.co/functions/v1/create-profiles-table',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As`,
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl5ZXlwYmZkdGl0eHFzc3ZuYWd5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQzOTI1NTgsImV4cCI6MjA0OTk2ODU1OH0.jKd7rzhCpkF76FIYUAwT7gK3YLaGtUstjM-IJmdY6As'
-          },
-          body: JSON.stringify({ force_setup: true })
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Setup failed');
-      }
-      
-      console.log("Database setup successful:", data);
-      setDbSetupComplete(true);
-      
-      // Wait a moment then navigate to signup
-      setTimeout(() => {
-        navigate('/signup', { state: { isFirstUser: true }, replace: true });
-      }, 2000);
-    } catch (err: any) {
-      console.error("Error setting up database:", err);
-      setError(`Failed to set up database: ${err.message || 'Unknown error'}`);
-    } finally {
-      setIsSettingUpDb(false);
-    }
-  };
-
   useEffect(() => {
-    if (initializationInProgress) {
-      console.log('Initialization already in progress, skipping...');
-      return;
-    }
-    
     const initializeApp = async () => {
-      console.log('Starting app initialization...');
-      initializationInProgress = true;
-      
       try {
         // Wait for auth to stabilize
-        let authTimeout = 0;
-        const maxAuthWait = 3000;
+        let attempts = 0;
+        const maxAttempts = 15; // 3 seconds max
         
-        while (loading.get() && authTimeout < maxAuthWait) {
+        while (loading.get() && attempts < maxAttempts) {
           await new Promise(resolve => setTimeout(resolve, 200));
-          authTimeout += 200;
+          attempts++;
         }
-        
-        setAuthCheckComplete(true);
         
         const currentUser = user.get();
         const currentProfile = profile.get();
         
         console.log("Auth check complete:", { 
           hasUser: !!currentUser, 
-          hasProfile: !!currentProfile,
-          loading: loading.get()
+          hasProfile: !!currentProfile
         });
         
         // User is authenticated with a profile
         if (currentUser && currentProfile) {
-          console.log("User authenticated, navigating to default route for role:", currentProfile.role);
+          console.log("User authenticated, navigating to default route");
           const defaultRoute = DEFAULT_ROUTES[currentProfile.role] || '/dashboard';
           navigate(defaultRoute, { replace: true });
           return;
@@ -107,12 +46,13 @@ export default function Index() {
         if (currentUser && !currentProfile) {
           console.log("User authenticated but no profile found");
           setError("Account setup incomplete. Please contact support.");
+          setIsChecking(false);
           return;
         }
         
-        // No user - check database status
+        // No user - check if this is first user setup
         try {
-          console.log("Checking database status...");
+          console.log("Checking if first user setup...");
           
           const { count, error: countError } = await supabase
             .from('profiles')
@@ -121,17 +61,40 @@ export default function Index() {
           if (countError) {
             console.error("Database check error:", countError);
             
+            // If profiles table doesn't exist, setup database
             if (countError.message?.includes('relation "profiles" does not exist') || 
-                countError.message?.includes('permission denied') ||
-                countError.code === 'PGRST116' ||
-                countError.message === '') {
-              console.log("Database needs setup, setting up automatically...");
-              await setupDatabase();
+                countError.code === 'PGRST116') {
+              console.log("Setting up database...");
+              
+              const response = await fetch(
+                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                  },
+                  body: JSON.stringify({ force_setup: true })
+                }
+              );
+              
+              if (!response.ok) {
+                throw new Error(`Setup failed: ${response.status}`);
+              }
+              
+              const setupResult = await response.json();
+              console.log("Database setup result:", setupResult);
+              
+              if (setupResult.success) {
+                navigate('/signup', { state: { isFirstUser: true }, replace: true });
+              } else {
+                throw new Error(setupResult.error || 'Database setup failed');
+              }
               return;
             }
             
-            setError(`Database connection issue: ${countError.message || 'Unknown error'}`);
-            return;
+            throw countError;
           }
           
           const profileCount = count || 0;
@@ -146,32 +109,19 @@ export default function Index() {
           }
           
         } catch (err: any) {
-          console.error("Unexpected error during database check:", err);
-          setError(`Application initialization failed: ${err.message || 'Unknown error'}`);
+          console.error("Database check failed:", err);
+          setError(`Failed to initialize application: ${err.message || 'Unknown error'}`);
         }
+      } catch (error: any) {
+        console.error("App initialization error:", error);
+        setError(`Application initialization failed: ${error.message || 'Unknown error'}`);
       } finally {
-        initializationInProgress = false;
+        setIsChecking(false);
       }
     };
 
     initializeApp();
   }, [navigate, user, profile, loading]);
-
-  // Show completion message
-  if (dbSetupComplete) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center p-4 bg-background">
-        <div className="w-full max-w-md text-center">
-          <Alert className="mb-6 bg-green-50 border-green-200">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <AlertDescription className="mt-2 text-green-800">
-              Database setup completed successfully! Redirecting to create your admin account...
-            </AlertDescription>
-          </Alert>
-        </div>
-      </div>
-    );
-  }
 
   // Show error state
   if (error) {
@@ -188,19 +138,19 @@ export default function Index() {
   }
 
   // Show loading screen
-  return (
-    <div className="flex h-screen flex-col items-center justify-center bg-background">
-      <div className="flex items-center mb-6">
-        <LoadingSpinner size={24} />
-        <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
+  if (isChecking) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-background">
+        <div className="flex items-center mb-6">
+          <LoadingSpinner size={24} />
+          <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
+        </div>
+        <p className="text-muted-foreground text-center max-w-md">
+          Initializing your application...
+        </p>
       </div>
-      <p className="text-muted-foreground text-center max-w-md">
-        {!authCheckComplete 
-          ? "Initializing authentication..." 
-          : isSettingUpDb 
-          ? "Setting up database automatically..." 
-          : "Setting up your application..."}
-      </p>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
