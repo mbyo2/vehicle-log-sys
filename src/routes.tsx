@@ -26,6 +26,7 @@ import App from "./App";
 import Index from "./pages/Index";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ModalProvider } from "./contexts/ModalContext";
+import { AuthenticatedLayout } from "./components/layouts/AuthenticatedLayout";
 import VehicleDetails from "./pages/VehicleDetails";
 import NewTrip from "./pages/NewTrip";
 
@@ -40,11 +41,13 @@ const RootLayout = () => {
   );
 };
 
-// Create a layout route with the ProtectedRoute component
+// Create a layout route with the ProtectedRoute component and authenticated features
 const ProtectedLayout = () => {
   return (
     <ProtectedRoute>
-      <Outlet />
+      <AuthenticatedLayout>
+        <Outlet />
+      </AuthenticatedLayout>
     </ProtectedRoute>
   );
 };
