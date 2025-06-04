@@ -6,23 +6,26 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 export default function Index() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [initializationStep, setInitializationStep] = useState('Starting...');
   
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Wait for auth to stabilize
+        setInitializationStep('Checking authentication...');
+        
+        // Wait for auth to stabilize with timeout
         let attempts = 0;
-        const maxAttempts = 15; // 3 seconds max
+        const maxAttempts = 10;
         
         while (loading.get() && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 300));
           attempts++;
         }
         
@@ -31,7 +34,8 @@ export default function Index() {
         
         console.log("Auth check complete:", { 
           hasUser: !!currentUser, 
-          hasProfile: !!currentProfile
+          hasProfile: !!currentProfile,
+          attempts 
         });
         
         // User is authenticated with a profile
@@ -50,68 +54,67 @@ export default function Index() {
           return;
         }
         
-        // No user - check if this is first user setup
+        // No user - set up database and check first user status
+        setInitializationStep('Setting up database...');
+        console.log("No user found, setting up database...");
+        
         try {
-          console.log("Checking if first user setup...");
+          const { data: setupResult, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
+            body: { force_setup: true }
+          });
           
-          const { count, error: countError } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
+          if (setupError) {
+            console.error("Database setup error:", setupError);
+            throw new Error(`Database setup failed: ${setupError.message}`);
+          }
           
-          if (countError) {
-            console.error("Database check error:", countError);
+          console.log("Database setup result:", setupResult);
+          
+          if (setupResult?.success) {
+            const isFirstUser = setupResult.isFirstUser || setupResult.profileCount === 0;
+            console.log("Setup successful, isFirstUser:", isFirstUser);
             
-            // If profiles table doesn't exist, setup database
-            if (countError.message?.includes('relation "profiles" does not exist') || 
-                countError.code === 'PGRST116') {
-              console.log("Setting up database...");
+            if (isFirstUser) {
+              console.log("Directing to first user signup");
+              navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            } else {
+              console.log("Directing to signin");
+              navigate('/signin', { replace: true });
+            }
+          } else {
+            throw new Error(setupResult?.error || 'Database setup failed');
+          }
+          
+        } catch (setupErr: any) {
+          console.error("Failed to setup database:", setupErr);
+          
+          // Fallback: try to check profiles directly
+          setInitializationStep('Checking existing setup...');
+          try {
+            const { count, error: countError } = await supabase
+              .from('profiles')
+              .select('*', { count: 'exact', head: true });
+            
+            if (countError) {
+              console.error("Direct profile check failed:", countError);
+              // If we can't check profiles, assume first user
+              navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            } else {
+              const profileCount = count || 0;
+              console.log("Direct check - profile count:", profileCount);
               
-              const response = await fetch(
-                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-profiles-table`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-                  },
-                  body: JSON.stringify({ force_setup: true })
-                }
-              );
-              
-              if (!response.ok) {
-                throw new Error(`Setup failed: ${response.status}`);
-              }
-              
-              const setupResult = await response.json();
-              console.log("Database setup result:", setupResult);
-              
-              if (setupResult.success) {
+              if (profileCount === 0) {
                 navigate('/signup', { state: { isFirstUser: true }, replace: true });
               } else {
-                throw new Error(setupResult.error || 'Database setup failed');
+                navigate('/signin', { replace: true });
               }
-              return;
             }
-            
-            throw countError;
+          } catch (finalErr: any) {
+            console.error("Final fallback failed:", finalErr);
+            setError(`Failed to initialize: ${finalErr.message || 'Unknown error'}`);
           }
-          
-          const profileCount = count || 0;
-          console.log("Found profiles in database:", profileCount);
-          
-          if (profileCount === 0) {
-            console.log("No profiles found, directing to first user signup");
-            navigate('/signup', { state: { isFirstUser: true }, replace: true });
-          } else {
-            console.log("Profiles exist, directing to signin");
-            navigate('/signin', { replace: true });
-          }
-          
-        } catch (err: any) {
-          console.error("Database check failed:", err);
-          setError(`Failed to initialize application: ${err.message || 'Unknown error'}`);
         }
+        
       } catch (error: any) {
         console.error("App initialization error:", error);
         setError(`Application initialization failed: ${error.message || 'Unknown error'}`);
@@ -146,7 +149,7 @@ export default function Index() {
           <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
         </div>
         <p className="text-muted-foreground text-center max-w-md">
-          Initializing your application...
+          {initializationStep}
         </p>
       </div>
     );

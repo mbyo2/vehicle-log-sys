@@ -16,6 +16,7 @@ export default function SignUp() {
 
   useEffect(() => {
     const checkFirstUserStatus = async () => {
+      // If we have location state, use it
       if (locationIsFirstUser !== undefined) {
         console.log("Using location state for first user:", locationIsFirstUser);
         setIsFirstUser(locationIsFirstUser);
@@ -24,61 +25,45 @@ export default function SignUp() {
       }
       
       try {
-        console.log("Checking if first user...");
+        console.log("Checking first user status via database setup...");
         
-        // Check if any profiles exist with retry logic
-        let retries = 3;
-        let profileCount = 0;
+        // Use the database setup function to check status
+        const { data: setupResult, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
+          body: { check_only: true }
+        });
         
-        while (retries > 0) {
+        if (setupError) {
+          console.error("Setup function error:", setupError);
+          // Fallback to direct database check
           try {
-            const { count, error } = await supabase
+            const { count, error: countError } = await supabase
               .from('profiles')
               .select('*', { count: 'exact', head: true });
               
-            if (error) {
-              console.error("Error checking profiles:", error);
-              
-              if (error.message?.includes('relation "profiles" does not exist') || 
-                  error.code === 'PGRST116') {
-                console.log("Profiles table doesn't exist, assuming first user");
-                setIsFirstUser(true);
-                setCheckingFirstUser(false);
-                return;
-              }
-              
-              retries--;
-              if (retries === 0) {
-                // On final retry failure, assume not first user
-                console.warn("Failed to check profiles after retries, assuming not first user");
-                setIsFirstUser(false);
-                break;
-              }
-              
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              continue;
+            if (countError) {
+              console.error("Direct count error:", countError);
+              // If we can't check, assume first user for safety
+              setIsFirstUser(true);
+            } else {
+              setIsFirstUser((count || 0) === 0);
             }
-            
-            profileCount = count || 0;
-            break;
-          } catch (err) {
-            retries--;
-            if (retries === 0) {
-              console.error("Final retry failed:", err);
-              setIsFirstUser(false);
-              break;
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (fallbackErr) {
+            console.error("Fallback check failed:", fallbackErr);
+            setIsFirstUser(true);
           }
+        } else if (setupResult?.success) {
+          const profileCount = setupResult.profileCount || 0;
+          console.log("Profile count from setup function:", profileCount);
+          setIsFirstUser(profileCount === 0);
+        } else {
+          console.warn("Setup function returned unsuccessful result");
+          setIsFirstUser(true);
         }
         
-        console.log("Profile count determined:", profileCount);
-        setIsFirstUser(profileCount === 0);
-        
       } catch (err: any) {
-        console.error("Unexpected error during first user check:", err);
-        // Default to not first user to be safe
-        setIsFirstUser(false);
+        console.error("Error checking first user status:", err);
+        // Default to first user to allow setup
+        setIsFirstUser(true);
       } finally {
         setCheckingFirstUser(false);
       }
