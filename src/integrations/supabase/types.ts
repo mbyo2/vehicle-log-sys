@@ -391,13 +391,19 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           created_by: string | null
+          driver_id: string | null
+          expiry_date: string | null
+          file_size: number | null
+          file_url: string | null
           id: string
           metadata: Json | null
+          mime_type: string | null
           name: string
           parent_document_id: string | null
           storage_path: string
           type: string
           updated_at: string | null
+          vehicle_id: string | null
           verification_notes: string | null
           verification_status: string
           verified_at: string | null
@@ -410,13 +416,19 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          driver_id?: string | null
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           metadata?: Json | null
+          mime_type?: string | null
           name: string
           parent_document_id?: string | null
           storage_path: string
           type: string
           updated_at?: string | null
+          vehicle_id?: string | null
           verification_notes?: string | null
           verification_status?: string
           verified_at?: string | null
@@ -429,13 +441,19 @@ export type Database = {
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
+          driver_id?: string | null
+          expiry_date?: string | null
+          file_size?: number | null
+          file_url?: string | null
           id?: string
           metadata?: Json | null
+          mime_type?: string | null
           name?: string
           parent_document_id?: string | null
           storage_path?: string
           type?: string
           updated_at?: string | null
+          vehicle_id?: string | null
           verification_notes?: string | null
           verification_status?: string
           verified_at?: string | null
@@ -466,10 +484,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "documents_parent_document_id_fkey"
             columns: ["parent_document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
           {

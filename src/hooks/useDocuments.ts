@@ -1,146 +1,126 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Document, DocumentType } from '@/types/document';
+import { DocumentType } from '@/types/document';
+import { fileValidation } from '@/lib/validation';
+
+interface DocumentUploadData {
+  name: string;
+  type: DocumentType;
+  expiry_date?: string;
+  company_id: string;
+  vehicle_id?: string;
+  driver_id?: string;
+}
 
 export function useDocuments() {
-  const [isUploading, setIsUploading] = useState(false);
-  const queryClient = useQueryClient();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('documents')
-        .select('*')
-        .order('upload_date', { ascending: false });
+        .select(`
+          *,
+          verified_by:profiles!documents_verified_by_fkey (
+            full_name
+          )
+        `)
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Document[];
+      return data;
     },
   });
 
-  const getVehicleDocuments = (vehicleId: string) => {
-    return useQuery({
-      queryKey: ['vehicle-documents', vehicleId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('documents')
-          .select('*')
-          .eq('vehicle_id', vehicleId)
-          .order('upload_date', { ascending: false });
-        
-        if (error) throw error;
-        return data as Document[];
-      },
-    });
-  };
+  const uploadDocument = useMutation({
+    mutationFn: async ({ file, documentData }: { file: File; documentData: DocumentUploadData }) => {
+      // Validate file
+      const validation = fileValidation.validateFile(file);
+      if (!validation.isValid) {
+        throw new Error(validation.errors.join(', '));
+      }
 
-  const getDriverDocuments = (driverId: string) => {
-    return useQuery({
-      queryKey: ['driver-documents', driverId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('documents')
-          .select('*')
-          .eq('driver_id', driverId)
-          .order('upload_date', { ascending: false });
-        
-        if (error) throw error;
-        return data as Document[];
-      },
-    });
-  };
+      // Create file path
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${documentData.company_id}/${fileName}`;
 
-  const uploadDocument = async (
-    file: File,
-    documentInfo: {
-      name: string;
-      type: DocumentType;
-      expiry_date?: string;
-      company_id: string;
-      vehicle_id?: string;
-      driver_id?: string;
-      metadata?: Record<string, any>;
-    }
-  ) => {
-    try {
-      setIsUploading(true);
-      
-      // Create folder structure: documents/company_id/document_type/
-      const folderPath = `${documentInfo.company_id}/${documentInfo.type}/`;
-      const filePath = `${folderPath}${Date.now()}_${file.name}`;
-      
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
-      
-      // Create document record in database
-      const { error: insertError } = await supabase
+      if (uploadError) {
+        throw new Error(`File upload failed: ${uploadError.message}`);
+      }
+
+      // Get file URL
+      const { data: urlData } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      // Insert document record
+      const { error: dbError } = await supabase
         .from('documents')
         .insert({
-          name: documentInfo.name,
-          file_path: filePath,
-          type: documentInfo.type,
-          expiry_date: documentInfo.expiry_date,
-          company_id: documentInfo.company_id,
-          vehicle_id: documentInfo.vehicle_id,
-          driver_id: documentInfo.driver_id,
-          metadata: documentInfo.metadata || {},
+          ...documentData,
+          storage_path: filePath,
+          file_url: urlData.publicUrl,
+          file_size: file.size,
+          mime_type: file.type,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
         });
 
-      if (insertError) throw insertError;
-      
-      // Refresh documents list
+      if (dbError) {
+        // Clean up uploaded file if database insert fails
+        await supabase.storage.from('documents').remove([filePath]);
+        throw new Error(`Database error: ${dbError.message}`);
+      }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
-      if (documentInfo.vehicle_id) {
-        queryClient.invalidateQueries({ queryKey: ['vehicle-documents', documentInfo.vehicle_id] });
-      }
-      if (documentInfo.driver_id) {
-        queryClient.invalidateQueries({ queryKey: ['driver-documents', documentInfo.driver_id] });
-      }
-
       toast({
-        title: "Document uploaded",
-        description: "Your document has been uploaded successfully.",
+        title: "Success",
+        description: "Document uploaded successfully",
       });
-      
-      return true;
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Upload failed",
+        title: "Upload Error",
         description: error.message,
       });
-      return false;
-    } finally {
-      setIsUploading(false);
-    }
+    },
+  });
+
+  const getDocumentUrl = async (filePath: string) => {
+    const { data } = supabase.storage
+      .from('documents')
+      .getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   const verifyDocument = useMutation({
-    mutationFn: async ({ 
-      documentId, 
-      status, 
-      notes 
-    }: { 
-      documentId: string; 
-      status: 'verified' | 'rejected'; 
-      notes?: string 
+    mutationFn: async ({
+      documentId,
+      status,
+      notes
+    }: {
+      documentId: string;
+      status: 'verified' | 'rejected';
+      notes?: string;
     }) => {
       const { error } = await supabase
         .from('documents')
         .update({
-          status: status,
+          verification_status: status,
           verification_notes: notes,
           verified_at: new Date().toISOString(),
-          verified_by: (await supabase.auth.getUser()).data.user?.id
+          verified_by: (await supabase.auth.getUser()).data.user?.id,
         })
         .eq('id', documentId);
 
@@ -149,14 +129,14 @@ export function useDocuments() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast({
-        title: "Document verified",
-        description: "The document status has been updated.",
+        title: "Success",
+        description: "Document verification status updated successfully",
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Verification failed",
+        title: "Error",
         description: error.message,
       });
     },
@@ -164,64 +144,57 @@ export function useDocuments() {
 
   const deleteDocument = useMutation({
     mutationFn: async (documentId: string) => {
-      // First get the document details to know the file path
+      // Get document details first
       const { data: document, error: fetchError } = await supabase
         .from('documents')
-        .select('file_path')
+        .select('storage_path')
         .eq('id', documentId)
         .single();
-      
+
       if (fetchError) throw fetchError;
-      
-      // Delete the file from storage
-      const { error: storageError } = await supabase.storage
-        .from('documents')
-        .remove([document.file_path]);
-      
-      if (storageError) throw storageError;
-      
-      // Delete the document record
-      const { error: deleteError } = await supabase
+
+      // Delete from storage
+      if (document.storage_path) {
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove([document.storage_path]);
+
+        if (storageError) {
+          console.warn('Storage deletion failed:', storageError);
+        }
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase
         .from('documents')
         .delete()
         .eq('id', documentId);
-      
-      if (deleteError) throw deleteError;
+
+      if (dbError) throw dbError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       toast({
-        title: "Document deleted",
-        description: "The document has been deleted successfully.",
+        title: "Success",
+        description: "Document deleted successfully",
       });
     },
     onError: (error: any) => {
       toast({
         variant: "destructive",
-        title: "Delete failed",
+        title: "Error",
         description: error.message,
       });
     },
   });
 
-  const getDocumentUrl = async (filePath: string): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
-    
-    if (error) throw error;
-    return data.signedUrl;
-  };
-
   return {
     documents,
     isLoading,
-    isUploading,
     uploadDocument,
+    getDocumentUrl,
     verifyDocument,
     deleteDocument,
-    getDocumentUrl,
-    getVehicleDocuments,
-    getDriverDocuments,
+    isUploading: uploadDocument.isPending,
   };
 }

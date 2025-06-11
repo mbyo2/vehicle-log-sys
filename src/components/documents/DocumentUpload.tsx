@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { documentSchema, fileValidation } from '@/lib/validation';
+import { z } from 'zod';
 
 const documentTypes: Array<{ value: DocumentType; label: string }> = [
   { value: 'driver_license', label: 'Driver License' },
@@ -38,15 +39,11 @@ const documentTypes: Array<{ value: DocumentType; label: string }> = [
   { value: 'other', label: 'Other' },
 ];
 
-const documentSchema = z.object({
-  name: z.string().min(1, 'Document name is required'),
-  type: z.string().min(1, 'Document type is required'),
-  expiry_date: z.date().optional(),
-  vehicle_id: z.string().optional(),
-  driver_id: z.string().optional(),
+const uploadSchema = documentSchema.extend({
+  file: z.custom<File>((val) => val instanceof File, 'Please select a file'),
 });
 
-type DocumentFormValues = z.infer<typeof documentSchema>;
+type DocumentFormValues = z.infer<typeof uploadSchema>;
 
 interface DocumentUploadProps {
   companyId: string;
@@ -57,13 +54,14 @@ interface DocumentUploadProps {
 
 export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: DocumentUploadProps) {
   const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string>('');
   const { uploadDocument, isUploading } = useDocuments();
 
   const form = useForm<DocumentFormValues>({
-    resolver: zodResolver(documentSchema),
+    resolver: zodResolver(uploadSchema),
     defaultValues: {
       name: '',
-      type: '',
+      type: 'other' as DocumentType,
       vehicle_id: vehicleId,
       driver_id: driverId,
     },
@@ -71,28 +69,51 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      
+      // Validate file
+      const validation = fileValidation.validateFile(selectedFile);
+      if (!validation.isValid) {
+        setFileError(validation.errors.join(', '));
+        setFile(null);
+        return;
+      }
+
+      setFileError('');
+      setFile(selectedFile);
+      form.setValue('file', selectedFile);
+      
       // Use the file name as the default document name
-      form.setValue('name', e.target.files[0].name);
+      if (!form.getValues('name')) {
+        form.setValue('name', selectedFile.name.replace(/\.[^/.]+$/, ''));
+      }
     }
   };
 
   const onSubmit = async (values: DocumentFormValues) => {
     if (!file) return;
 
-    const success = await uploadDocument(file, {
-      name: values.name,
-      type: values.type as DocumentType,
-      expiry_date: values.expiry_date ? format(values.expiry_date, 'yyyy-MM-dd') : undefined,
-      company_id: companyId,
-      vehicle_id: vehicleId,
-      driver_id: driverId,
-    });
+    try {
+      await uploadDocument.mutateAsync({
+        file,
+        documentData: {
+          name: values.name,
+          type: values.type,
+          expiry_date: values.expiry_date ? format(values.expiry_date, 'yyyy-MM-dd') : undefined,
+          company_id: companyId,
+          vehicle_id: vehicleId,
+          driver_id: driverId,
+        },
+      });
 
-    if (success && onSuccess) {
-      onSuccess();
-      form.reset();
-      setFile(null);
+      if (onSuccess) {
+        onSuccess();
+        form.reset();
+        setFile(null);
+        setFileError('');
+      }
+    } catch (error) {
+      // Error is handled by the mutation
     }
   };
 
@@ -105,9 +126,16 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
             id="file"
             type="file"
             onChange={handleFileChange}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
             required
+            className={fileError ? 'border-red-500' : ''}
           />
+          {fileError && (
+            <p className="text-sm text-red-600">{fileError}</p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF. Max size: 10MB
+          </p>
         </div>
 
         <FormField
@@ -132,7 +160,7 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
               <FormLabel>Document Type</FormLabel>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -157,7 +185,7 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
           name="expiry_date"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Expiry Date</FormLabel>
+              <FormLabel>Expiry Date (Optional)</FormLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
