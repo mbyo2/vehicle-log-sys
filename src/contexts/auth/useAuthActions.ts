@@ -105,24 +105,6 @@ export const useAuthActions = () => {
       setLoadingState(true);
       console.log("Starting signup process with isFirstUser =", isFirstUser);
       
-      // If this is the first user setup, ensure database is ready
-      if (isFirstUser) {
-        console.log("Setting up database for first user...");
-        try {
-          const { data: setupData, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
-            body: { force_setup: true }
-          });
-          
-          if (setupError) {
-            console.warn("Database setup warning:", setupError);
-          } else {
-            console.log("Database setup confirmed:", setupData);
-          }
-        } catch (setupErr) {
-          console.warn("Database setup failed, continuing with signup:", setupErr);
-        }
-      }
-      
       // Determine the role based on whether this is the first user
       const role = isFirstUser ? 'super_admin' : 'company_admin';
       
@@ -157,107 +139,13 @@ export const useAuthActions = () => {
 
       console.log("Account created successfully:", data.user.id);
       
-      // For first user setup, attempt automatic login
-      if (isFirstUser && data.user) {
-        console.log("First user created, attempting automatic login");
-        
-        try {
-          // Wait for the database trigger to create the profile
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password
-          });
-          
-          if (signInError) {
-            console.error("Auto login error:", signInError);
-            toast({
-              title: 'Account Created',
-              description: 'Your account was created successfully. Please sign in.',
-            });
-            
-            setTimeout(() => navigate('/signin'), 1500);
-            return { success: true };
-          } 
-          
-          if (signInData.user) {
-            // Set auth state for logged in user
-            authState.user.set(signInData.user);
-            
-            // Fetch user profile data with retries
-            let profileData = null;
-            let retries = 5;
-            
-            while (retries > 0 && !profileData) {
-              try {
-                const { data: profile, error: profileError } = await supabase
-                  .from('profiles')
-                  .select('*')
-                  .eq('id', signInData.user.id)
-                  .single();
-
-                if (profileError) {
-                  console.error('Error fetching profile after signup:', profileError);
-                  retries--;
-                  if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    continue;
-                  }
-                } else if (profile) {
-                  profileData = profile;
-                  authState.profile.set(profile);
-                  break;
-                }
-              } catch (err) {
-                console.error('Profile fetch error:', err);
-                retries--;
-                if (retries > 0) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-              }
-            }
-
-            if (profileData) {
-              console.log("Auto login successful, navigating to default route");
-              
-              const defaultRoute = DEFAULT_ROUTES[profileData.role] || '/dashboard';
-              navigate(defaultRoute);
-              
-              toast({
-                title: 'Welcome!',
-                description: `You have been logged in as ${profileData.role.replace('_', ' ')}.`,
-              });
-              
-              return {
-                success: true,
-                user: signInData.user
-              };
-            } else {
-              toast({
-                title: 'Account Created',
-                description: 'Account created but profile setup incomplete. Please sign in.',
-              });
-              navigate('/signin');
-              return { success: true };
-            }
-          }
-        } catch (loginErr: any) {
-          console.error("Error during auto-login:", loginErr);
-          toast({
-            title: 'Account Created',
-            description: 'Account created successfully. Please sign in.',
-          });
-          navigate('/signin');
-          return { success: true };
-        }
-      }
-      
-      // For non-first users or if auto-login failed
       toast({
         title: 'Account created',
         description: 'Your account has been created successfully. Please sign in.',
       });
+      
+      // Navigate to sign in
+      navigate('/signin');
       
       return { success: true };
       

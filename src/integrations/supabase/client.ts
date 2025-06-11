@@ -18,17 +18,11 @@ export const supabase = createClient(
     global: {
       headers: {
         'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-        'Prefer': 'return=minimal'
+        'Authorization': `Bearer ${supabaseAnonKey}`
       }
     },
     db: {
       schema: 'public'
-    },
-    realtime: {
-      params: {
-        eventsPerSecond: 10
-      }
     }
   }
 );
@@ -41,7 +35,6 @@ const testConnection = async () => {
   connectionTested = true;
   
   try {
-    // Simple connection test without triggering table creation
     const { error } = await supabase.auth.getSession();
     
     if (error && !error.message?.includes('JWT')) {

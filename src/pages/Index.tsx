@@ -20,12 +20,12 @@ export default function Index() {
       try {
         setInitializationStep('Checking authentication...');
         
-        // Wait for auth to stabilize with timeout
+        // Wait for auth to stabilize
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 5;
         
         while (loading.get() && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await new Promise(resolve => setTimeout(resolve, 500));
           attempts++;
         }
         
@@ -48,71 +48,44 @@ export default function Index() {
         
         // User authenticated but no profile
         if (currentUser && !currentProfile) {
-          console.log("User authenticated but no profile found");
-          setError("Account setup incomplete. Please contact support.");
-          setIsChecking(false);
+          console.log("User authenticated but no profile found, signing out");
+          await supabase.auth.signOut();
+          navigate('/signin', { replace: true });
           return;
         }
         
-        // No user - set up database and check first user status
-        setInitializationStep('Setting up database...');
-        console.log("No user found, setting up database...");
+        // No user - check first user status
+        setInitializationStep('Checking setup status...');
+        console.log("No user found, checking first user status...");
         
         try {
-          const { data: setupResult, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
-            body: { force_setup: true }
-          });
+          // Simple direct check for profiles
+          const { count, error: countError } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
           
-          if (setupError) {
-            console.error("Database setup error:", setupError);
-            throw new Error(`Database setup failed: ${setupError.message}`);
+          if (countError) {
+            console.error("Profile count check failed:", countError);
+            // If profiles table doesn't exist, assume first user
+            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            return;
           }
           
-          console.log("Database setup result:", setupResult);
+          const profileCount = count || 0;
+          console.log("Profile count:", profileCount);
           
-          if (setupResult?.success) {
-            const isFirstUser = setupResult.isFirstUser || setupResult.profileCount === 0;
-            console.log("Setup successful, isFirstUser:", isFirstUser);
-            
-            if (isFirstUser) {
-              console.log("Directing to first user signup");
-              navigate('/signup', { state: { isFirstUser: true }, replace: true });
-            } else {
-              console.log("Directing to signin");
-              navigate('/signin', { replace: true });
-            }
+          if (profileCount === 0) {
+            console.log("First user detected, redirecting to signup");
+            navigate('/signup', { state: { isFirstUser: true }, replace: true });
           } else {
-            throw new Error(setupResult?.error || 'Database setup failed');
+            console.log("Existing users found, redirecting to signin");
+            navigate('/signin', { replace: true });
           }
           
         } catch (setupErr: any) {
-          console.error("Failed to setup database:", setupErr);
-          
-          // Fallback: try to check profiles directly
-          setInitializationStep('Checking existing setup...');
-          try {
-            const { count, error: countError } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true });
-            
-            if (countError) {
-              console.error("Direct profile check failed:", countError);
-              // If we can't check profiles, assume first user
-              navigate('/signup', { state: { isFirstUser: true }, replace: true });
-            } else {
-              const profileCount = count || 0;
-              console.log("Direct check - profile count:", profileCount);
-              
-              if (profileCount === 0) {
-                navigate('/signup', { state: { isFirstUser: true }, replace: true });
-              } else {
-                navigate('/signin', { replace: true });
-              }
-            }
-          } catch (finalErr: any) {
-            console.error("Final fallback failed:", finalErr);
-            setError(`Failed to initialize: ${finalErr.message || 'Unknown error'}`);
-          }
+          console.error("Setup check failed:", setupErr);
+          // Default to first user to allow setup
+          navigate('/signup', { state: { isFirstUser: true }, replace: true });
         }
         
       } catch (error: any) {
@@ -135,6 +108,12 @@ export default function Index() {
             <AlertTriangle className="h-5 w-5" />
             <AlertDescription className="mt-2">{error}</AlertDescription>
           </Alert>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );

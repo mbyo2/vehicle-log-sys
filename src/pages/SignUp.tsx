@@ -16,48 +16,30 @@ export default function SignUp() {
 
   useEffect(() => {
     const checkFirstUserStatus = async () => {
-      // If we have location state, use it
-      if (locationIsFirstUser !== undefined) {
-        console.log("Using location state for first user:", locationIsFirstUser);
-        setIsFirstUser(locationIsFirstUser);
-        setCheckingFirstUser(false);
-        return;
-      }
-      
       try {
-        console.log("Checking first user status via database setup...");
+        // If we have location state, use it
+        if (locationIsFirstUser !== undefined) {
+          console.log("Using location state for first user:", locationIsFirstUser);
+          setIsFirstUser(locationIsFirstUser);
+          setCheckingFirstUser(false);
+          return;
+        }
         
-        // Use the database setup function to check status
-        const { data: setupResult, error: setupError } = await supabase.functions.invoke('create-profiles-table', {
-          body: { check_only: true }
-        });
+        console.log("Checking first user status via direct database query...");
         
-        if (setupError) {
-          console.error("Setup function error:", setupError);
-          // Fallback to direct database check
-          try {
-            const { count, error: countError } = await supabase
-              .from('profiles')
-              .select('*', { count: 'exact', head: true });
-              
-            if (countError) {
-              console.error("Direct count error:", countError);
-              // If we can't check, assume first user for safety
-              setIsFirstUser(true);
-            } else {
-              setIsFirstUser((count || 0) === 0);
-            }
-          } catch (fallbackErr) {
-            console.error("Fallback check failed:", fallbackErr);
-            setIsFirstUser(true);
-          }
-        } else if (setupResult?.success) {
-          const profileCount = setupResult.profileCount || 0;
-          console.log("Profile count from setup function:", profileCount);
-          setIsFirstUser(profileCount === 0);
-        } else {
-          console.warn("Setup function returned unsuccessful result");
+        // Direct database check
+        const { count, error: countError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+          
+        if (countError) {
+          console.error("Direct count error:", countError);
+          // If we can't check, assume first user for safety
           setIsFirstUser(true);
+        } else {
+          const profileCount = count || 0;
+          console.log("Profile count from direct check:", profileCount);
+          setIsFirstUser(profileCount === 0);
         }
         
       } catch (err: any) {
