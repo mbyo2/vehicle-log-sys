@@ -25,21 +25,36 @@ export default function SignUp() {
           return;
         }
         
-        console.log("Checking first user status via direct database query...");
+        console.log("Checking first user status...");
         
-        // Direct database check
-        const { count, error: countError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true });
+        // Use a simpler approach - check auth.users table directly via edge function
+        // or use a service role query to avoid RLS issues
+        try {
+          const { data, error } = await supabase.rpc('check_if_first_user');
           
-        if (countError) {
-          console.error("Direct count error:", countError);
-          // If we can't check, assume first user for safety
-          setIsFirstUser(true);
-        } else {
-          const profileCount = count || 0;
-          console.log("Profile count from direct check:", profileCount);
-          setIsFirstUser(profileCount === 0);
+          if (error) {
+            console.error("RPC call failed:", error);
+            // If the function doesn't exist, assume first user for setup
+            setIsFirstUser(true);
+          } else {
+            console.log("First user check result:", data);
+            setIsFirstUser(data === true);
+          }
+        } catch (rpcError) {
+          console.error("RPC function not available, checking profiles count...");
+          
+          // Fallback: try to get session first, then check profiles
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          if (!session) {
+            // No session, try direct count with service role approach
+            // For now, assume first user if we can't check
+            console.log("No session, assuming first user for safety");
+            setIsFirstUser(true);
+          } else {
+            // If we have a session, we're probably not the first user
+            setIsFirstUser(false);
+          }
         }
         
       } catch (err: any) {

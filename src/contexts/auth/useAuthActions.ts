@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -135,18 +134,20 @@ export const useAuthActions = () => {
       setLoadingState(true);
       console.log("Starting signup process with isFirstUser =", isFirstUser);
       
-      // Determine the role based on whether this is the first user
-      const role = isFirstUser ? 'super_admin' : 'company_admin';
+      // For the first user, we'll create a super admin account
+      // For subsequent users, they'll be regular company admins
+      const userRole = isFirstUser ? 'super_admin' : 'company_admin';
       
-      console.log("Creating account with role:", role);
+      console.log("Creating account with role:", userRole);
       
+      // Sign up the user with metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: role,
+            role: userRole,
           },
         },
       });
@@ -180,18 +181,57 @@ export const useAuthActions = () => {
       await logSecurityEvent('user_signup_success', 'low', {
         user_id: data.user.id,
         email: data.user.email,
-        role,
+        role: userRole,
         isFirstUser,
         timestamp: new Date().toISOString()
       });
-      
-      toast({
-        title: 'Account created',
-        description: 'Your account has been created successfully. Please sign in.',
-      });
-      
-      // Navigate to sign in
-      navigate('/signin');
+
+      // If this is the first user (super admin), they should be automatically signed in
+      if (isFirstUser) {
+        console.log("First user created, setting up auth state and redirecting...");
+        
+        // Set the auth state
+        authState.user.set(data.user);
+        
+        // Wait a moment for the database trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Try to fetch the profile
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profile) {
+            authState.profile.set(profile);
+            console.log('Super admin profile loaded, navigating to dashboard');
+            navigate('/dashboard');
+          } else {
+            console.error('Profile not found after signup:', profileError);
+            toast({
+              title: 'Account created',
+              description: 'Please sign in with your new account.',
+            });
+            navigate('/signin');
+          }
+        } catch (profileErr) {
+          console.error('Error fetching new profile:', profileErr);
+          toast({
+            title: 'Account created',
+            description: 'Please sign in with your new account.',
+          });
+          navigate('/signin');
+        }
+      } else {
+        // For regular users, navigate to sign in
+        toast({
+          title: 'Account created',
+          description: 'Your account has been created successfully. Please sign in.',
+        });
+        navigate('/signin');
+      }
       
       return { success: true };
       
