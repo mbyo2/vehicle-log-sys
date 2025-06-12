@@ -168,34 +168,43 @@ export type Database = {
       }
       backup_logs: {
         Row: {
+          backup_frequency: string | null
           backup_type: string
           company_id: string | null
           completed_at: string | null
           created_at: string | null
+          encryption_enabled: boolean | null
           file_path: string | null
           id: string
+          retention_days: number | null
           size_bytes: number | null
           started_at: string | null
           status: string
         }
         Insert: {
+          backup_frequency?: string | null
           backup_type: string
           company_id?: string | null
           completed_at?: string | null
           created_at?: string | null
+          encryption_enabled?: boolean | null
           file_path?: string | null
           id?: string
+          retention_days?: number | null
           size_bytes?: number | null
           started_at?: string | null
           status?: string
         }
         Update: {
+          backup_frequency?: string | null
           backup_type?: string
           company_id?: string | null
           completed_at?: string | null
           created_at?: string | null
+          encryption_enabled?: boolean | null
           file_path?: string | null
           id?: string
+          retention_days?: number | null
           size_bytes?: number | null
           started_at?: string | null
           status?: string
@@ -651,6 +660,62 @@ export type Database = {
           },
         ]
       }
+      error_logs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          error_data: Json | null
+          error_message: string
+          error_type: string
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          stack_trace: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          error_data?: Json | null
+          error_message: string
+          error_type: string
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          error_data?: Json | null
+          error_message?: string
+          error_type?: string
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          stack_trace?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "error_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       external_integrations: {
         Row: {
           company_id: string | null
@@ -1071,6 +1136,91 @@ export type Database = {
           },
         ]
       }
+      security_audit_logs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          risk_level: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          risk_level?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          risk_level?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_policies: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          policy_config: Json
+          policy_name: string
+          policy_type: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_config?: Json
+          policy_name: string
+          policy_type: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_config?: Json
+          policy_name?: string
+          policy_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_policies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_bookings: {
         Row: {
           booking_date: string
@@ -1184,6 +1334,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      system_health_logs: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_value: number
+          status: string
+          threshold_value: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_value: number
+          status?: string
+          threshold_value?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_value?: number
+          status?: string
+          threshold_value?: number | null
+        }
+        Relationships: []
       }
       training_courses: {
         Row: {
@@ -1782,6 +1962,35 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_backup: {
+        Args: { p_company_id: string; p_backup_type?: string }
+        Returns: string
+      }
+      log_error: {
+        Args: {
+          p_error_type: string
+          p_error_message: string
+          p_stack_trace?: string
+          p_user_id?: string
+          p_company_id?: string
+          p_url?: string
+          p_user_agent?: string
+          p_error_data?: Json
+        }
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_event_type: string
+          p_user_id?: string
+          p_company_id?: string
+          p_ip_address?: string
+          p_user_agent?: string
+          p_event_data?: Json
+          p_risk_level?: string
+        }
+        Returns: string
+      }
       process_service_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined

@@ -18,6 +18,7 @@ import {
   FileText,
   Wrench,
   LineChart,
+  Shield,
 } from 'lucide-react';
 
 interface NavItem {
@@ -42,6 +43,12 @@ export function Sidebar() {
       href: '/companies',
       icon: <Building className="mr-2 h-4 w-4" />,
       roles: ['super_admin'],
+    },
+    {
+      title: 'Security & Monitoring',
+      href: '/security',
+      icon: <Shield className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
     },
     {
       title: 'Fleet',

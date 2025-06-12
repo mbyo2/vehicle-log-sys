@@ -12,6 +12,23 @@ interface AuthResult {
   user?: any;
 }
 
+// Helper function to log security events
+const logSecurityEvent = async (eventType: string, riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low', eventData: Record<string, any> = {}) => {
+  try {
+    await supabase.rpc('log_security_event', {
+      p_event_type: eventType,
+      p_user_id: null,
+      p_company_id: null,
+      p_ip_address: null,
+      p_user_agent: navigator.userAgent,
+      p_event_data: eventData,
+      p_risk_level: riskLevel,
+    });
+  } catch (error) {
+    console.error('Failed to log security event:', error);
+  }
+};
+
 export const useAuthActions = () => {
   const [loadingState, setLoadingState] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -28,6 +45,12 @@ export const useAuthActions = () => {
       });
 
       if (error) {
+        // Log failed login attempt
+        await logSecurityEvent('user_login_failure', 'medium', {
+          email,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
         throw error;
       }
 
@@ -35,6 +58,13 @@ export const useAuthActions = () => {
         console.log('Sign in successful for user:', data.user.id);
         authState.user.set(data.user);
         authState.loading.set(true);
+
+        // Log successful login
+        await logSecurityEvent('user_login_success', 'low', {
+          user_id: data.user.id,
+          email: data.user.email,
+          timestamp: new Date().toISOString()
+        });
 
         // Fetch user profile data with retry
         let retries = 3;
@@ -123,6 +153,13 @@ export const useAuthActions = () => {
 
       if (error) {
         console.error("Signup error:", error);
+        // Log failed signup attempt
+        await logSecurityEvent('user_signup_failure', 'medium', {
+          email,
+          error: error.message,
+          isFirstUser,
+          timestamp: new Date().toISOString()
+        });
         return {
           success: false,
           error: error.message
@@ -138,6 +175,15 @@ export const useAuthActions = () => {
       }
 
       console.log("Account created successfully:", data.user.id);
+      
+      // Log successful signup
+      await logSecurityEvent('user_signup_success', 'low', {
+        user_id: data.user.id,
+        email: data.user.email,
+        role,
+        isFirstUser,
+        timestamp: new Date().toISOString()
+      });
       
       toast({
         title: 'Account created',
@@ -168,6 +214,16 @@ export const useAuthActions = () => {
   const signOut = async () => {
     try {
       setLoadingState(true);
+      
+      // Log logout before clearing state
+      const currentUser = authState.user.get();
+      if (currentUser) {
+        await logSecurityEvent('user_logout', 'low', {
+          user_id: currentUser.id,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       await supabase.auth.signOut();
       
       // Clear the auth state
