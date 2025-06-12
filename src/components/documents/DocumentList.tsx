@@ -60,7 +60,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
 
   const handlePreview = async (document: Document) => {
     try {
-      const url = await getDocumentUrl(document.file_path);
+      const url = await getDocumentUrl(document.storage_path);
       setPreviewUrl(url);
       setSelectedDocument(document);
     } catch (error) {
@@ -70,7 +70,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
 
   const handleDownload = async (document: Document) => {
     try {
-      const url = await getDocumentUrl(document.file_path);
+      const url = await getDocumentUrl(document.storage_path);
       // Use the global window.document instead of Document type
       const link = window.document.createElement('a');
       link.href = url;
@@ -131,7 +131,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
             <TableRow key={document.id}>
               <TableCell className="font-medium">{document.name}</TableCell>
               <TableCell>{document.type.replace('_', ' ')}</TableCell>
-              <TableCell>{getStatusBadge(document.status)}</TableCell>
+              <TableCell>{getStatusBadge(document.verification_status)}</TableCell>
               <TableCell>
                 {document.expiry_date ? (
                   <span className={cn(
@@ -146,7 +146,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
                   "N/A"
                 )}
               </TableCell>
-              <TableCell>{format(new Date(document.upload_date), 'dd MMM yyyy')}</TableCell>
+              <TableCell>{format(new Date(document.created_at), 'dd MMM yyyy')}</TableCell>
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -164,7 +164,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
-                    {showVerification && document.status === 'pending' && (
+                    {showVerification && document.verification_status === 'pending' && (
                       <Dialog>
                         <DialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
