@@ -10,7 +10,7 @@ export function useIntersectionObserver(
 ) {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
-  const elementRef = useRef<HTMLElement | null>(null);
+  const elementRef = useRef<HTMLDivElement | null>(null);
   const frozen = useRef(false);
 
   const { freezeOnceVisible = false, ...observerOptions } = options;
