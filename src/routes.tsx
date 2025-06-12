@@ -20,7 +20,7 @@ import { Advertisements } from "./pages/Advertisements";
 import { Analytics } from "./pages/Analytics";
 import { Reports } from "./pages/Reports";
 import TripManagement from "./pages/TripManagement";
-import { Users } from "./pages/Users";
+import Users from "./pages/Users";
 import { Integrations } from "./pages/Integrations";
 import App from "./App";
 import Index from "./pages/Index";
@@ -29,15 +29,20 @@ import { ModalProvider } from "./contexts/ModalContext";
 import { AuthenticatedLayout } from "./components/layouts/AuthenticatedLayout";
 import VehicleDetails from "./pages/VehicleDetails";
 import NewTrip from "./pages/NewTrip";
+import { SecurityAuditDashboard } from "./components/security/SecurityAuditDashboard";
+import { ResponsiveDashboardLayout } from "./components/layouts/ResponsiveDashboardLayout";
+import { ErrorMonitoringBoundary } from "./components/security/ErrorMonitoringBoundary";
 
 // Create a layout route with the providers
 const RootLayout = () => {
   return (
-    <AuthProvider>
-      <ModalProvider>
-        <Outlet />
-      </ModalProvider>
-    </AuthProvider>
+    <ErrorMonitoringBoundary>
+      <AuthProvider>
+        <ModalProvider>
+          <App />
+        </ModalProvider>
+      </AuthProvider>
+    </ErrorMonitoringBoundary>
   );
 };
 
@@ -45,9 +50,9 @@ const RootLayout = () => {
 const ProtectedLayout = () => {
   return (
     <ProtectedRoute>
-      <AuthenticatedLayout>
+      <ResponsiveDashboardLayout>
         <Outlet />
-      </AuthenticatedLayout>
+      </ResponsiveDashboardLayout>
     </ProtectedRoute>
   );
 };
@@ -58,126 +63,208 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
+        index: true,
+        element: <Index />,
+      },
+      {
+        path: "signin",
+        element: <SignIn />,
+      },
+      {
+        path: "signup",
+        element: <SignUp />,
+      },
+      {
         path: "/",
-        element: <App />,
+        element: <ProtectedLayout />,
         children: [
           {
-            index: true,
-            element: <Index />,
+            path: "dashboard",
+            element: <Dashboard />,
           },
           {
-            path: "signin",
-            element: <SignIn />,
+            path: "companies",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <Companies />
+              </ProtectedRoute>
+            ),
           },
           {
-            path: "signup",
-            element: <SignUp />,
+            path: "security",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
+                <SecurityAuditDashboard />
+              </ProtectedRoute>
+            ),
           },
           {
-            path: "/",
-            element: <ProtectedLayout />,
-            children: [
-              {
-                path: "dashboard",
-                element: <Dashboard />,
-              },
-              {
-                path: "fleet",
-                element: <Fleet />,
-              },
-              {
-                path: "fleet/:id",
-                element: <VehicleDetails />,
-              },
-              {
-                path: "drivers",
-                element: <Drivers />,
-              },
-              {
-                path: "companies",
-                element: <Companies />,
-              },
-              {
-                path: "documents",
-                element: <Documents />,
-              },
-              {
-                path: "maintenance",
-                element: <Maintenance />,
-              },
-              {
-                path: "settings",
-                element: <Settings />,
-              },
-              {
-                path: "service-bookings",
-                element: <ServiceBookings />,
-              },
-              {
-                path: "trips",
-                element: <Trips />,
-              },
-              {
-                path: "new-trip",
-                element: <NewTrip />,
-              },
-              {
-                path: "new-trip/:vehicleId",
-                element: <NewTrip />,
-              },
-              {
-                path: "profile",
-                element: <Profile />,
-              },
-              {
-                path: "trip-approvals",
-                element: <TripApprovals />,
-              },
-              {
-                path: "vehicle-status",
-                element: <VehicleStatus />,
-              },
-              {
-                path: "driver-portal",
-                element: <DriverPortal />,
-              },
-              {
-                path: "driver",
-                element: <DriverPortal />,
-              },
-              {
-                path: "driver/messages",
-                element: <DriverPortal />,
-              },
-              {
-                path: "driver/trainings",
-                element: <DriverPortal />,
-              },
-              {
-                path: "advertisements",
-                element: <Advertisements />,
-              },
-              {
-                path: "analytics",
-                element: <Analytics />,
-              },
-              {
-                path: "reports",
-                element: <Reports />,
-              },
-              {
-                path: "trip-management",
-                element: <TripManagement />,
-              },
-              {
-                path: "users",
-                element: <Users />,
-              },
-              {
-                path: "integrations",
-                element: <Integrations />,
-              },
-            ],
+            path: "fleet",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Fleet />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "fleet/:id",
+            element: <VehicleDetails />,
+          },
+          {
+            path: "drivers",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Drivers />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "users",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Users />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "documents",
+            element: <Documents />,
+          },
+          {
+            path: "trip-management",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <TripManagement />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "trip-approvals",
+            element: (
+              <ProtectedRoute allowedRoles={['supervisor']}>
+                <TripApprovals />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "trips",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <Trips />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "vehicle-status",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <VehicleStatus />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "maintenance",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Maintenance />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "reports",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Reports />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "settings",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'super_admin']}>
+                <Settings />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "service-bookings",
+            element: <ServiceBookings />,
+          },
+          {
+            path: "new-trip",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <NewTrip />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "new-trip/:vehicleId",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <NewTrip />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "profile",
+            element: <Profile />,
+          },
+          {
+            path: "driver-portal",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <DriverPortal />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "driver",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <DriverPortal />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "driver/messages",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <DriverPortal />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "driver/trainings",
+            element: (
+              <ProtectedRoute allowedRoles={['driver']}>
+                <DriverPortal />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "advertisements",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <Advertisements />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "analytics",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+                <Analytics />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "integrations",
+            element: (
+              <ProtectedRoute allowedRoles={['company_admin', 'super_admin']}>
+                <Integrations />
+              </ProtectedRoute>
+            ),
           },
         ],
       },
