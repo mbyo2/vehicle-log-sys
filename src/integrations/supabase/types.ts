@@ -1962,9 +1962,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_if_first_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       create_backup: {
         Args: { p_company_id: string; p_backup_type?: string }
         Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
       }
       log_error: {
         Args: {

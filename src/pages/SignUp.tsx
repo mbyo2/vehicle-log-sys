@@ -17,6 +17,8 @@ export default function SignUp() {
   useEffect(() => {
     const checkFirstUserStatus = async () => {
       try {
+        setCheckingFirstUser(true);
+        
         // If we have location state, use it
         if (locationIsFirstUser !== undefined) {
           console.log("Using location state for first user:", locationIsFirstUser);
@@ -27,40 +29,22 @@ export default function SignUp() {
         
         console.log("Checking first user status...");
         
-        // Use a simpler approach - check auth.users table directly via edge function
-        // or use a service role query to avoid RLS issues
-        try {
-          const { data, error } = await supabase.rpc('check_if_first_user');
-          
-          if (error) {
-            console.error("RPC call failed:", error);
-            // If the function doesn't exist, assume first user for setup
-            setIsFirstUser(true);
-          } else {
-            console.log("First user check result:", data);
-            setIsFirstUser(data === true);
-          }
-        } catch (rpcError) {
-          console.error("RPC function not available, checking profiles count...");
-          
-          // Fallback: try to get session first, then check profiles
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          if (!session) {
-            // No session, try direct count with service role approach
-            // For now, assume first user if we can't check
-            console.log("No session, assuming first user for safety");
-            setIsFirstUser(true);
-          } else {
-            // If we have a session, we're probably not the first user
-            setIsFirstUser(false);
-          }
+        // Use the new database function to check if this is the first user
+        const { data, error } = await supabase.rpc('check_if_first_user');
+        
+        if (error) {
+          console.error("Error checking first user status:", error);
+          // If we can't determine, assume it's not the first user for security
+          setIsFirstUser(false);
+        } else {
+          console.log("First user check result:", data);
+          setIsFirstUser(data === true);
         }
         
       } catch (err: any) {
         console.error("Error checking first user status:", err);
-        // Default to first user to allow setup
-        setIsFirstUser(true);
+        // Default to false for security
+        setIsFirstUser(false);
       } finally {
         setCheckingFirstUser(false);
       }
@@ -72,8 +56,8 @@ export default function SignUp() {
   const isUserLoading = loading.get();
   const currentUser = user.get();
 
-  // If already logged in and not first user, redirect to dashboard
-  if (!isUserLoading && currentUser && !isFirstUser) {
+  // If already logged in, redirect to dashboard
+  if (!isUserLoading && currentUser) {
     return <Navigate to="/dashboard" replace />;
   }
   

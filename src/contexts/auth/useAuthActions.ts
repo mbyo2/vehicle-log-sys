@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -135,26 +136,30 @@ export const useAuthActions = () => {
       console.log("Starting signup process with isFirstUser =", isFirstUser);
       
       // For the first user, we'll create a super admin account
-      // For subsequent users, they'll be regular company admins
       const userRole = isFirstUser ? 'super_admin' : 'company_admin';
       
       console.log("Creating account with role:", userRole);
       
-      // Sign up the user with metadata
+      // Sign up the user with metadata that will be used by the trigger
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: userRole,
           },
+          // Don't set role in metadata for first user - let the trigger handle it
+          ...(isFirstUser ? {} : {
+            data: {
+              full_name: fullName,
+              role: userRole,
+            }
+          })
         },
       });
 
       if (error) {
         console.error("Signup error:", error);
-        // Log failed signup attempt
         await logSecurityEvent('user_signup_failure', 'medium', {
           email,
           error: error.message,
@@ -186,14 +191,14 @@ export const useAuthActions = () => {
         timestamp: new Date().toISOString()
       });
 
-      // If this is the first user (super admin), they should be automatically signed in
-      if (isFirstUser) {
-        console.log("First user created, setting up auth state and redirecting...");
+      // For the first user (super admin), they might get automatically signed in
+      if (isFirstUser && data.session) {
+        console.log("First user created and signed in automatically");
         
         // Set the auth state
         authState.user.set(data.user);
         
-        // Wait a moment for the database trigger to create the profile
+        // Wait for the database trigger to create the profile
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Try to fetch the profile
@@ -207,6 +212,10 @@ export const useAuthActions = () => {
           if (profile) {
             authState.profile.set(profile);
             console.log('Super admin profile loaded, navigating to dashboard');
+            toast({
+              title: 'Welcome!',
+              description: 'Super admin account created successfully.',
+            });
             navigate('/dashboard');
           } else {
             console.error('Profile not found after signup:', profileError);
@@ -225,10 +234,12 @@ export const useAuthActions = () => {
           navigate('/signin');
         }
       } else {
-        // For regular users, navigate to sign in
+        // For regular users or if first user didn't get auto-signed in
         toast({
           title: 'Account created',
-          description: 'Your account has been created successfully. Please sign in.',
+          description: isFirstUser 
+            ? 'Super admin account created. Please sign in to continue.' 
+            : 'Your account has been created successfully. Please sign in.',
         });
         navigate('/signin');
       }
