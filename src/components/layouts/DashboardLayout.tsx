@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3 } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3, UserCog } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types/auth";
@@ -15,12 +15,13 @@ const navigation = {
     { name: 'Companies', href: '/companies', icon: Building2 },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Users', href: '/users', icon: Users },
+    { name: 'User Management', href: '/user-management', icon: UserCog },
     { name: 'Settings', href: '/settings', icon: Settings },
   ],
   company_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Fleet Management', href: '/fleet', icon: Car },
-    { name: 'User Management', href: '/users', icon: Users },
+    { name: 'User Management', href: '/user-management', icon: UserCog },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
     { name: 'Documents', href: '/documents', icon: FileText },

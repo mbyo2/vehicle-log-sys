@@ -21,6 +21,7 @@ import { Analytics } from "./pages/Analytics";
 import { Reports } from "./pages/Reports";
 import TripManagement from "./pages/TripManagement";
 import Users from "./pages/Users";
+import { UserManagement } from "./pages/UserManagement";
 import { Integrations } from "./pages/Integrations";
 import App from "./App";
 import Index from "./pages/Index";

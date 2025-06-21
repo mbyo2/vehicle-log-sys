@@ -21,7 +21,8 @@ import {
   Wrench,
   LineChart,
   Menu,
-  X
+  X,
+  UserCog
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,6 +62,12 @@ export function MobileNavigation() {
       href: '/users',
       icon: <Users className="h-5 w-5" />,
       roles: ['company_admin', 'supervisor'],
+    },
+    {
+      title: 'User Management',
+      href: '/user-management',
+      icon: <UserCog className="h-5 w-5" />,
+      roles: ['company_admin', 'super_admin'],
     },
     {
       title: 'Documents',

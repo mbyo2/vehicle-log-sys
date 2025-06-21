@@ -19,6 +19,7 @@ import {
   Wrench,
   LineChart,
   Shield,
+  UserCog,
 } from 'lucide-react';
 
 interface NavItem {
@@ -61,6 +62,12 @@ export function Sidebar() {
       href: '/users',
       icon: <Users className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'supervisor'],
+    },
+    {
+      title: 'User Management',
+      href: '/user-management',
+      icon: <UserCog className="mr-2 h-4 w-4" />,
+      roles: ['company_admin', 'super_admin'],
     },
     {
       title: 'Documents',
