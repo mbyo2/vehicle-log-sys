@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -133,7 +134,8 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Select your role in the organization</p>
+                          <p>Company Admin: Can manage the company and invite users</p>
+                          <p>Driver/Supervisor: Must be invited by a Company Admin</p>
                         </TooltipContent>
                       </Tooltip>
                     </FormLabel>
@@ -149,8 +151,8 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="company_admin">Company Admin</SelectItem>
-                        <SelectItem value="driver">Driver</SelectItem>
-                        <SelectItem value="supervisor">Supervisor</SelectItem>
+                        <SelectItem value="driver" disabled>Driver (Invitation Required)</SelectItem>
+                        <SelectItem value="supervisor" disabled>Supervisor (Invitation Required)</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -168,7 +170,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                         <FormLabel>Company Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Enter company name"
+                            placeholder="Enter your company name"
                             disabled={loading}
                             {...field}
                           />
@@ -189,8 +191,8 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                               <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Trial gives you 25 days of access</p>
-                              <p>Full subscription provides unlimited access</p>
+                              <p>Trial: 25 days of free access to test the platform</p>
+                              <p>Full: Unlimited access with all features</p>
                             </TooltipContent>
                           </Tooltip>
                         </FormLabel>
@@ -205,7 +207,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="trial">Trial (25 days)</SelectItem>
+                            <SelectItem value="trial">Trial (25 days free)</SelectItem>
                             <SelectItem value="full">Full Access</SelectItem>
                           </SelectContent>
                         </Select>
@@ -225,7 +227,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
             {loading && (
               <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
             )}
-            {isFirstUser ? 'Create Super Admin Account' : 'Sign Up'}
+            {isFirstUser ? 'Create Super Admin Account' : 'Create Account & Company'}
           </Button>
         </form>
       </Form>

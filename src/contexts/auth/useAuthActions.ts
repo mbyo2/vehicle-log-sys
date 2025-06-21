@@ -130,7 +130,7 @@ export const useAuthActions = () => {
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean): Promise<AuthResult> => {
+  const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean, companyName?: string, subscriptionType?: string): Promise<AuthResult> => {
     try {
       setLoadingState(true);
       console.log("Starting signup process with isFirstUser =", isFirstUser);
@@ -140,21 +140,28 @@ export const useAuthActions = () => {
       
       console.log("Creating account with role:", userRole);
       
+      // Prepare metadata for the user
+      const metadata: any = {
+        full_name: fullName,
+      };
+
+      // Add role and company info to metadata if not first user
+      if (!isFirstUser) {
+        metadata.role = userRole;
+        if (companyName) {
+          metadata.company_name = companyName;
+        }
+        if (subscriptionType) {
+          metadata.subscription_type = subscriptionType;
+        }
+      }
+      
       // Sign up the user with metadata that will be used by the trigger
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
-          // Don't set role in metadata for first user - let the trigger handle it
-          ...(isFirstUser ? {} : {
-            data: {
-              full_name: fullName,
-              role: userRole,
-            }
-          })
+          data: metadata
         },
       });
 
@@ -239,7 +246,9 @@ export const useAuthActions = () => {
           title: 'Account created',
           description: isFirstUser 
             ? 'Super admin account created. Please sign in to continue.' 
-            : 'Your account has been created successfully. Please sign in.',
+            : companyName 
+              ? `Account and company "${companyName}" created successfully. Please sign in.`
+              : 'Your account has been created successfully. Please sign in.',
         });
         navigate('/signin');
       }

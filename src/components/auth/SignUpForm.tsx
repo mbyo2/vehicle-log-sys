@@ -35,7 +35,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
       toast({
         variant: "destructive",
         title: "Registration not allowed",
-        description: "Drivers and supervisors must be added by company administrators"
+        description: "Drivers and supervisors must be invited by company administrators"
       });
       return;
     }
@@ -51,7 +51,9 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         values.email,
         values.password,
         values.fullName,
-        isFirstUser || false
+        isFirstUser || false,
+        values.companyName,
+        values.subscriptionType
       );
       
       console.log("SignUp result:", result);
@@ -67,10 +69,11 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
           });
           // For first user (super admin), we'll be redirected automatically by the signUp function
         } else {
-          setSuccessMessage("Account created successfully! You can now sign in.");
+          const companyMessage = values.companyName ? ` and company "${values.companyName}"` : "";
+          setSuccessMessage(`Account${companyMessage} created successfully! You can now sign in.`);
           toast({
             title: "Account Created",
-            description: "Your account has been created. Please sign in."
+            description: `Your account${companyMessage} has been created. Please sign in.`
           });
           // Navigate to signin page after successful signup with a short delay
           setTimeout(() => {
@@ -109,12 +112,12 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         <Card className="w-full shadow-lg">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">
-              {isFirstUser ? 'Create Super Admin Account' : 'Create Account'}
+              {isFirstUser ? 'Create Super Admin Account' : 'Create Account & Company'}
             </CardTitle>
             <CardDescription className="text-center">
               {isFirstUser 
                 ? 'Set up your super admin account to get started'
-                : 'Register your account to start managing your fleet'}
+                : 'Register your account and create your company to start managing your fleet'}
             </CardDescription>
           </CardHeader>
           <CardContent>
