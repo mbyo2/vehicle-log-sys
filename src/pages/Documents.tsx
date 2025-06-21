@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
-import { DocumentList } from '@/components/documents/DocumentList';
+import { EnhancedDocumentList } from '@/components/documents/EnhancedDocumentList';
+import { DocumentCategories } from '@/components/documents/DocumentCategories';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,7 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import { Upload, FileText, BellRing } from 'lucide-react';
+import { Upload, FileText, BellRing, FolderPlus } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -64,7 +65,7 @@ export default function Documents() {
   return (
     <div className="container py-6 max-w-6xl">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Documents</h1>
+        <h1 className="text-3xl font-bold">Document Management</h1>
         <div className="flex gap-2">
           {isAdmin && (
             <Button variant="outline" onClick={handleSendReminder}>
@@ -101,32 +102,34 @@ export default function Documents() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="all" className="w-full">
+      <Tabs defaultValue="documents" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="all">All Documents</TabsTrigger>
-          <TabsTrigger value="pending">Pending Verification</TabsTrigger>
-          <TabsTrigger value="expiring">Expiring Soon</TabsTrigger>
+          <TabsTrigger value="documents">
+            <FileText className="mr-2 h-4 w-4" />
+            All Documents
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="categories">
+              <FolderPlus className="mr-2 h-4 w-4" />
+              Categories
+            </TabsTrigger>
+          )}
         </TabsList>
         
-        <TabsContent value="all">
+        <TabsContent value="documents">
           <div className="bg-white rounded-md shadow">
-            <DocumentList showVerification={isAdmin} />
+            <EnhancedDocumentList 
+              showVerification={isAdmin} 
+              companyId={companyId}
+            />
           </div>
         </TabsContent>
         
-        <TabsContent value="pending">
-          <div className="bg-white rounded-md shadow">
-            {/* You would filter documents by status here */}
-            <DocumentList showVerification={isAdmin} />
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="expiring">
-          <div className="bg-white rounded-md shadow">
-            {/* You would filter documents by expiry here */}
-            <DocumentList showVerification={isAdmin} />
-          </div>
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="categories">
+            <DocumentCategories />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
