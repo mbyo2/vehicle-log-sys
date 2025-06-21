@@ -135,19 +135,14 @@ export const useAuthActions = () => {
       setLoadingState(true);
       console.log("Starting signup process with isFirstUser =", isFirstUser);
       
-      // For the first user, we'll create a super admin account
-      const userRole = isFirstUser ? 'super_admin' : 'company_admin';
-      
-      console.log("Creating account with role:", userRole);
-      
       // Prepare metadata for the user
       const metadata: any = {
         full_name: fullName,
       };
 
-      // Add role and company info to metadata if not first user
+      // For first user (super admin), don't add role to metadata - let the trigger handle it
       if (!isFirstUser) {
-        metadata.role = userRole;
+        metadata.role = 'company_admin';
         if (companyName) {
           metadata.company_name = companyName;
         }
@@ -155,6 +150,8 @@ export const useAuthActions = () => {
           metadata.subscription_type = subscriptionType;
         }
       }
+      
+      console.log("Creating account with metadata:", metadata);
       
       // Sign up the user with metadata that will be used by the trigger
       const { data, error } = await supabase.auth.signUp({
@@ -193,12 +190,11 @@ export const useAuthActions = () => {
       await logSecurityEvent('user_signup_success', 'low', {
         user_id: data.user.id,
         email: data.user.email,
-        role: userRole,
         isFirstUser,
         timestamp: new Date().toISOString()
       });
 
-      // For the first user (super admin), they might get automatically signed in
+      // For the first user (super admin), they should get automatically signed in
       if (isFirstUser && data.session) {
         console.log("First user created and signed in automatically");
         
@@ -206,49 +202,62 @@ export const useAuthActions = () => {
         authState.user.set(data.user);
         
         // Wait for the database trigger to create the profile
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Try to fetch the profile
-        try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
+        // Try to fetch the profile multiple times
+        let profileAttempts = 0;
+        let profile = null;
+        
+        while (profileAttempts < 5 && !profile) {
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
 
-          if (profile) {
-            authState.profile.set(profile);
-            console.log('Super admin profile loaded, navigating to dashboard');
-            toast({
-              title: 'Welcome!',
-              description: 'Super admin account created successfully.',
-            });
-            navigate('/dashboard');
-          } else {
-            console.error('Profile not found after signup:', profileError);
-            toast({
-              title: 'Account created',
-              description: 'Please sign in with your new account.',
-            });
-            navigate('/signin');
+            if (profileData) {
+              profile = profileData;
+              authState.profile.set(profile);
+              console.log('Super admin profile loaded:', profile);
+              break;
+            } else {
+              console.log('Profile not ready yet, attempt', profileAttempts + 1);
+              profileAttempts++;
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          } catch (profileErr) {
+            console.error('Error fetching profile attempt', profileAttempts + 1, ':', profileErr);
+            profileAttempts++;
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
-        } catch (profileErr) {
-          console.error('Error fetching new profile:', profileErr);
+        }
+
+        if (profile) {
+          toast({
+            title: 'Welcome!',
+            description: 'Super admin account created successfully.',
+          });
+          navigate('/dashboard');
+        } else {
+          console.error('Could not load profile after multiple attempts');
           toast({
             title: 'Account created',
-            description: 'Please sign in with your new account.',
+            description: 'Please sign in with your new super admin account.',
           });
           navigate('/signin');
         }
       } else {
         // For regular users or if first user didn't get auto-signed in
+        const message = isFirstUser 
+          ? 'Super admin account created. Please sign in to continue.' 
+          : companyName 
+            ? `Account and company "${companyName}" created successfully. Please sign in.`
+            : 'Your account has been created successfully. Please sign in.';
+            
         toast({
           title: 'Account created',
-          description: isFirstUser 
-            ? 'Super admin account created. Please sign in to continue.' 
-            : companyName 
-              ? `Account and company "${companyName}" created successfully. Please sign in.`
-              : 'Your account has been created successfully. Please sign in.',
+          description: message,
         });
         navigate('/signin');
       }

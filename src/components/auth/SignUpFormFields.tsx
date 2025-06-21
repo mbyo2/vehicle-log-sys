@@ -41,15 +41,15 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
       password: "",
       fullName: "",
       role: isFirstUser ? "super_admin" : "company_admin",
-      companyName: "",
-      subscriptionType: "trial",
+      companyName: isFirstUser ? "" : "",
+      subscriptionType: isFirstUser ? undefined : "trial",
     },
   });
 
   const watchRole = form.watch("role");
 
   const handleFormSubmit = async (values: SignUpFormValues) => {
-    console.log("Form submitted with values:", values);
+    console.log("Form submitted with values:", { ...values, isFirstUser });
     try {
       await onSubmit(values);
     } catch (error) {
@@ -70,7 +70,7 @@ export function SignUpFormFields({ onSubmit, loading, isFirstUser }: SignUpFormF
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="admin@example.com"
                     disabled={loading}
                     {...field}
                   />

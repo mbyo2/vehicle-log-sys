@@ -29,13 +29,23 @@ export default function SignUp() {
         
         console.log("Checking first user status...");
         
-        // Use the new database function to check if this is the first user
+        // Use the database function to check if this is the first user
         const { data, error } = await supabase.rpc('check_if_first_user');
         
         if (error) {
           console.error("Error checking first user status:", error);
-          // If we can't determine, assume it's not the first user for security
-          setIsFirstUser(false);
+          // If we can't determine, check profiles table directly
+          const { data: profiles, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .limit(1);
+          
+          if (profileError) {
+            console.error("Error checking profiles:", profileError);
+            setIsFirstUser(true); // Assume first user if we can't check
+          } else {
+            setIsFirstUser(profiles.length === 0);
+          }
         } else {
           console.log("First user check result:", data);
           setIsFirstUser(data === true);
@@ -43,8 +53,8 @@ export default function SignUp() {
         
       } catch (err: any) {
         console.error("Error checking first user status:", err);
-        // Default to false for security
-        setIsFirstUser(false);
+        // Default to true for first time setup
+        setIsFirstUser(true);
       } finally {
         setCheckingFirstUser(false);
       }
