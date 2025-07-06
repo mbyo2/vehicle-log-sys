@@ -1974,6 +1974,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_user_role: {
+        Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       log_error: {
         Args: {
           p_error_type: string
