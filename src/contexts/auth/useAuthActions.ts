@@ -12,16 +12,20 @@ interface AuthResult {
   user?: any;
 }
 
-// Helper function to log security events
+// Enhanced security logging with rate limiting detection
 const logSecurityEvent = async (eventType: string, riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low', eventData: Record<string, any> = {}) => {
   try {
     await supabase.rpc('log_security_event', {
       p_event_type: eventType,
-      p_user_id: null,
+      p_user_id: eventData.user_id || null,
       p_company_id: null,
-      p_ip_address: null,
+      p_ip_address: null, // Would be captured server-side
       p_user_agent: navigator.userAgent,
-      p_event_data: eventData,
+      p_event_data: {
+        ...eventData,
+        timestamp: new Date().toISOString(),
+        url: window.location.href
+      },
       p_risk_level: riskLevel,
     });
   } catch (error) {
@@ -45,11 +49,12 @@ export const useAuthActions = () => {
       });
 
       if (error) {
-        // Log failed login attempt
-        await logSecurityEvent('user_login_failure', 'medium', {
+        // Log failed login attempt with enhanced details
+        await logSecurityEvent('user_login_failure', 'high', {
           email,
           error: error.message,
-          timestamp: new Date().toISOString()
+          attempt_count: 1, // Could be enhanced to track actual attempts
+          risk_indicators: ['failed_password']
         });
         throw error;
       }

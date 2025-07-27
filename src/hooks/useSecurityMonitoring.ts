@@ -79,8 +79,13 @@ export function useSecurityMonitoring() {
   const logLogin = (success: boolean, additionalData?: Record<string, any>) => {
     logSecurityEvent.mutate({
       eventType: success ? 'user_login_success' : 'user_login_failure',
-      riskLevel: success ? 'low' : 'medium',
-      eventData: { success, ...additionalData },
+      riskLevel: success ? 'low' : 'high', // Mark failed logins as high risk
+      eventData: { 
+        success, 
+        timestamp: new Date().toISOString(),
+        ip_address: 'client_ip', // Would be captured server-side
+        ...additionalData 
+      },
     });
   };
 
@@ -109,8 +114,14 @@ export function useSecurityMonitoring() {
   const logSuspiciousActivity = (activity: string, details?: Record<string, any>) => {
     logSecurityEvent.mutate({
       eventType: 'suspicious_activity',
-      riskLevel: 'high',
-      eventData: { activity, ...details },
+      riskLevel: 'critical', // Upgrade suspicious activity to critical
+      eventData: { 
+        activity, 
+        timestamp: new Date().toISOString(),
+        user_agent: navigator.userAgent,
+        url: window.location.href,
+        ...details 
+      },
     });
   };
 

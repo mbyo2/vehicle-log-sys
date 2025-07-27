@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import * as speakeasy from "speakeasy";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -38,9 +39,15 @@ export function TwoFactorVerification({ email, onVerificationComplete }: TwoFact
 
       if (profileError) throw profileError;
 
-      // Verify the code against the stored secret
-      // In a real implementation, you would verify this against the stored secret
-      if (code === profile.two_factor_secret) {
+      // Verify the code against the stored TOTP secret using speakeasy
+      const verified = speakeasy.totp.verify({
+        secret: profile.two_factor_secret,
+        encoding: 'base32',
+        token: code,
+        window: 2 // Allow 2 time steps tolerance
+      });
+
+      if (verified) {
         toast({
           title: "Success",
           description: "Two-factor authentication verified",
