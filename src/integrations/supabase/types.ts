@@ -174,45 +174,60 @@ export type Database = {
       backup_logs: {
         Row: {
           backup_frequency: string | null
+          backup_hash: string | null
+          backup_location: string | null
           backup_type: string
           company_id: string | null
           completed_at: string | null
+          compression_ratio: number | null
           created_at: string | null
           encryption_enabled: boolean | null
+          encryption_key_id: string | null
           file_path: string | null
           id: string
           retention_days: number | null
           size_bytes: number | null
           started_at: string | null
           status: string
+          verification_status: string | null
         }
         Insert: {
           backup_frequency?: string | null
+          backup_hash?: string | null
+          backup_location?: string | null
           backup_type: string
           company_id?: string | null
           completed_at?: string | null
+          compression_ratio?: number | null
           created_at?: string | null
           encryption_enabled?: boolean | null
+          encryption_key_id?: string | null
           file_path?: string | null
           id?: string
           retention_days?: number | null
           size_bytes?: number | null
           started_at?: string | null
           status?: string
+          verification_status?: string | null
         }
         Update: {
           backup_frequency?: string | null
+          backup_hash?: string | null
+          backup_location?: string | null
           backup_type?: string
           company_id?: string | null
           completed_at?: string | null
+          compression_ratio?: number | null
           created_at?: string | null
           encryption_enabled?: boolean | null
+          encryption_key_id?: string | null
           file_path?: string | null
           id?: string
           retention_days?: number | null
           size_bytes?: number | null
           started_at?: string | null
           status?: string
+          verification_status?: string | null
         }
         Relationships: [
           {
@@ -1185,6 +1200,48 @@ export type Database = {
           },
         ]
       }
+      security_audit_results: {
+        Row: {
+          audit_id: string
+          company_id: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          results: Json
+          score: number
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          audit_id: string
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          results?: Json
+          score?: number
+          started_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          audit_id?: string
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          results?: Json
+          score?: number
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       security_policies: {
         Row: {
           company_id: string | null
@@ -1225,6 +1282,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      security_policy_config: {
+        Row: {
+          company_id: string
+          configuration: Json
+          created_at: string
+          created_by: string
+          id: string
+          is_enabled: boolean
+          policy_name: string
+          policy_type: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          configuration?: Json
+          created_at?: string
+          created_by: string
+          id?: string
+          is_enabled?: boolean
+          policy_name: string
+          policy_type: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          configuration?: Json
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_enabled?: boolean
+          policy_name?: string
+          policy_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       service_bookings: {
         Row: {
@@ -2046,6 +2139,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      check_public_table_access: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          has_public_access: boolean
+        }[]
+      }
+      check_table_rls_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          table_name: string
+          rls_enabled: boolean
+        }[]
+      }
       create_backup: {
         Args: { p_company_id: string; p_backup_type?: string }
         Returns: string
@@ -2086,6 +2193,14 @@ export type Database = {
       process_service_reminders: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      schedule_automated_backup: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      verify_backup_integrity: {
+        Args: { backup_id: string }
+        Returns: boolean
       }
     }
     Enums: {
