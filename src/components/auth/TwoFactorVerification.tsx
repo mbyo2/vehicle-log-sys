@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import * as speakeasy from "speakeasy";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -17,7 +17,7 @@ export function TwoFactorVerification({ email, onVerificationComplete }: TwoFact
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  
 
   const handleVerification = async () => {
     if (code.length !== 6) {
@@ -31,23 +31,13 @@ export function TwoFactorVerification({ email, onVerificationComplete }: TwoFact
 
     setLoading(true);
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('two_factor_secret')
-        .eq('email', email)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Verify the code against the stored TOTP secret using speakeasy
-      const verified = speakeasy.totp.verify({
-        secret: profile.two_factor_secret,
-        encoding: 'base32',
-        token: code,
-        window: 2 // Allow 2 time steps tolerance
+      const { data, error } = await supabase.functions.invoke('verify-totp', {
+        body: { code }
       });
 
-      if (verified) {
+      if (error) throw error;
+
+      if (data?.success) {
         toast({
           title: "Success",
           description: "Two-factor authentication verified",

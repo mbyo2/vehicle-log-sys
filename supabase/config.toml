@@ -1,4 +1,3 @@
-
 project_id = "yyeypbfdtitxqssvnagy"
 
 [api]
@@ -20,3 +19,6 @@ enable_anonymous_sign_ins = false
 
 [functions.create-profiles-table]
 verify_jwt = false
+
+[functions.verify-totp]
+verify_jwt = true
