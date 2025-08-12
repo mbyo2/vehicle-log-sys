@@ -15,12 +15,6 @@ export const supabase = createClient(
       flowType: 'pkce',
       storage: typeof window !== 'undefined' ? window.localStorage : undefined
     },
-    global: {
-      headers: {
-        'apikey': supabaseAnonKey,
-        'Authorization': `Bearer ${supabaseAnonKey}`
-      }
-    },
     db: {
       schema: 'public'
     }
