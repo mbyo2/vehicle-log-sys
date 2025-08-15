@@ -20,6 +20,7 @@ import {
   LineChart,
   Shield,
   UserCog,
+  Cog,
 } from 'lucide-react';
 
 interface NavItem {
@@ -43,6 +44,12 @@ export function Sidebar() {
       title: 'Companies',
       href: '/companies',
       icon: <Building className="mr-2 h-4 w-4" />,
+      roles: ['super_admin'],
+    },
+    {
+      title: 'Setup',
+      href: '/setup',
+      icon: <Cog className="mr-2 h-4 w-4" />,
       roles: ['super_admin'],
     },
     {

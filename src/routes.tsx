@@ -30,6 +30,7 @@ import { ModalProvider } from "./contexts/ModalContext";
 import { AuthenticatedLayout } from "./components/layouts/AuthenticatedLayout";
 import VehicleDetails from "./pages/VehicleDetails";
 import NewTrip from "./pages/NewTrip";
+import Setup from "./pages/Setup";
 import { SecurityAuditDashboard } from "./components/security/SecurityAuditDashboard";
 import { ResponsiveDashboardLayout } from "./components/layouts/ResponsiveDashboardLayout";
 import { ErrorMonitoringBoundary } from "./components/security/ErrorMonitoringBoundary";
@@ -264,6 +265,14 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={['company_admin', 'super_admin']}>
                 <Integrations />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "setup",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin']}>
+                <Setup />
               </ProtectedRoute>
             ),
           },
