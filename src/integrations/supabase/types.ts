@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -1119,7 +1119,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           two_factor_enabled: boolean | null
           two_factor_method: string | null
-          two_factor_secret: string | null
           updated_at: string
         }
         Insert: {
@@ -1131,7 +1130,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           two_factor_enabled?: boolean | null
           two_factor_method?: string | null
-          two_factor_secret?: string | null
           updated_at?: string
         }
         Update: {
@@ -1143,7 +1141,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           two_factor_enabled?: boolean | null
           two_factor_method?: string | null
-          two_factor_secret?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1804,6 +1801,32 @@ export type Database = {
           },
         ]
       }
+      user_mfa_secrets: {
+        Row: {
+          created_at: string
+          secret: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          secret: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          secret?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mfa_secrets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_inspections: {
         Row: {
           checklist: Json
@@ -2142,19 +2165,23 @@ export type Database = {
       check_public_table_access: {
         Args: Record<PropertyKey, never>
         Returns: {
-          table_name: string
           has_public_access: boolean
+          table_name: string
         }[]
       }
       check_table_rls_status: {
         Args: Record<PropertyKey, never>
         Returns: {
-          table_name: string
           rls_enabled: boolean
+          table_name: string
         }[]
       }
       create_backup: {
-        Args: { p_company_id: string; p_backup_type?: string }
+        Args: { p_backup_type?: string; p_company_id: string }
+        Returns: string
+      }
+      get_current_company_id: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_current_user_role: {
@@ -2167,26 +2194,26 @@ export type Database = {
       }
       log_error: {
         Args: {
-          p_error_type: string
-          p_error_message: string
-          p_stack_trace?: string
-          p_user_id?: string
           p_company_id?: string
+          p_error_data?: Json
+          p_error_message: string
+          p_error_type: string
+          p_stack_trace?: string
           p_url?: string
           p_user_agent?: string
-          p_error_data?: Json
+          p_user_id?: string
         }
         Returns: string
       }
       log_security_event: {
         Args: {
-          p_event_type: string
-          p_user_id?: string
           p_company_id?: string
-          p_ip_address?: string
-          p_user_agent?: string
           p_event_data?: Json
+          p_event_type: string
+          p_ip_address?: string
           p_risk_level?: string
+          p_user_agent?: string
+          p_user_id?: string
         }
         Returns: string
       }
