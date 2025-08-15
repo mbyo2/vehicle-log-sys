@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
+import { openUrlSafely } from "@/lib/urlValidation";
 
 export function AdPlacement() {
   const { toast } = useToast();
@@ -30,10 +31,17 @@ export function AdPlacement() {
       await supabase.rpc('increment_ad_clicks', { ad_id: adId });
       setSelectedAd(adId);
       
-      // Find the ad URL or content
+      // Find the ad URL or content and validate before opening
       const ad = ads?.find(a => a.id === adId);
       if (ad?.content) {
-        window.open(ad.content, '_blank');
+        const opened = openUrlSafely(ad.content);
+        if (!opened) {
+          toast({
+            variant: "destructive",
+            title: "Invalid URL",
+            description: "This advertisement contains an invalid or unsafe URL",
+          });
+        }
       }
     } catch (error: any) {
       toast({

@@ -58,10 +58,8 @@ export function useDocuments() {
         throw new Error(`File upload failed: ${uploadError.message}`);
       }
 
-      // Get file URL
-      const { data: urlData } = supabase.storage
-        .from('documents')
-        .getPublicUrl(filePath);
+      // For upload, we still store the path but don't expose public URLs
+      // The actual URL will be generated securely when needed
 
       // Insert document record
       const { error: dbError } = await supabase
@@ -69,7 +67,7 @@ export function useDocuments() {
         .insert({
           ...documentData,
           storage_path: filePath,
-          file_url: urlData.publicUrl,
+          file_url: null, // Remove public URL storage for security
           file_size: file.size,
           mime_type: file.type,
           created_by: (await supabase.auth.getUser()).data.user?.id,
@@ -98,10 +96,24 @@ export function useDocuments() {
   });
 
   const getDocumentUrl = async (filePath: string) => {
-    const { data } = supabase.storage
+    // Validate access permissions through database function
+    const { data: validatedPath, error: validationError } = await supabase
+      .rpc('get_secure_document_url', { storage_path: filePath });
+
+    if (validationError) {
+      throw new Error(`Access denied: ${validationError.message}`);
+    }
+
+    // Generate signed URL for secure access (24 hour expiry)
+    const { data, error } = await supabase.storage
       .from('documents')
-      .getPublicUrl(filePath);
-    return data.publicUrl;
+      .createSignedUrl(validatedPath, 86400); // 24 hours
+
+    if (error) {
+      throw new Error(`Failed to generate secure URL: ${error.message}`);
+    }
+
+    return data.signedUrl;
   };
 
   const verifyDocument = useMutation({

@@ -34,7 +34,7 @@ export function CompanyLogoUpload({ companyId, currentLogoUrl }: CompanyLogoUplo
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
+      // Get public URL (company logos are public assets)
       const { data: { publicUrl } } = supabase.storage
         .from('company-logos')
         .getPublicUrl(filePath);
