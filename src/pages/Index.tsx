@@ -20,13 +20,21 @@ export default function Index() {
       try {
         setInitializationStep('Checking authentication...');
         
-        // Wait for auth to stabilize
+        // Wait for auth to stabilize with longer timeout for mobile
         let attempts = 0;
-        const maxAttempts = 5;
+        const maxAttempts = 10; // Increased for mobile
         
         while (loading.get() && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise(resolve => setTimeout(resolve, 800)); // Longer delay for mobile
           attempts++;
+        }
+        
+        // Force clear loading state if stuck
+        if (loading.get() && attempts >= maxAttempts) {
+          console.warn("Auth loading stuck, forcing clear");
+          await supabase.auth.signOut();
+          navigate('/signin', { replace: true });
+          return;
         }
         
         const currentUser = user.get();
@@ -59,15 +67,17 @@ export default function Index() {
         console.log("No user found, checking first user status...");
         
         try {
-          // Simple direct check for profiles
+          // Simple direct check for profiles with better mobile handling
           const { count, error: countError } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true });
           
           if (countError) {
             console.error("Profile count check failed:", countError);
-            // If profiles table doesn't exist, assume first user
-            navigate('/signup', { state: { isFirstUser: true }, replace: true });
+            // On mobile, connection might be flaky - use location state as fallback
+            const isFirstUser = window.location.search.includes('firstuser') || 
+                               sessionStorage.getItem('firstUser') === 'true';
+            navigate('/signup', { state: { isFirstUser }, replace: true });
             return;
           }
           
