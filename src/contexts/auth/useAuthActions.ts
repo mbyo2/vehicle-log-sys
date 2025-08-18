@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { authState } from './AuthState';
 import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
+import { SecurityUtils } from '@/lib/security';
 
 interface AuthResult {
   success: boolean;
@@ -42,9 +43,31 @@ export const useAuthActions = () => {
     try {
       setLoadingState(true);
       console.log('Attempting to sign in user:', email);
+
+      // Rate limiting check
+      const canProceed = await supabase.rpc('check_rate_limit', {
+        p_identifier: email,
+        p_action_type: 'login',
+        p_max_attempts: 5,
+        p_window_minutes: 15
+      });
+
+      if (!canProceed.data) {
+        const error = "Too many login attempts. Please try again in 15 minutes.";
+        await logSecurityEvent('rate_limit_exceeded', 'high', { email, action: 'login' });
+        throw new Error(error);
+      }
+
+      // Input validation and sanitization
+      const emailValidation = SecurityUtils.validateEmail(email);
+      if (!emailValidation.isValid) {
+        throw new Error("Invalid email format");
+      }
+
+      const sanitizedEmail = emailValidation.sanitized;
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: sanitizedEmail,
         password,
       });
 
@@ -139,17 +162,56 @@ export const useAuthActions = () => {
     try {
       setLoadingState(true);
       console.log("Starting signup process with isFirstUser =", isFirstUser);
+
+      // Rate limiting check
+      const canProceed = await supabase.rpc('check_rate_limit', {
+        p_identifier: email,
+        p_action_type: 'signup',
+        p_max_attempts: 3,
+        p_window_minutes: 60
+      });
+
+      if (!canProceed.data) {
+        const error = "Too many signup attempts. Please try again in 1 hour.";
+        await logSecurityEvent('rate_limit_exceeded', 'high', { email, action: 'signup' });
+        return { success: false, error };
+      }
+
+      // Input validation and sanitization
+      const emailValidation = SecurityUtils.validateEmail(email);
+      if (!emailValidation.isValid) {
+        return { success: false, error: "Invalid email format" };
+      }
+
+      const passwordValidation = SecurityUtils.validatePassword(password);
+      if (!passwordValidation.isValid) {
+        return { success: false, error: `Password requirements not met: ${passwordValidation.feedback.join(', ')}` };
+      }
+
+      const sanitizedEmail = emailValidation.sanitized;
+      const sanitizedFullName = SecurityUtils.sanitizeString(fullName);
+      const sanitizedCompanyName = companyName ? SecurityUtils.sanitizeString(companyName) : undefined;
+
+      // Check for suspicious activity
+      const suspiciousCheck = SecurityUtils.detectSuspiciousActivity(email + fullName + (companyName || ''));
+      if (suspiciousCheck.isSuspicious) {
+        await logSecurityEvent('suspicious_signup_attempt', 'critical', { 
+          email: sanitizedEmail, 
+          reasons: suspiciousCheck.reasons 
+        });
+        return { success: false, error: "Signup blocked due to security concerns. Please contact support." };
+      }
       
       // Prepare metadata for the user
       const metadata: any = {
-        full_name: fullName,
+        full_name: sanitizedFullName,
       };
 
       // For first user (super admin), don't add role to metadata - let the trigger handle it
       if (!isFirstUser) {
         metadata.role = 'company_admin';
-        if (companyName) {
-          metadata.company_name = companyName;
+        if (sanitizedCompanyName) {
+          metadata.company_name = sanitizedCompanyName;
         }
         if (subscriptionType) {
           metadata.subscription_type = subscriptionType;
@@ -160,7 +222,7 @@ export const useAuthActions = () => {
       
       // Sign up the user with metadata that will be used by the trigger
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: sanitizedEmail,
         password,
         options: {
           data: metadata

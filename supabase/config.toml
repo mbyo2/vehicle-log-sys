@@ -22,3 +22,9 @@ verify_jwt = false
 
 [functions.verify-totp]
 verify_jwt = true
+
+[functions.setup-totp]
+verify_jwt = true
+
+[functions.disable-totp]
+verify_jwt = true

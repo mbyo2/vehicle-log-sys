@@ -31,6 +31,7 @@ import { AuthenticatedLayout } from "./components/layouts/AuthenticatedLayout";
 import VehicleDetails from "./pages/VehicleDetails";
 import NewTrip from "./pages/NewTrip";
 import Setup from "./pages/Setup";
+import { Security } from "./pages/Security";
 import { SecurityAuditDashboard } from "./components/security/SecurityAuditDashboard";
 import { ResponsiveDashboardLayout } from "./components/layouts/ResponsiveDashboardLayout";
 import { ErrorMonitoringBoundary } from "./components/security/ErrorMonitoringBoundary";
@@ -95,8 +96,8 @@ export const router = createBrowserRouter([
           {
             path: "security",
             element: (
-              <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
-                <SecurityAuditDashboard />
+              <ProtectedRoute>
+                <Security />
               </ProtectedRoute>
             ),
           },

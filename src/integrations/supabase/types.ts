@@ -171,6 +171,36 @@ export type Database = {
           },
         ]
       }
+      auth_rate_limits: {
+        Row: {
+          action_type: string
+          attempt_count: number | null
+          blocked_until: string | null
+          created_at: string | null
+          id: string
+          user_identifier: string
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          user_identifier: string
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          attempt_count?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          id?: string
+          user_identifier?: string
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       backup_logs: {
         Row: {
           backup_frequency: string | null
@@ -2169,6 +2199,15 @@ export type Database = {
           table_name: string
         }[]
       }
+      check_rate_limit: {
+        Args: {
+          p_action_type: string
+          p_identifier: string
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
       check_table_rls_status: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2178,6 +2217,14 @@ export type Database = {
       }
       create_backup: {
         Args: { p_backup_type?: string; p_company_id: string }
+        Returns: string
+      }
+      decrypt_credentials: {
+        Args: { encrypted_data: string; encryption_key?: string }
+        Returns: Json
+      }
+      encrypt_credentials: {
+        Args: { credentials_data: Json; encryption_key?: string }
         Returns: string
       }
       get_current_company_id: {
