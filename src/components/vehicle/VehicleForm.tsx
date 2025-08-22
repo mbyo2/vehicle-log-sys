@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Vehicle } from '@/types/vehicle';
+import { useEnhancedSecurity } from '@/hooks/useEnhancedSecurity';
+import { EnhancedSecurityValidation } from '@/components/security/EnhancedSecurityValidation';
 import {
   Form,
   FormControl,
@@ -49,6 +51,7 @@ interface VehicleFormProps {
 export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { validateAndSanitizeVehicleData } = useEnhancedSecurity();
   
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
@@ -71,10 +74,17 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
     try {
       setLoading(true);
       
+      // Enhanced security validation and sanitization
+      const validationResult = validateAndSanitizeVehicleData(data);
+      if (!validationResult.isValid) {
+        setLoading(false);
+        return; // Toast already shown by the validation hook
+      }
+      
       const vehicleData = {
-        plate_number: data.plate_number,
-        make: data.make,
-        model: data.model,
+        plate_number: validationResult.sanitizedData?.plate_number || data.plate_number,
+        make: validationResult.sanitizedData?.make || data.make,
+        model: validationResult.sanitizedData?.model || data.model,
         year: parseInt(data.year),
         service_interval: parseInt(data.service_interval),
         current_kilometers: parseInt(data.current_kilometers),
@@ -138,6 +148,11 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <EnhancedSecurityValidation 
+          data={form.getValues()} 
+          validationType="vehicle"
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}

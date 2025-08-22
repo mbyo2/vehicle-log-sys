@@ -188,6 +188,112 @@ export class SecurityUtils {
       reasons
     };
   }
+
+  /**
+   * Enhanced vehicle data validation
+   */
+  static validateVehicleData(data: any): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (data.plate_number && !this.validateLicensePlate(data.plate_number)) {
+      errors.push('Invalid license plate format');
+    }
+    
+    if (data.make && this.detectSuspiciousActivity(data.make).isSuspicious) {
+      errors.push('Vehicle make contains suspicious content');
+    }
+    
+    if (data.model && this.detectSuspiciousActivity(data.model).isSuspicious) {
+      errors.push('Vehicle model contains suspicious content');
+    }
+    
+    if (data.current_kilometers && (parseInt(data.current_kilometers) < 0 || parseInt(data.current_kilometers) > 10000000)) {
+      errors.push('Invalid odometer reading');
+    }
+    
+    return { isValid: errors.length === 0, errors };
+  }
+
+  /**
+   * Validate license plate format
+   */
+  static validateLicensePlate(plate: string): boolean {
+    const sanitized = this.sanitizeString(plate);
+    // Basic alphanumeric validation with dashes and spaces
+    return /^[A-Z0-9\s\-]{1,15}$/i.test(sanitized);
+  }
+
+  /**
+   * Enhanced trip log validation
+   */
+  static validateTripLog(data: any): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (data.start_location && this.detectSuspiciousActivity(data.start_location).isSuspicious) {
+      errors.push('Start location contains suspicious content');
+    }
+    
+    if (data.end_location && this.detectSuspiciousActivity(data.end_location).isSuspicious) {
+      errors.push('End location contains suspicious content');
+    }
+    
+    if (data.purpose && this.detectSuspiciousActivity(data.purpose).isSuspicious) {
+      errors.push('Trip purpose contains suspicious content');
+    }
+    
+    if (data.start_kilometers && data.end_kilometers) {
+      if (parseInt(data.end_kilometers) <= parseInt(data.start_kilometers)) {
+        errors.push('End odometer reading must be greater than start reading');
+      }
+      if ((parseInt(data.end_kilometers) - parseInt(data.start_kilometers)) > 2000) {
+        errors.push('Trip distance seems unusually long (>2000km)');
+      }
+    }
+    
+    return { isValid: errors.length === 0, errors };
+  }
+
+  /**
+   * Enhanced integration credentials validation
+   */
+  static validateIntegrationCredentials(data: any): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    if (data.api_key && !this.validateApiKey(data.api_key)) {
+      errors.push('Invalid API key format');
+    }
+    
+    if (data.username && this.detectSuspiciousActivity(data.username).isSuspicious) {
+      errors.push('Username contains suspicious content');
+    }
+    
+    if (data.endpoint_url && !this.validateUrl(data.endpoint_url)) {
+      errors.push('Invalid endpoint URL');
+    }
+    
+    return { isValid: errors.length === 0, errors };
+  }
+
+  /**
+   * Validate API key format
+   */
+  static validateApiKey(key: string): boolean {
+    // Basic API key validation - alphanumeric with common separators
+    return /^[a-zA-Z0-9_\-\.]{8,128}$/.test(key);
+  }
+
+  /**
+   * Enhanced URL validation
+   */
+  static validateUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      // Only allow HTTPS for security
+      return parsed.protocol === 'https:' && parsed.hostname.length > 0;
+    } catch {
+      return false;
+    }
+  }
 }
 
 // Rate limiters for common operations
