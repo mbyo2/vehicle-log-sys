@@ -669,6 +669,7 @@ export type Database = {
           config: Json
           created_at: string | null
           credentials: Json
+          encrypted_credentials: string | null
           id: string
           is_active: boolean | null
           last_sync_at: string | null
@@ -681,6 +682,7 @@ export type Database = {
           config?: Json
           created_at?: string | null
           credentials?: Json
+          encrypted_credentials?: string | null
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
@@ -693,6 +695,7 @@ export type Database = {
           config?: Json
           created_at?: string | null
           credentials?: Json
+          encrypted_credentials?: string | null
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
@@ -771,6 +774,7 @@ export type Database = {
           company_id: string | null
           config: Json
           created_at: string | null
+          encrypted_config: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -781,6 +785,7 @@ export type Database = {
           company_id?: string | null
           config?: Json
           created_at?: string | null
+          encrypted_config?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -791,6 +796,7 @@ export type Database = {
           company_id?: string | null
           config?: Json
           created_at?: string | null
+          encrypted_config?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
@@ -2223,8 +2229,16 @@ export type Database = {
         Args: { encrypted_data: string; encryption_key?: string }
         Returns: Json
       }
+      decrypt_integration_credentials: {
+        Args: { encrypted_data: string }
+        Returns: Json
+      }
       encrypt_credentials: {
         Args: { credentials_data: Json; encryption_key?: string }
+        Returns: string
+      }
+      encrypt_integration_credentials: {
+        Args: { credentials_data: Json }
         Returns: string
       }
       get_current_company_id: {
