@@ -27,35 +27,19 @@ export function useSignIn() {
     try {
       console.log("Checking if first user exists...");
       
-      // Safely check if profiles table exists first
-      const { error: tableError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .limit(1);
-      
-      if (tableError) {
-        // If there's an error with the profiles table, assume this is a first-time setup
-        console.log("Error checking profiles table, may not exist:", tableError);
-        signInState.isFirstUser.set(true);
-        signInState.isFirstUserChecked.set(true);
-        navigate('/signup', { state: { isFirstUser: true }, replace: true });
-        return true;
-      }
-      
-      // If we get here, the table exists, now check for any profiles
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+      // Use the database function to check if this is the first user
+      const { data, error } = await supabase.rpc('check_if_first_user');
       
       if (error) {
         console.error("Error checking first user:", error);
+        // If there's an error, assume there are users (safer default)
+        signInState.isFirstUser.set(false);
+        signInState.isFirstUserChecked.set(true);
         return false;
       }
       
-      console.log("Profile count:", count);
-      // Make sure count is correctly converted to number
-      const profileCount = count === null ? 0 : (typeof count === 'string' ? parseInt(count, 10) : count);
-      const isFirst = profileCount === 0;
+      console.log("First user check result:", data);
+      const isFirst = data === true;
       
       signInState.isFirstUser.set(isFirst);
       signInState.isFirstUserChecked.set(true);
@@ -68,6 +52,9 @@ export function useSignIn() {
       return false;
     } catch (error) {
       console.error("Error checking first user:", error);
+      // If there's an error, assume there are users (safer default)
+      signInState.isFirstUser.set(false);
+      signInState.isFirstUserChecked.set(true);
       return false;
     } finally {
       signInState.loading.set(false);

@@ -225,7 +225,8 @@ export const useAuthActions = () => {
         email: sanitizedEmail,
         password,
         options: {
-          data: metadata
+          data: metadata,
+          emailRedirectTo: `${window.location.origin}/dashboard`
         },
       });
 

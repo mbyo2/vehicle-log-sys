@@ -34,18 +34,8 @@ export default function SignUp() {
         
         if (error) {
           console.error("Error checking first user status:", error);
-          // If we can't determine, check profiles table directly
-          const { data: profiles, error: profileError } = await supabase
-            .from('profiles')
-            .select('id')
-            .limit(1);
-          
-          if (profileError) {
-            console.error("Error checking profiles:", profileError);
-            setIsFirstUser(true); // Assume first user if we can't check
-          } else {
-            setIsFirstUser(profiles.length === 0);
-          }
+          // Default to false if there's an error (assume there are users)
+          setIsFirstUser(false);
         } else {
           console.log("First user check result:", data);
           setIsFirstUser(data === true);
@@ -53,8 +43,8 @@ export default function SignUp() {
         
       } catch (err: any) {
         console.error("Error checking first user status:", err);
-        // Default to true for first time setup
-        setIsFirstUser(true);
+        // Default to false if we can't check (assume there are users)
+        setIsFirstUser(false);
       } finally {
         setCheckingFirstUser(false);
       }
