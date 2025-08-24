@@ -19,15 +19,28 @@ export default function SignUp() {
       try {
         setCheckingFirstUser(true);
         
-        // If we have location state, use it
+        // If we have location state, use it but verify it
         if (locationIsFirstUser !== undefined) {
-          console.log("Using location state for first user:", locationIsFirstUser);
-          setIsFirstUser(locationIsFirstUser);
+          console.log("Location state indicates first user:", locationIsFirstUser);
+          
+          // Double check with database if location says it's first user
+          if (locationIsFirstUser) {
+            const { data, error } = await supabase.rpc('check_if_first_user');
+            if (!error && data === false) {
+              // Location state is wrong, there's already a super admin
+              console.log("Location state incorrect, super admin already exists");
+              setIsFirstUser(false);
+            } else {
+              setIsFirstUser(locationIsFirstUser);
+            }
+          } else {
+            setIsFirstUser(locationIsFirstUser);
+          }
           setCheckingFirstUser(false);
           return;
         }
         
-        console.log("Checking first user status...");
+        console.log("Checking first user status directly...");
         
         // Use the database function to check if this is the first user
         const { data, error } = await supabase.rpc('check_if_first_user');

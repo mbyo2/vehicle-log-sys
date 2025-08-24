@@ -45,7 +45,7 @@ export function useSignIn() {
       signInState.isFirstUserChecked.set(true);
       
       if (isFirst) {
-        console.log("No profiles found, directing to first user signup");
+        console.log("No super admin found, directing to first user signup");
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
         return true;
       }
@@ -105,11 +105,13 @@ export function useSignIn() {
       
       let errorMessage = error.message || "Failed to sign in";
       
-      // Check for specific database errors that might indicate setup issues
-      if (errorMessage.includes("relation") && errorMessage.includes("does not exist")) {
-        errorMessage = "Database setup is incomplete. Please contact support.";
-        // Redirect to signup with first user flag if this appears to be a fresh install
-        navigate('/signup', { state: { isFirstUser: true }, replace: true });
+      // Check for specific error that might indicate no super admin exists
+      if (errorMessage.includes("Invalid login credentials") || errorMessage.includes("Email not confirmed")) {
+        // Check if this might be because no super admin exists
+        const isFirstUser = await checkFirstUser();
+        if (isFirstUser) {
+          return; // checkFirstUser will handle navigation
+        }
       }
       
       toast({

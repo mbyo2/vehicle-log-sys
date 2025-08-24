@@ -37,7 +37,7 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
       // Give auth some time to initialize
       setTimeout(() => {
         setIsVerifying(false);
-      }, 2000);
+      }, 3000); // Increased timeout to allow for profile loading
     };
 
     checkAuth();
