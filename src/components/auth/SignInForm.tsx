@@ -11,12 +11,13 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import { AlertTriangle } from "lucide-react";
 import { ConnectionStatus } from "@/components/ui/connection-status";
-import { PasswordResetDialog } from "./PasswordResetDialog";
+import { PasswordResetDialog } from './PasswordResetDialog';
 
 export function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const { signIn, loading } = useAuthActions();
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,13 +90,13 @@ export function SignInForm() {
               </Button>
             </form>
             <div className="mt-4 text-center">
-              <PasswordResetDialog 
-                trigger={
-                  <Button variant="link" className="text-sm">
-                    Forgot your password?
-                  </Button>
-                }
-              />
+              <Button 
+                variant="link" 
+                className="text-sm" 
+                onClick={() => setShowResetDialog(true)}
+              >
+                Forgot password?
+              </Button>
             </div>
           </CardContent>
           <CardFooter className="flex justify-center border-t p-4">
@@ -110,6 +111,11 @@ export function SignInForm() {
             </div>
           </CardFooter>
         </Card>
+        
+        <PasswordResetDialog
+          open={showResetDialog}
+          onOpenChange={setShowResetDialog}
+        />
       </div>
     </ErrorBoundary>
   );

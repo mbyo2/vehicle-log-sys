@@ -330,7 +330,7 @@ export const useAuthActions = () => {
         navigate('/signin');
       }
       
-      return { success: true };
+      return { success: true, user: data.user };
       
     } catch (error: any) {
       console.error('Error signing up:', error.message);

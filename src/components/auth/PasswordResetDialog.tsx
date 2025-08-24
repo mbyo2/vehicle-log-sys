@@ -1,128 +1,152 @@
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Mail, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+
+const resetSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
+type ResetFormValues = z.infer<typeof resetSchema>;
 
 interface PasswordResetDialogProps {
-  trigger: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function PasswordResetDialog({ trigger }: PasswordResetDialogProps) {
-  const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
+export function PasswordResetDialog({ open, onOpenChange }: PasswordResetDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
 
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
+  const form = useForm<ResetFormValues>({
+    resolver: zodResolver(resetSchema),
+    defaultValues: {
+      email: '',
+    },
+  });
 
-    setLoading(true);
-    setError(null);
-
+  const onSubmit = async (values: ResetFormValues) => {
+    setIsLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      setSuccess(true);
+      setIsSuccess(true);
       toast({
-        title: 'Reset link sent',
-        description: 'Check your email for a password reset link.',
+        title: 'Reset email sent',
+        description: 'Check your inbox for the password reset link.',
       });
-    } catch (err: any) {
-      console.error('Password reset error:', err);
-      setError(err.message || 'Failed to send reset email');
+    } catch (error: any) {
+      console.error('Password reset error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: err.message || 'Failed to send reset email',
+        title: 'Failed to send reset email',
+        description: error.message || 'Please try again later.',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // Reset form when dialog closes
-      setEmail('');
-      setSuccess(false);
-      setError(null);
-    }
+  const handleClose = () => {
+    setIsSuccess(false);
+    form.reset();
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Reset Password</DialogTitle>
           <DialogDescription>
             Enter your email address and we'll send you a link to reset your password.
           </DialogDescription>
         </DialogHeader>
-        
-        {success ? (
-          <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
-              Password reset link has been sent to your email. Please check your inbox and follow the instructions.
-            </AlertDescription>
-          </Alert>
+
+        {isSuccess ? (
+          <div className="space-y-4">
+            <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800 dark:text-green-200">
+                Password reset email sent! Check your inbox and follow the instructions to reset your password.
+              </AlertDescription>
+            </Alert>
+            <Button onClick={handleClose} className="w-full">
+              Done
+            </Button>
+          </div>
         ) : (
-          <form onSubmit={handleReset} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                required
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="Enter your email"
+                          className="pl-10"
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="flex gap-2">
-              <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? 'Sending...' : 'Send Reset Link'}
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => setOpen(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+              </div>
+            </form>
+          </Form>
         )}
       </DialogContent>
     </Dialog>

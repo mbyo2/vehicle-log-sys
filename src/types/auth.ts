@@ -6,6 +6,8 @@ export interface UserProfile {
   role: UserRole;
   full_name?: string;
   company_id?: string;
+  two_factor_enabled?: boolean;
+  two_factor_method?: string;
 }
 
 export interface Company {
