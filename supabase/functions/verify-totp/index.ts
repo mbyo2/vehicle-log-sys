@@ -68,6 +68,25 @@ Deno.serve(async (req) => {
       window: 2, // allow +/- 1 time step
     });
 
+    if (verified) {
+      // Update the user's profile to enable 2FA
+      const { error: updateError } = await adminClient
+        .from('profiles')
+        .update({ two_factor_enabled: true })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error("Error updating profile:", updateError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to update profile" }),
+          {
+            status: 500,
+            headers: corsHeaders,
+          }
+        );
+      }
+    }
+
     return new Response(JSON.stringify({ success: !!verified }), {
       status: 200,
       headers: corsHeaders,

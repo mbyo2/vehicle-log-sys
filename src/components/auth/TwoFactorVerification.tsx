@@ -64,8 +64,16 @@ export function TwoFactorVerification({
       const currentUser = user.get();
       if (!currentUser) throw new Error('User not authenticated');
 
-      // Simulate verification for demo
-      if (values.code === '123456') {
+      // Call the verify-totp edge function
+      const { data, error } = await supabase.functions.invoke('verify-totp', {
+        body: { code: values.code }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Verification failed');
+      }
+
+      if (data?.success) {
         toast({
           title: mode === 'setup' ? '2FA enabled' : 'Verification successful',
           description: mode === 'setup' 
@@ -111,7 +119,7 @@ export function TwoFactorVerification({
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="Enter 6-digit code (use 123456 for demo)"
+                      placeholder="Enter 6-digit code from your authenticator app"
                       maxLength={6}
                       className="text-center text-lg tracking-widest"
                       disabled={isLoading}
