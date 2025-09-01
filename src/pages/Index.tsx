@@ -62,41 +62,9 @@ export default function Index() {
           return;
         }
         
-        // No user - check first user status
-        setInitializationStep('Checking setup status...');
-        console.log("No user found, checking first user status...");
-        
-        try {
-          // Simple direct check for profiles with better mobile handling
-          const { count, error: countError } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-          
-          if (countError) {
-            console.error("Profile count check failed:", countError);
-            // On mobile, connection might be flaky - use location state as fallback
-            const isFirstUser = window.location.search.includes('firstuser') || 
-                               sessionStorage.getItem('firstUser') === 'true';
-            navigate('/signup', { state: { isFirstUser }, replace: true });
-            return;
-          }
-          
-          const profileCount = count || 0;
-          console.log("Profile count:", profileCount);
-          
-          if (profileCount === 0) {
-            console.log("First user detected, redirecting to signup");
-            navigate('/signup', { state: { isFirstUser: true }, replace: true });
-          } else {
-            console.log("Existing users found, redirecting to signin");
-            navigate('/signin', { replace: true });
-          }
-          
-        } catch (setupErr: any) {
-          console.error("Setup check failed:", setupErr);
-          // Default to first user to allow setup
-          navigate('/signup', { state: { isFirstUser: true }, replace: true });
-        }
+        // No user - always redirect to sign-in for unauthenticated users
+        console.log("No user found, redirecting to signin");
+        navigate('/signin', { replace: true });
         
       } catch (error: any) {
         console.error("App initialization error:", error);
