@@ -85,8 +85,10 @@ export function SecuritySettings() {
             </Alert>
 
             <TwoFactorVerification
-              email={(typeof user?.email === 'string' ? user.email : user?.email?.get?.() || "")}
-              onVerificationComplete={handleTwoFactorVerification}
+              open={showTwoFactorSetup}
+              onOpenChange={setShowTwoFactorSetup}
+              mode="setup"
+              onSuccess={handleTwoFactorVerification}
             />
 
             <Button 
