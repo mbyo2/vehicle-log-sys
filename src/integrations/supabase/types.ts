@@ -2225,6 +2225,10 @@ export type Database = {
         Args: { p_backup_type?: string; p_company_id: string }
         Returns: string
       }
+      create_test_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       decrypt_credentials: {
         Args: { encrypted_data: string; encryption_key?: string }
         Returns: Json
