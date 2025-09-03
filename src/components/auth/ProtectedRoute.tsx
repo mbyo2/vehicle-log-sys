@@ -49,9 +49,14 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   if (isVerifying || isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner className="mb-4" />
+      <div className="flex h-screen items-center justify-center animate-fade-in">
+        <div className="text-center space-y-4">
+          <div className="relative">
+            <LoadingSpinner size={24} className="text-primary" />
+            <div className="absolute inset-0 animate-ping">
+              <LoadingSpinner size={24} className="opacity-20 text-primary" />
+            </div>
+          </div>
           <p className="text-muted-foreground">Verifying authentication...</p>
         </div>
       </div>

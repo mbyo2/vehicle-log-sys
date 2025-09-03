@@ -100,14 +100,21 @@ export default function Index() {
   // Show loading screen
   if (isChecking) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center bg-background">
-        <div className="flex items-center mb-6">
-          <LoadingSpinner size={24} />
-          <span className="ml-2 text-xl font-medium">Loading Fleet Manager...</span>
+      <div className="flex h-screen flex-col items-center justify-center bg-background animate-fade-in">
+        <div className="flex flex-col items-center space-y-6">
+          <div className="relative">
+            <LoadingSpinner size={32} className="text-primary" />
+            <div className="absolute inset-0 animate-ping">
+              <LoadingSpinner size={32} className="opacity-20 text-primary" />
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <h1 className="text-xl font-semibold">Fleet Manager</h1>
+            <p className="text-muted-foreground animate-pulse max-w-md">
+              {initializationStep}
+            </p>
+          </div>
         </div>
-        <p className="text-muted-foreground text-center max-w-md">
-          {initializationStep}
-        </p>
       </div>
     );
   }

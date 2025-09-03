@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import { AlertTriangle } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ConnectionStatus } from "@/components/ui/connection-status";
 import { PasswordResetDialog } from './PasswordResetDialog';
 

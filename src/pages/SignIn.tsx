@@ -10,9 +10,11 @@ export default function SignIn() {
   // If still loading, show a spinner
   if (loading.get()) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingSpinner />
-        <span className="ml-2 text-muted-foreground">Loading...</span>
+      <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in">
+        <div className="flex flex-col items-center space-y-4">
+          <LoadingSpinner size={24} className="text-primary" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -23,7 +25,7 @@ export default function SignIn() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 animate-fade-in">
       <SignInForm />
     </div>
   );

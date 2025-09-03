@@ -48,6 +48,26 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 324 96% 34%;
   }
+  /* Smooth scrolling and performance optimizations */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  body {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+  }
 }
 
 @layer base {
@@ -81,4 +101,40 @@
 /* Add smooth transitions for theme changes */
 .transition-theme {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+@layer components {
+  /* Interactive animations */
+  .story-link {
+    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  .loading-pulse {
+    @apply animate-pulse bg-muted rounded;
+  }
+  
+  /* Card animations */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:scale-[1.02] hover:border-primary/20;
+  }
+  
+  /* Button animations */
+  .btn-glow {
+    @apply relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700;
+  }
+  
+  /* Focus states */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
 }
