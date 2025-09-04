@@ -1189,6 +1189,36 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          action: string
+          company_id: string | null
+          created_at: string
+          id: string
+          is_granted: boolean
+          resource: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          action: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_granted?: boolean
+          resource: string
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          action?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_granted?: boolean
+          resource?: string
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
       security_audit_logs: {
         Row: {
           company_id: string | null
@@ -2350,6 +2380,10 @@ export type Database = {
         Args: { credentials_data: Json }
         Returns: string
       }
+      encrypt_sensitive_data: {
+        Args: { data_text: string }
+        Returns: string
+      }
       get_current_company_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2398,6 +2432,10 @@ export type Database = {
       schedule_automated_backup: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      user_has_permission: {
+        Args: { p_action: string; p_company_id?: string; p_resource: string }
+        Returns: boolean
       }
       verify_backup_integrity: {
         Args: { backup_id: string }

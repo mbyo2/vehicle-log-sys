@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { useAuthActions } from "@/contexts/auth/useAuthActions";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
 import { AlertTriangle } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ConnectionStatus } from "@/components/ui/connection-status";
@@ -18,7 +18,7 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const { signIn, loading } = useAuthActions();
+  const { signIn, loading } = useEnhancedAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,11 +33,15 @@ export function SignInForm() {
       return;
     }
 
-    try {
-      await signIn(email, password);
-      // Navigation is handled in the signIn function
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in");
+    const { data, error: signInError } = await signIn(email, password);
+
+    if (signInError) {
+      setError(signInError.message);
+      return;
+    }
+
+    if (data) {
+      navigate(from, { replace: true });
     }
   };
 

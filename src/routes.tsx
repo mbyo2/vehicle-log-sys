@@ -32,7 +32,7 @@ import { AuthenticatedLayout } from "./components/layouts/AuthenticatedLayout";
 import VehicleDetails from "./pages/VehicleDetails";
 import NewTrip from "./pages/NewTrip";
 import Setup from "./pages/Setup";
-import { Security } from "./pages/Security";
+import Security from "./pages/Security";
 import { SecurityAuditDashboard } from "./components/security/SecurityAuditDashboard";
 import { ResponsiveDashboardLayout } from "./components/layouts/ResponsiveDashboardLayout";
 import { ErrorMonitoringBoundary } from "./components/security/ErrorMonitoringBoundary";
