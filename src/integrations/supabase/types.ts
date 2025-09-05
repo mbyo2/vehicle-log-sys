@@ -2384,6 +2384,10 @@ export type Database = {
         Args: { data_text: string }
         Returns: string
       }
+      enforce_security_policies: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_company_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -2395,6 +2399,15 @@ export type Database = {
       get_secure_document_url: {
         Args: { storage_path: string }
         Returns: string
+      }
+      get_security_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          metric_description: string
+          metric_name: string
+          metric_value: number
+          risk_level: string
+        }[]
       }
       get_user_role: {
         Args: { user_id?: string }
