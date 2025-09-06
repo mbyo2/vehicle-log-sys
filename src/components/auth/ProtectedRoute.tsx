@@ -1,6 +1,6 @@
 
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { UserRole } from '@/types/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useEffect, useState } from 'react';
@@ -18,18 +18,14 @@ export const DEFAULT_ROUTES: Record<UserRole, string> = {
 };
 
 export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading } = useEnhancedAuth();
   const location = useLocation();
   const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const isLoading = loading.get();
-      const currentUser = user.get();
-      const currentProfile = profile.get();
-      
       // If not loading and we have user data, we can proceed
-      if (!isLoading) {
+      if (!loading) {
         setIsVerifying(false);
         return;
       }
@@ -43,9 +39,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
     checkAuth();
   }, [loading, user, profile]);
 
-  const currentUser = user.get();
-  const currentProfile = profile.get();
-  const isLoading = loading.get();
+  const currentUser = user;
+  const currentProfile = profile;
+  const isLoading = loading;
 
   if (isVerifying || isLoading) {
     return (
