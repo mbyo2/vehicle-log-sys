@@ -81,8 +81,22 @@ export function UserInvitationForm({ onSuccess }: UserInvitationFormProps) {
         throw error;
       }
 
-      // TODO: Send invitation email using edge function
-      // For now, we'll just show success message
+      // Send invitation email using edge function
+      try {
+        await supabase.functions.invoke('send-invitation', {
+          body: {
+            email: values.email,
+            role: values.role,
+            companyName: currentProfile.company_id || 'Fleet Management',
+            inviterName: currentProfile.full_name || 'Admin',
+            invitationToken: token
+          }
+        });
+      } catch (emailError) {
+        // Don't fail the whole operation if email fails
+        console.error('Failed to send invitation email:', emailError);
+      }
+
       toast({
         title: "Invitation Sent",
         description: `Invitation sent to ${values.email} for ${values.role} role.`,

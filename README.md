@@ -1,8 +1,35 @@
-# Welcome to your Lovable project
+# Fleet Management System
+
+A comprehensive fleet management application built with React, TypeScript, and Supabase.
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/e8d526f9-f1ee-4f30-b2d4-eeae1e4340da
+
+## 🚀 Production Deployment
+
+Before deploying to production, please review:
+
+- **[PRODUCTION_CHECKLIST.md](./PRODUCTION_CHECKLIST.md)** - Complete checklist of production requirements
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Step-by-step deployment guide
+
+### Quick Production Setup
+
+1. Complete all manual steps in Supabase Dashboard (see PRODUCTION_CHECKLIST.md)
+2. Configure environment variables
+3. Run production build and deploy
+4. Verify all critical flows
+
+## Features
+
+- **Fleet Management**: Complete vehicle tracking and management
+- **Driver Management**: Driver assignments, licensing, and training
+- **Trip Management**: Trip logging, approvals, and analytics
+- **Maintenance Scheduling**: Service bookings, parts inventory, and history
+- **Document Management**: Secure document storage with categories
+- **Security**: Comprehensive security with RLS, audit logging, and monitoring
+- **Analytics**: Fleet utilization, cost analysis, and reporting
+- **Multi-tenant**: Full company isolation with role-based access control
 
 ## How can I edit this code?
 

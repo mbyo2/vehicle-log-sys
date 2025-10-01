@@ -7,8 +7,31 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+interface MaintenancePart {
+  quantity_used: number;
+  unit_cost: number;
+  part_name?: string;
+}
+
+interface Vehicle {
+  plate_number: string;
+  make: string;
+  model: string;
+}
+
+interface ServiceRecord {
+  id: string;
+  service_type: string;
+  description?: string;
+  cost: number;
+  service_date: string;
+  odometer_reading?: number;
+  maintenance_parts?: MaintenancePart[];
+  vehicles?: Vehicle;
+}
+
 interface ServiceHistoryDetailsProps {
-  service: any; // TODO: Add proper typing
+  service: ServiceRecord;
 }
 
 export function ServiceHistoryDetails({ service }: ServiceHistoryDetailsProps) {
