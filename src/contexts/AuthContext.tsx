@@ -70,8 +70,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         if (data) {
-          console.log('Profile loaded successfully:', data.role);
-          return data;
+          // Fetch user role from user_roles table
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .order('role')
+            .limit(1)
+            .maybeSingle();
+          
+          const userRole = roleData?.role || 'driver';
+          console.log('Profile loaded successfully with role:', userRole);
+          return { ...data, role: userRole };
         }
         
         retries--;

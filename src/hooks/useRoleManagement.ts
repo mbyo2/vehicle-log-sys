@@ -38,10 +38,26 @@ export function useRoleManagement() {
         return false;
       }
 
-      const { error } = await supabase
+      // Get user's company_id from profile
+      const { data: profileData } = await supabase
         .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId);
+        .select('company_id')
+        .eq('id', userId)
+        .single();
+
+      // Delete existing role and insert new one
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: newRole,
+          company_id: profileData?.company_id
+        });
 
       if (error) {
         throw error;
