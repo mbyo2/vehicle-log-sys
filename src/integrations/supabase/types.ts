@@ -1152,7 +1152,6 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
           two_factor_enabled: boolean | null
           two_factor_method: string | null
           updated_at: string
@@ -1163,7 +1162,6 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
           two_factor_enabled?: boolean | null
           two_factor_method?: string | null
           updated_at?: string
@@ -1174,7 +1172,6 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
           two_factor_enabled?: boolean | null
           two_factor_method?: string | null
           updated_at?: string
