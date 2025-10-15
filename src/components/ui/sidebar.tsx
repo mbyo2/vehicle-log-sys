@@ -21,6 +21,14 @@ import {
   Shield,
   UserCog,
   Cog,
+  Calendar,
+  BarChart3,
+  Megaphone,
+  MessageSquare,
+  GraduationCap,
+  TrendingUp,
+  ExternalLink,
+  Inbox,
 } from 'lucide-react';
 
 interface NavItem {
@@ -35,15 +43,30 @@ export function Sidebar() {
   const { user, profile, signOut } = useAuth();
 
   const navItems: NavItem[] = [
+    // Common
     {
       title: 'Dashboard',
       href: '/dashboard',
       icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
     },
+    
+    // Super Admin
     {
       title: 'Companies',
       href: '/companies',
       icon: <Building className="mr-2 h-4 w-4" />,
+      roles: ['super_admin'],
+    },
+    {
+      title: 'Advertisements',
+      href: '/advertisements',
+      icon: <Megaphone className="mr-2 h-4 w-4" />,
+      roles: ['super_admin'],
+    },
+    {
+      title: 'System Security',
+      href: '/security',
+      icon: <Shield className="mr-2 h-4 w-4" />,
       roles: ['super_admin'],
     },
     {
@@ -52,11 +75,13 @@ export function Sidebar() {
       icon: <Cog className="mr-2 h-4 w-4" />,
       roles: ['super_admin'],
     },
+    
+    // Company Admin & Supervisor
     {
-      title: 'Security & Monitoring',
-      href: '/security',
-      icon: <Shield className="mr-2 h-4 w-4" />,
-      roles: ['super_admin', 'company_admin'],
+      title: 'Analytics',
+      href: '/analytics',
+      icon: <BarChart3 className="mr-2 h-4 w-4" />,
+      roles: ['company_admin', 'supervisor'],
     },
     {
       title: 'Fleet',
@@ -65,46 +90,16 @@ export function Sidebar() {
       roles: ['company_admin', 'supervisor'],
     },
     {
-      title: 'Users',
-      href: '/users',
+      title: 'Drivers',
+      href: '/drivers',
       icon: <Users className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'supervisor'],
-    },
-    {
-      title: 'User Management',
-      href: '/user-management',
-      icon: <UserCog className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'super_admin'],
-    },
-    {
-      title: 'Documents',
-      href: '/documents',
-      icon: <FileText className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor', 'driver'],
     },
     {
       title: 'Trip Management',
       href: '/trip-management',
       icon: <Map className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'supervisor'],
-    },
-    {
-      title: 'Trip Approvals',
-      href: '/trip-approvals',
-      icon: <ClipboardCheck className="mr-2 h-4 w-4" />,
-      roles: ['supervisor'],
-    },
-    {
-      title: 'My Trips',
-      href: '/trips',
-      icon: <Map className="mr-2 h-4 w-4" />,
-      roles: ['driver'],
-    },
-    {
-      title: 'Vehicle Status',
-      href: '/vehicle-status',
-      icon: <Car className="mr-2 h-4 w-4" />,
-      roles: ['driver'],
     },
     {
       title: 'Maintenance',
@@ -118,12 +113,88 @@ export function Sidebar() {
       icon: <LineChart className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'supervisor'],
     },
+    
+    // Company Admin Only
+    {
+      title: 'User Management',
+      href: '/user-management',
+      icon: <UserCog className="mr-2 h-4 w-4" />,
+      roles: ['company_admin'],
+    },
+    {
+      title: 'Integrations',
+      href: '/integrations',
+      icon: <ExternalLink className="mr-2 h-4 w-4" />,
+      roles: ['company_admin'],
+    },
+    
+    // Supervisor
+    {
+      title: 'Trip Approvals',
+      href: '/trip-approvals',
+      icon: <ClipboardCheck className="mr-2 h-4 w-4" />,
+      roles: ['supervisor'],
+    },
+    
+    // Driver
+    {
+      title: 'Driver Portal',
+      href: '/driver-portal',
+      icon: <Car className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'My Trips',
+      href: '/trips',
+      icon: <Map className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'New Trip',
+      href: '/new-trip',
+      icon: <TrendingUp className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'Vehicle Status',
+      href: '/vehicle-status',
+      icon: <Wrench className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'Messages',
+      href: '/driver/messages',
+      icon: <MessageSquare className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'Training',
+      href: '/driver/trainings',
+      icon: <GraduationCap className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    
+    // Shared - Multiple Roles
+    {
+      title: 'Service Bookings',
+      href: '/service-bookings',
+      icon: <Calendar className="mr-2 h-4 w-4" />,
+      roles: ['company_admin', 'supervisor', 'driver'],
+    },
+    {
+      title: 'Documents',
+      href: '/documents',
+      icon: <FileText className="mr-2 h-4 w-4" />,
+      roles: ['company_admin', 'supervisor', 'driver'],
+    },
     {
       title: 'Settings',
       href: '/settings',
       icon: <Settings className="mr-2 h-4 w-4" />,
       roles: ['company_admin', 'super_admin'],
     },
+    
+    // All Users
     {
       title: 'Profile',
       href: '/profile',
