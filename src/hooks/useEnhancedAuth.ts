@@ -237,10 +237,24 @@ export function useEnhancedAuth() {
         }
 
         if (data) {
+          // Fetch user role from user_roles table
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .order('role')
+            .limit(1)
+            .maybeSingle();
+          
+          const userRole = roleData?.role || 'driver';
+          console.log('Profile loaded with role:', userRole);
+          
           // Fetch permissions for this user
-          const permissions = await fetchUserPermissions(data.role, data.company_id);
+          const permissions = await fetchUserPermissions(userRole, data.company_id);
           setAuthState(prev => ({ ...prev, permissions }));
-          return data;
+          
+          // Return profile with role attached
+          return { ...data, role: userRole };
         }
 
         retries--;
