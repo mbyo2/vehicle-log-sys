@@ -112,9 +112,20 @@ export const useAuthActions = () => {
                 throw new Error('Profile not found. Please contact support.');
               }
             } else if (profile) {
-              console.log('Profile loaded for role:', profile.role);
-              profileData = profile;
-              authState.profile.set(profile);
+              // Fetch user role from user_roles table
+              const { data: roleData, error: roleError } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', data.user.id)
+                .order('role')
+                .limit(1)
+                .maybeSingle();
+              
+              const userRole = roleData?.role || 'driver';
+              console.log('Profile loaded with role:', userRole);
+              
+              profileData = { ...profile, role: userRole };
+              authState.profile.set(profileData);
               break;
             }
             
@@ -285,9 +296,19 @@ export const useAuthActions = () => {
               .single();
 
             if (profileData) {
-              profile = profileData;
+              // Fetch user role from user_roles table
+              const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('role')
+                .eq('user_id', data.user.id)
+                .order('role')
+                .limit(1)
+                .maybeSingle();
+              
+              const userRole = roleData?.role || 'super_admin';
+              profile = { ...profileData, role: userRole };
               authState.profile.set(profile);
-              console.log('Super admin profile loaded:', profile);
+              console.log('Super admin profile loaded with role:', userRole);
               break;
             } else {
               console.log('Profile not ready yet, attempt', profileAttempts + 1);
