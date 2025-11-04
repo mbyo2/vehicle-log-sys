@@ -2358,7 +2358,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_company_memberships: {
+        Row: {
+          company_id: string | null
+          company_is_active: boolean | null
+          company_logo: string | null
+          company_name: string | null
+          joined_at: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          subscription_type:
+            | Database["public"]["Enums"]["subscription_type"]
+            | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_if_first_user: { Args: never; Returns: boolean }
@@ -2426,12 +2448,27 @@ export type Database = {
           risk_level: string
         }[]
       }
+      get_user_companies: {
+        Args: { p_user_id: string }
+        Returns: {
+          company_id: string
+          company_logo: string
+          company_name: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          subscription_type: Database["public"]["Enums"]["subscription_type"]
+        }[]
+      }
       get_user_primary_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_role: {
         Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_user_role_for_company: {
+        Args: { p_company_id: string; p_user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
