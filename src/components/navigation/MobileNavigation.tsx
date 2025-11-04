@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { CompanySwitcher } from '@/components/navigation/CompanySwitcher';
 import {
   LayoutDashboard,
   Car,
@@ -166,6 +167,11 @@ export function MobileNavigation() {
             >
               <X className="h-5 w-5" />
             </Button>
+          </div>
+          
+          {/* Company Switcher */}
+          <div className="p-4 border-b">
+            <CompanySwitcher userId={currentUser?.id} className="w-full" />
           </div>
           
           <ScrollArea className="flex-1 p-4">

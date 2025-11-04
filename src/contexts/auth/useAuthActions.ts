@@ -112,21 +112,53 @@ export const useAuthActions = () => {
                 throw new Error('Profile not found. Please contact support.');
               }
             } else if (profile) {
-              // Fetch user role from user_roles table
-              const { data: roleData, error: roleError } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', data.user.id)
-                .order('role')
-                .limit(1)
-                .maybeSingle();
+              // Fetch all companies for this user
+              const { data: companiesData } = await supabase.rpc('get_user_companies', {
+                p_user_id: data.user.id
+              });
               
-              const userRole = roleData?.role || 'driver';
-              console.log('Profile loaded with role:', userRole);
-              
-              profileData = { ...profile, role: userRole };
-              authState.profile.set(profileData);
-              break;
+              if (companiesData && companiesData.length > 0) {
+                // Get saved company or use first one
+                const savedCompanyId = localStorage.getItem('current_company_id');
+                let targetCompanyId = savedCompanyId;
+                const validCompany = companiesData.find((c: any) => c.company_id === savedCompanyId);
+                
+                if (!validCompany) {
+                  targetCompanyId = companiesData[0].company_id;
+                  localStorage.setItem('current_company_id', targetCompanyId);
+                }
+                
+                // Fetch user role from user_roles table for the specific company
+                const { data: roleData, error: roleError } = await supabase
+                  .from('user_roles')
+                  .select('role')
+                  .eq('user_id', data.user.id)
+                  .eq('company_id', targetCompanyId)
+                  .maybeSingle();
+                
+                const userRole = roleData?.role || 'driver';
+                console.log('Profile loaded with role:', userRole, 'for company:', targetCompanyId);
+                
+                profileData = { ...profile, role: userRole, company_id: targetCompanyId };
+                authState.profile.set(profileData);
+                authState.currentCompanyId.set(targetCompanyId);
+                break;
+              } else {
+                // Check if super_admin (no company required)
+                const { data: roleData } = await supabase
+                  .from('user_roles')
+                  .select('role, company_id')
+                  .eq('user_id', data.user.id)
+                  .order('role')
+                  .limit(1)
+                  .maybeSingle();
+                
+                if (roleData?.role === 'super_admin') {
+                  profileData = { ...profile, role: 'super_admin', company_id: roleData.company_id };
+                  authState.profile.set(profileData);
+                  break;
+                }
+              }
             }
             
             retries--;

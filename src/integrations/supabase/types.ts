@@ -2358,29 +2358,7 @@ export type Database = {
       }
     }
     Views: {
-      user_company_memberships: {
-        Row: {
-          company_id: string | null
-          company_is_active: boolean | null
-          company_logo: string | null
-          company_name: string | null
-          joined_at: string | null
-          role: Database["public"]["Enums"]["app_role"] | null
-          subscription_type:
-            | Database["public"]["Enums"]["subscription_type"]
-            | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       check_if_first_user: { Args: never; Returns: boolean }

@@ -50,6 +50,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log(`Fetching profile for user ${userId}`);
       
+      // Get the saved company ID from localStorage
+      const savedCompanyId = localStorage.getItem('current_company_id');
+      
       // Add retries for profile fetching
       let retries = 3;
       while (retries > 0) {
@@ -70,18 +73,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         if (data) {
-          // Fetch user role from user_roles table
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId)
-            .order('role')
-            .limit(1)
-            .maybeSingle();
+          // Fetch all companies for this user
+          const { data: companiesData } = await supabase.rpc('get_user_companies', {
+            p_user_id: userId
+          });
           
-          const userRole = roleData?.role || 'driver';
-          console.log('Profile loaded successfully with role:', userRole);
-          return { ...data, role: userRole };
+          if (companiesData && companiesData.length > 0) {
+            // Determine which company to use
+            let targetCompanyId = savedCompanyId;
+            const validCompany = companiesData.find((c: any) => c.company_id === savedCompanyId);
+            
+            if (!validCompany) {
+              // Use first company as default
+              targetCompanyId = companiesData[0].company_id;
+              localStorage.setItem('current_company_id', targetCompanyId);
+            }
+            
+            // Get role for the current company
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', userId)
+              .eq('company_id', targetCompanyId)
+              .maybeSingle();
+            
+            const userRole = roleData?.role || 'driver';
+            authState.currentCompanyId.set(targetCompanyId);
+            
+            console.log('Profile loaded successfully with role:', userRole, 'for company:', targetCompanyId);
+            return { ...data, role: userRole, company_id: targetCompanyId };
+          } else {
+            // Fallback: check if user is super_admin (no company)
+            const { data: roleData } = await supabase
+              .from('user_roles')
+              .select('role, company_id')
+              .eq('user_id', userId)
+              .order('role')
+              .limit(1)
+              .maybeSingle();
+            
+            if (roleData?.role === 'super_admin') {
+              console.log('Super admin user - no company required');
+              return { ...data, role: 'super_admin', company_id: roleData.company_id };
+            }
+          }
         }
         
         retries--;

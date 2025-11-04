@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
+import { CompanySwitcher } from '@/components/navigation/CompanySwitcher';
 import {
   LayoutDashboard,
   Car,
@@ -223,6 +224,12 @@ export function Sidebar() {
           <span className="text-lg">Fleet Manager</span>
         </Link>
       </div>
+      
+      {/* Company Switcher */}
+      <div className="border-b px-4 py-3">
+        <CompanySwitcher userId={currentUser?.id} className="w-full" />
+      </div>
+
       <ScrollArea className="flex-1 py-2">
         <nav className="grid gap-1 px-2">
           {filteredNavItems.map((item, index) => (

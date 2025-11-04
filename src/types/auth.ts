@@ -24,3 +24,12 @@ export interface Company {
   branding_primary_color?: string;
   branding_secondary_color?: string;
 }
+
+export interface UserCompanyMembership {
+  company_id: string;
+  company_name: string;
+  company_logo: string | null;
+  role: UserRole;
+  is_active: boolean;
+  subscription_type: 'trial' | 'full';
+}
