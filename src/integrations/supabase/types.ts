@@ -673,7 +673,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_sync_at: string | null
-          sync_frequency: unknown | null
+          sync_frequency: unknown
           system_type: Database["public"]["Enums"]["erp_system_type"]
           updated_at: string | null
         }
@@ -686,7 +686,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
-          sync_frequency?: unknown | null
+          sync_frequency?: unknown
           system_type: Database["public"]["Enums"]["erp_system_type"]
           updated_at?: string | null
         }
@@ -699,7 +699,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
-          sync_frequency?: unknown | null
+          sync_frequency?: unknown
           system_type?: Database["public"]["Enums"]["erp_system_type"]
           updated_at?: string | null
         }
@@ -2361,12 +2361,9 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      check_if_first_user: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      check_if_first_user: { Args: never; Returns: boolean }
       check_public_table_access: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           has_public_access: boolean
           table_name: string
@@ -2382,7 +2379,7 @@ export type Database = {
         Returns: boolean
       }
       check_table_rls_status: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           rls_enabled: boolean
           table_name: string
@@ -2392,10 +2389,7 @@ export type Database = {
         Args: { p_backup_type?: string; p_company_id: string }
         Returns: string
       }
-      create_test_super_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      create_test_super_admin: { Args: never; Returns: string }
       decrypt_credentials: {
         Args: { encrypted_data: string; encryption_key?: string }
         Returns: Json
@@ -2412,20 +2406,11 @@ export type Database = {
         Args: { credentials_data: Json }
         Returns: string
       }
-      encrypt_sensitive_data: {
-        Args: { data_text: string }
-        Returns: string
-      }
-      enforce_security_policies: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      get_current_company_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      encrypt_sensitive_data: { Args: { data_text: string }; Returns: string }
+      enforce_security_policies: { Args: never; Returns: undefined }
+      get_current_company_id: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_secure_document_url: {
@@ -2433,7 +2418,7 @@ export type Database = {
         Returns: string
       }
       get_security_metrics: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           metric_description: string
           metric_name: string
@@ -2481,22 +2466,13 @@ export type Database = {
         }
         Returns: string
       }
-      process_service_reminders: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      schedule_automated_backup: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      process_service_reminders: { Args: never; Returns: undefined }
+      schedule_automated_backup: { Args: never; Returns: undefined }
       user_has_permission: {
         Args: { p_action: string; p_company_id?: string; p_resource: string }
         Returns: boolean
       }
-      verify_backup_integrity: {
-        Args: { backup_id: string }
-        Returns: boolean
-      }
+      verify_backup_integrity: { Args: { backup_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "company_admin" | "supervisor" | "driver"
