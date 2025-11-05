@@ -5,16 +5,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Outlet } from "react-router-dom";
 import { PerformanceMonitor } from "@/components/ui/performance-monitor";
 import { SecurityValidationWrapper } from "@/components/security/SecurityValidationWrapper";
+import { CompanyBrandingProvider } from "@/components/branding/CompanyBrandingProvider";
 
 const App = () => (
   <TooltipProvider>
     <SecurityValidationWrapper>
-      <div className="animate-fade-in">
-        <Outlet />
-        <Toaster />
-        <Sonner />
-        <PerformanceMonitor />
-      </div>
+      <CompanyBrandingProvider>
+        <div className="animate-fade-in">
+          <Outlet />
+          <Toaster />
+          <Sonner />
+          <PerformanceMonitor />
+        </div>
+      </CompanyBrandingProvider>
     </SecurityValidationWrapper>
   </TooltipProvider>
 );

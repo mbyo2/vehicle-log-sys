@@ -72,6 +72,11 @@ export function CompanySettingsForm({ company }: CompanySettingsFormProps) {
         title: "Settings updated",
         description: "Your company settings have been updated successfully.",
       });
+
+      // Reload to apply new branding
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error: any) {
       toast({
         variant: "destructive",
