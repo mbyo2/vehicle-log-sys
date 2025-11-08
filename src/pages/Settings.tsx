@@ -2,9 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CompanySettingsForm } from "@/components/company/CompanySettingsForm";
+import { TeamManagement } from "@/components/settings/TeamManagement";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { Company } from "@/types/auth";
+import { Building2, Users } from "lucide-react";
 
 export function Settings() {
   const { profile } = useAuth();
@@ -49,18 +52,44 @@ export function Settings() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Company Settings</CardTitle>
-          <CardDescription>
-            Manage your company profile, branding, and subscription settings.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CompanySettingsForm company={company} />
-        </CardContent>
-      </Card>
+    <div className="container mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">
+          Manage your company settings and team members
+        </p>
+      </div>
+
+      <Tabs defaultValue="company" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="company">
+            <Building2 className="h-4 w-4 mr-2" />
+            Company
+          </TabsTrigger>
+          <TabsTrigger value="team">
+            <Users className="h-4 w-4 mr-2" />
+            Team
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="company" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Settings</CardTitle>
+              <CardDescription>
+                Manage your company profile, branding, and subscription settings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CompanySettingsForm company={company} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-6">
+          <TeamManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
