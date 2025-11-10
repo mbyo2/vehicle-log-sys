@@ -41,11 +41,15 @@ interface TeamMember {
   full_name: string | null;
   company_id: string | null;
   created_at: string;
+  last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
   roles: Array<{
     role: string;
     company_id: string | null;
   }>;
 }
+
+type UserStatus = 'active' | 'inactive' | 'pending';
 
 export function TeamManagement() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -72,8 +76,10 @@ export function TeamManagement() {
 
       if (profilesError) throw profilesError;
 
-      // Fetch roles for each user
+      // Fetch auth metadata for last sign in and email confirmation
       const userIds = profiles.map((p) => p.id);
+      
+      // Fetch roles for each user
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role, company_id")
@@ -81,9 +87,25 @@ export function TeamManagement() {
 
       if (rolesError) throw rolesError;
 
-      // Combine profiles with their roles
+      // Get auth user data via RPC or admin endpoint (if available)
+      // For now, we'll use a workaround by checking auth metadata stored elsewhere
+      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      
+      const authUserMap = new Map<string, { last_sign_in_at: string | null; email_confirmed_at: string | null }>(
+        authUsers?.users?.map(u => [
+          u.id, 
+          { 
+            last_sign_in_at: u.last_sign_in_at ?? null,
+            email_confirmed_at: u.email_confirmed_at ?? null
+          }
+        ] as [string, { last_sign_in_at: string | null; email_confirmed_at: string | null }]) || []
+      );
+
+      // Combine profiles with their roles and auth data
       const membersWithRoles = profiles.map((profile) => ({
         ...profile,
+        last_sign_in_at: authUserMap.get(profile.id)?.last_sign_in_at || null,
+        email_confirmed_at: authUserMap.get(profile.id)?.email_confirmed_at || null,
         roles: roles.filter((r) => r.user_id === profile.id),
       }));
 
@@ -193,6 +215,53 @@ export function TeamManagement() {
     return companyRole?.role || member.roles[0]?.role || "driver";
   };
 
+  const getUserStatus = (member: TeamMember): UserStatus => {
+    // Pending: email not confirmed
+    if (!member.email_confirmed_at) {
+      return 'pending';
+    }
+    
+    // Inactive: hasn't signed in for 30 days
+    if (member.last_sign_in_at) {
+      const lastSignIn = new Date(member.last_sign_in_at);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      if (lastSignIn < thirtyDaysAgo) {
+        return 'inactive';
+      }
+    }
+    
+    // Active: everything else
+    return 'active';
+  };
+
+  const getStatusBadgeVariant = (status: UserStatus) => {
+    switch (status) {
+      case 'active':
+        return 'default';
+      case 'inactive':
+        return 'secondary';
+      case 'pending':
+        return 'outline';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getStatusLabel = (status: UserStatus) => {
+    switch (status) {
+      case 'active':
+        return 'Active';
+      case 'inactive':
+        return 'Inactive';
+      case 'pending':
+        return 'Pending';
+      default:
+        return 'Unknown';
+    }
+  };
+
   const canManageRoles =
     currentProfile?.role === "super_admin" || currentProfile?.role === "company_admin";
 
@@ -270,6 +339,7 @@ export function TeamManagement() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -278,6 +348,7 @@ export function TeamManagement() {
                 <TableBody>
                   {teamMembers.map((member) => {
                     const userRole = getUserRole(member);
+                    const userStatus = getUserStatus(member);
                     const isCurrentUser = member.id === currentProfile?.id;
 
                     return (
@@ -291,6 +362,11 @@ export function TeamManagement() {
                           )}
                         </TableCell>
                         <TableCell>{member.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(userStatus)}>
+                            {getStatusLabel(userStatus)}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           {!isCurrentUser && canManageRoles ? (
                             <Select
