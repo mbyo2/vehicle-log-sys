@@ -23,7 +23,7 @@ import { UserInviteDialog } from "@/components/auth/UserInviteDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserPlus, Trash2, Mail } from "lucide-react";
+import { UserPlus, Trash2, Mail, MailCheck } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +56,7 @@ export function TeamManagement() {
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<TeamMember | null>(null);
+  const [resendingInvite, setResendingInvite] = useState<string | null>(null);
   const { toast } = useToast();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -188,6 +189,55 @@ export function TeamManagement() {
         title: "Removal failed",
         description: error.message || "Failed to remove user.",
       });
+    }
+  };
+
+  const handleResendInvitation = async (member: TeamMember) => {
+    if (!currentProfile?.company_id) return;
+
+    try {
+      setResendingInvite(member.id);
+
+      // Generate invitation token
+      const invitationToken = btoa(JSON.stringify({
+        email: member.email,
+        companyId: currentProfile.company_id,
+        invitedBy: currentProfile.id,
+        timestamp: Date.now()
+      }));
+
+      const inviteUrl = `${window.location.origin}/signup?invitation=${invitationToken}`;
+
+      // Send invitation email
+      const { error: emailError } = await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'invitation',
+          email: member.email,
+          data: {
+            name: member.full_name || 'Team Member',
+            inviteUrl,
+            companyName: 'Fleet Manager',
+            inviterName: currentProfile.full_name || 'A team member',
+            role: getUserRole(member)
+          }
+        }
+      });
+
+      if (emailError) throw emailError;
+
+      toast({
+        title: "Invitation resent",
+        description: `Invitation email sent to ${member.email}`,
+      });
+    } catch (error: any) {
+      console.error("Error resending invitation:", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to resend invitation",
+        description: error.message || "Please try again later.",
+      });
+    } finally {
+      setResendingInvite(null);
     }
   };
 
@@ -399,18 +449,31 @@ export function TeamManagement() {
                           {new Date(member.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          {!isCurrentUser && canManageRoles && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setUserToDelete(member);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            {userStatus === 'pending' && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleResendInvitation(member)}
+                                disabled={resendingInvite === member.id}
+                                title="Resend invitation email"
+                              >
+                                <MailCheck className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            )}
+                            {!isCurrentUser && canManageRoles && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setUserToDelete(member);
+                                  setDeleteDialogOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
