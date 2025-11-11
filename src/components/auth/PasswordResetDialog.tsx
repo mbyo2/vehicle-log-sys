@@ -51,11 +51,28 @@ export function PasswordResetDialog({ open, onOpenChange }: PasswordResetDialogP
   const onSubmit = async (values: ResetFormValues) => {
     setIsLoading(true);
     try {
+      // Request password reset from Supabase
       const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
+
+      // Send custom email notification via edge function
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'password_reset',
+            email: values.email,
+            data: {
+              resetUrl: `${window.location.origin}/reset-password`,
+            },
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send custom email:', emailError);
+        // Don't fail the whole operation if custom email fails
+      }
 
       setIsSuccess(true);
       toast({
