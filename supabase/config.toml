@@ -10,8 +10,8 @@ max_rows = 1000
 [auth]
 enabled = true
 port = 54324
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://yyeypbfdtitxqssvnagy.supabase.co"]
+site_url = "https://lovable.dev/projects/c29f3e89-e43a-4ff1-8b01-1c1e6b7b5b61"
+additional_redirect_urls = ["https://lovable.dev/projects/c29f3e89-e43a-4ff1-8b01-1c1e6b7b5b61", "https://yyeypbfdtitxqssvnagy.supabase.co"]
 jwt_expiry = 3600
 enable_signup = true
 email_double_confirm_changes = true

@@ -305,6 +305,25 @@ export const useAuthActions = () => {
         timestamp: new Date().toISOString()
       });
 
+      // Send verification email
+      try {
+        const confirmationUrl = `${window.location.origin}/`;
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'verification',
+            email: sanitizedEmail,
+            data: {
+              confirmationUrl,
+              userEmail: sanitizedEmail
+            }
+          }
+        });
+        console.log('Verification email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't block signup if email fails
+      }
+
       // For the first user (super admin), they should get automatically signed in
       if (isFirstUser && data.session) {
         console.log("First user created and signed in automatically");
