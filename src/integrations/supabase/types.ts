@@ -2408,6 +2408,7 @@ export type Database = {
       }
       encrypt_sensitive_data: { Args: { data_text: string }; Returns: string }
       enforce_security_policies: { Args: never; Returns: undefined }
+      expire_old_invitations: { Args: never; Returns: undefined }
       get_current_company_id: { Args: never; Returns: string }
       get_current_user_role: {
         Args: never

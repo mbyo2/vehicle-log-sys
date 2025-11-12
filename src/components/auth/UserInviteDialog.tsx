@@ -77,16 +77,36 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
 
     setIsLoading(true);
     try {
-      // Generate invitation token (simplified - in production, use a proper token system)
-      const invitationToken = btoa(JSON.stringify({
-        email: values.email,
-        role: values.role,
-        companyId: currentProfile.company_id,
-        invitedBy: currentUser.id,
-        timestamp: Date.now()
-      }));
+      // Generate secure invitation token
+      const invitationToken = crypto.randomUUID();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 
-      const inviteUrl = `${window.location.origin}/signup?invitation=${invitationToken}`;
+      // Create invitation in database
+      const { data: invitationData, error: invitationError } = await supabase
+        .from('user_invitations')
+        .insert({
+          email: values.email,
+          full_name: values.fullName,
+          role: values.role,
+          company_id: currentProfile.company_id,
+          invited_by: currentUser.id,
+          token: invitationToken,
+          expires_at: expiresAt.toISOString(),
+        })
+        .select()
+        .single();
+
+      if (invitationError) throw invitationError;
+
+      // Get company name
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', currentProfile.company_id)
+        .single();
+
+      const inviteUrl = `${window.location.origin}/accept-invitation?token=${invitationToken}`;
 
       // Send invitation email
       const { error: emailError } = await supabase.functions.invoke('send-email', {
@@ -96,34 +116,16 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
           data: {
             name: values.fullName,
             inviteUrl,
-            companyName: 'Fleet Manager', // Get from company data if available
+            companyName: companyData?.name || 'Fleet Manager',
             inviterName: currentProfile.full_name || 'A team member',
             role: values.role
           }
         }
       });
 
-      if (emailError) throw emailError;
-
-      // Log the invitation (optional - for tracking purposes)
-      try {
-        await supabase
-          .from('audit_logs')
-          .insert({
-            table_name: 'user_invitations',
-            action: 'invite_sent',
-            record_id: crypto.randomUUID(),
-            performed_by: currentUser.id,
-            company_id: currentProfile.company_id,
-            new_data: {
-              email: values.email,
-              role: values.role,
-              invited_name: values.fullName
-            }
-          });
-      } catch (logError) {
-        console.error('Failed to log invitation:', logError);
-        // Don't fail the invitation if logging fails
+      if (emailError) {
+        console.error('Email error:', emailError);
+        throw new Error('Failed to send invitation email');
       }
 
       setIsSuccess(true);

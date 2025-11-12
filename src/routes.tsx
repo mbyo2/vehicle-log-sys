@@ -8,6 +8,7 @@ import Documents from "./pages/Documents";
 import { Maintenance } from "./pages/Maintenance";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import AcceptInvitation from "./pages/AcceptInvitation";
 import ResetPassword from "./pages/ResetPassword";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { Settings } from "./pages/Settings";
@@ -77,6 +78,10 @@ export const router = createBrowserRouter([
       {
         path: "signup",
         element: <SignUp />,
+      },
+      {
+        path: "accept-invitation",
+        element: <AcceptInvitation />,
       },
       {
         path: "reset-password",
