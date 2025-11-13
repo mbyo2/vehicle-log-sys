@@ -43,13 +43,15 @@ export function useNotifications(limit: number = 10) {
       subject,
       type,
       details,
-      delivery = 'in_app'
+      delivery = 'in_app',
+      companyId
     }: {
       to: string[];
       subject: string;
       type: NotificationType;
       details: Record<string, any>;
       delivery?: NotificationDelivery;
+      companyId?: string;
     }) => {
       const { error } = await supabase.functions.invoke('send-notification', {
         body: {
@@ -57,7 +59,8 @@ export function useNotifications(limit: number = 10) {
           subject,
           type,
           details,
-          delivery
+          delivery,
+          companyId
         },
       });
 

@@ -3,11 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { CompanySettingsForm } from "@/components/company/CompanySettingsForm";
 import { TeamManagement } from "@/components/settings/TeamManagement";
+import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { Company } from "@/types/auth";
-import { Building2, Users } from "lucide-react";
+import { Building2, Users, Bell } from "lucide-react";
 
 export function Settings() {
   const { profile } = useAuth();
@@ -70,6 +71,10 @@ export function Settings() {
             <Users className="h-4 w-4 mr-2" />
             Team
           </TabsTrigger>
+          <TabsTrigger value="notifications">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company" className="space-y-6">
@@ -88,6 +93,10 @@ export function Settings() {
 
         <TabsContent value="team" className="space-y-6">
           <TeamManagement />
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <NotificationPreferences />
         </TabsContent>
       </Tabs>
     </div>

@@ -16,11 +16,12 @@ const corsHeaders = {
 };
 
 interface NotificationRequest {
-  to: string[]; // user IDs or email addresses
+  to: string[]; // user IDs
   subject: string;
   type: "maintenance" | "vehicle_issue" | "document_expiry" | "user_action" | "approval_required" | "urgent";
   details: Record<string, any>;
   delivery?: "in_app" | "email" | "sms" | "all";
+  companyId?: string;
 }
 
 const supabase = createClient(
@@ -36,14 +37,14 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const notification: NotificationRequest = await req.json();
-    const { to, subject, type, details, delivery = "in_app" } = notification;
+    const { to, subject, type, details, delivery = "in_app", companyId } = notification;
     
     console.log(`Processing notification: ${type} via ${delivery}`);
     
     // Get user details for all recipients
     const { data: users, error: usersError } = await supabase
       .from('profiles')
-      .select('id, email, full_name, phone_number, company_id')
+      .select('id, email, full_name, company_id')
       .in('id', to);
 
     if (usersError) {
@@ -54,32 +55,96 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No valid recipients found');
     }
 
+    // Fetch notification preferences for each user
+    const usersWithPreferences = await Promise.all(
+      users.map(async (user) => {
+        const { data: prefs } = await supabase
+          .from('notification_preferences')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('company_id', companyId || user.company_id)
+          .maybeSingle();
+
+        return { ...user, preferences: prefs };
+      })
+    );
+
+    // Helper function to check if notification should be sent
+    const shouldSendNotification = (prefs: any, deliveryMethod: string): boolean => {
+      if (!prefs) return true; // No preferences set, send all
+      
+      // Check delivery method
+      if (deliveryMethod === 'email' && !prefs.email_enabled) return false;
+      if (deliveryMethod === 'sms' && !prefs.sms_enabled) return false;
+      if (deliveryMethod === 'push' && !prefs.push_enabled) return false;
+      if (deliveryMethod === 'in_app' && !prefs.in_app_enabled) return false;
+
+      // Check notification type
+      if (type === 'maintenance' && !prefs.maintenance_reminders) return false;
+      if (type === 'vehicle_issue' && !prefs.vehicle_issues) return false;
+      if (type === 'document_expiry' && !prefs.document_expiry) return false;
+      if (type === 'user_action' && !prefs.user_actions) return false;
+      if (type === 'approval_required' && !prefs.approval_required) return false;
+      if (type === 'urgent' && !prefs.urgent_alerts) return false;
+
+      // Check quiet hours (skip for urgent)
+      if (prefs.quiet_hours_enabled && type !== 'urgent') {
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const [startHour, startMin] = prefs.quiet_hours_start.split(':').map(Number);
+        const [endHour, endMin] = prefs.quiet_hours_end.split(':').map(Number);
+        const startTime = startHour * 60 + startMin;
+        const endTime = endHour * 60 + endMin;
+
+        if (startTime < endTime) {
+          // Normal case: quiet hours within same day
+          if (currentTime >= startTime && currentTime < endTime) return false;
+        } else {
+          // Quiet hours span midnight
+          if (currentTime >= startTime || currentTime < endTime) return false;
+        }
+      }
+
+      return true;
+    };
+
     // Process in-app notifications
     if (delivery === 'in_app' || delivery === 'all') {
-      await Promise.all(users.map(async (user) => {
-        await supabase
+      const notificationsToSend = usersWithPreferences
+        .filter(user => shouldSendNotification(user.preferences, 'in_app'))
+        .map(user => ({
+          type,
+          message: details.message || subject,
+          priority: getPriorityFromType(type),
+          company_id: companyId || user.company_id,
+          metadata: {
+            ...details,
+            user_id: user.id,
+            subject
+          },
+          status: 'unread'
+        }));
+
+      if (notificationsToSend.length > 0) {
+        const { error: notifError } = await supabase
           .from('vehicle_notifications')
-          .insert({
-            type,
-            message: details.message || subject,
-            priority: getPriorityFromType(type),
-            company_id: user.company_id,
-            metadata: {
-              ...details,
-              user_id: user.id,
-              subject
-            },
-            status: 'unread'
-          });
-      }));
+          .insert(notificationsToSend);
+
+        if (notifError) {
+          console.error('Error creating in-app notifications:', notifError);
+        } else {
+          console.log(`Created ${notificationsToSend.length} in-app notifications`);
+        }
+      }
     }
 
     // Process email notifications
     if (delivery === 'email' || delivery === 'all') {
-      await Promise.all(users.map(async (user) => {
-        if (!user.email) return;
-        
-        // Create email content
+      const usersToEmail = usersWithPreferences.filter(user => 
+        user.email && shouldSendNotification(user.preferences, 'email')
+      );
+
+      await Promise.all(usersToEmail.map(async (user) => {
         const emailHtml = generateEmailTemplate({
           type,
           subject,
@@ -88,7 +153,6 @@ const handler = async (req: Request): Promise<Response> => {
           details
         });
 
-        // Send email using Resend
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -106,24 +170,29 @@ const handler = async (req: Request): Promise<Response> => {
         if (!res.ok) {
           const error = await res.text();
           console.error(`Email sending failed for ${user.email}:`, error);
+        } else {
+          console.log(`Email sent to ${user.email}`);
         }
       }));
     }
 
     // Process SMS notifications
     if ((delivery === 'sms' || delivery === 'all') && TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
-      const urgentTypes = ['urgent', 'vehicle_issue'];
-      
-      // Only send SMS for urgent notifications if type is not explicitly urgent
-      if (urgentTypes.includes(type) || delivery === 'sms') {
-        await Promise.all(users.filter(user => user.phone_number).map(async (user) => {
-          const message = `${subject}: ${details.message || ''}`;
-          await sendSMS(user.phone_number, message);
-        }));
-      }
+      const usersToSMS = usersWithPreferences.filter(user => 
+        shouldSendNotification(user.preferences, 'sms') && 
+        user.preferences?.phone_number
+      );
+
+      await Promise.all(usersToSMS.map(async (user) => {
+        const message = `${subject}: ${details.message || ''}`;
+        await sendSMS(user.preferences.phone_number, message);
+      }));
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ 
+      success: true,
+      message: 'Notifications processed successfully' 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

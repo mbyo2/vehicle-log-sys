@@ -1095,6 +1095,86 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          approval_required: boolean | null
+          company_id: string | null
+          created_at: string | null
+          digest_frequency: string | null
+          digest_mode: boolean | null
+          document_expiry: boolean | null
+          email_enabled: boolean | null
+          id: string
+          in_app_enabled: boolean | null
+          maintenance_reminders: boolean | null
+          phone_number: string | null
+          push_enabled: boolean | null
+          quiet_hours_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sms_enabled: boolean | null
+          updated_at: string | null
+          urgent_alerts: boolean | null
+          user_actions: boolean | null
+          user_id: string
+          vehicle_issues: boolean | null
+        }
+        Insert: {
+          approval_required?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          digest_frequency?: string | null
+          digest_mode?: boolean | null
+          document_expiry?: boolean | null
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          maintenance_reminders?: boolean | null
+          phone_number?: string | null
+          push_enabled?: boolean | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          urgent_alerts?: boolean | null
+          user_actions?: boolean | null
+          user_id: string
+          vehicle_issues?: boolean | null
+        }
+        Update: {
+          approval_required?: boolean | null
+          company_id?: string | null
+          created_at?: string | null
+          digest_frequency?: string | null
+          digest_mode?: boolean | null
+          document_expiry?: boolean | null
+          email_enabled?: boolean | null
+          id?: string
+          in_app_enabled?: boolean | null
+          maintenance_reminders?: boolean | null
+          phone_number?: string | null
+          push_enabled?: boolean | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+          urgent_alerts?: boolean | null
+          user_actions?: boolean | null
+          user_id?: string
+          vehicle_issues?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parts_inventory: {
         Row: {
           company_id: string | null
@@ -2414,6 +2494,38 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_notification_preferences: {
+        Args: { p_company_id: string; p_user_id: string }
+        Returns: {
+          approval_required: boolean | null
+          company_id: string | null
+          created_at: string | null
+          digest_frequency: string | null
+          digest_mode: boolean | null
+          document_expiry: boolean | null
+          email_enabled: boolean | null
+          id: string
+          in_app_enabled: boolean | null
+          maintenance_reminders: boolean | null
+          phone_number: string | null
+          push_enabled: boolean | null
+          quiet_hours_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          sms_enabled: boolean | null
+          updated_at: string | null
+          urgent_alerts: boolean | null
+          user_actions: boolean | null
+          user_id: string
+          vehicle_issues: boolean | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "notification_preferences"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_secure_document_url: {
         Args: { storage_path: string }
         Returns: string
@@ -2484,6 +2596,15 @@ export type Database = {
       }
       process_service_reminders: { Args: never; Returns: undefined }
       schedule_automated_backup: { Args: never; Returns: undefined }
+      should_send_notification: {
+        Args: {
+          p_company_id: string
+          p_delivery_method: string
+          p_notification_type: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       user_has_permission: {
         Args: { p_action: string; p_company_id?: string; p_resource: string }
         Returns: boolean
