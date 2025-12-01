@@ -145,13 +145,31 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       await Promise.all(usersToEmail.map(async (user) => {
-        const emailHtml = generateEmailTemplate({
-          type,
-          subject,
-          message: details.message || '',
-          userName: user.full_name || '',
-          details
-        });
+        // Try to get custom template from database
+        const template = await getNotificationTemplate(type, 'email', companyId || user.company_id);
+        
+        let emailSubject = subject;
+        let emailHtml = '';
+        
+        if (template) {
+          // Render template with variables
+          const variables = {
+            userName: user.full_name || '',
+            ...details
+          };
+          const rendered = renderTemplate(template, variables);
+          emailSubject = rendered.subject || subject;
+          emailHtml = rendered.html || rendered.body;
+        } else {
+          // Fallback to default template generation
+          emailHtml = generateEmailTemplate({
+            type,
+            subject,
+            message: details.message || '',
+            userName: user.full_name || '',
+            details
+          });
+        }
 
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -162,7 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
           body: JSON.stringify({
             from: "Fleet Manager <notifications@resend.dev>",
             to: [user.email],
-            subject: subject,
+            subject: emailSubject,
             html: emailHtml,
           }),
         });
@@ -184,8 +202,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
 
       await Promise.all(usersToSMS.map(async (user) => {
-        const message = `${subject}: ${details.message || ''}`;
-        await sendSMS(user.preferences.phone_number, message);
+        // Try to get custom SMS template
+        const template = await getNotificationTemplate(type, 'sms', companyId || user.company_id);
+        
+        let smsMessage = `${subject}: ${details.message || ''}`;
+        
+        if (template) {
+          const variables = {
+            userName: user.full_name || '',
+            ...details
+          };
+          const rendered = renderTemplate(template, variables);
+          smsMessage = rendered.body;
+        }
+        
+        await sendSMS(user.preferences.phone_number, smsMessage);
       }));
     }
 
@@ -239,6 +270,42 @@ async function sendSMS(phoneNumber: string, message: string) {
   } catch (error) {
     console.error('Error sending SMS:', error);
   }
+}
+
+// Helper function to get template from database
+async function getNotificationTemplate(
+  notificationType: string,
+  deliveryMethod: string,
+  companyId: string | null
+) {
+  const { data: templates } = await supabase
+    .from('notification_templates')
+    .select('*')
+    .eq('notification_type', notificationType)
+    .eq('delivery_method', deliveryMethod)
+    .eq('is_active', true)
+    .or(`company_id.eq.${companyId},company_id.is.null`)
+    .order('company_id', { ascending: false, nullsFirst: false })
+    .limit(1);
+
+  return templates?.[0] || null;
+}
+
+// Helper function to render template with variables
+function renderTemplate(template: any, variables: Record<string, any>) {
+  let subject = template.subject_template || '';
+  let body = template.body_template || '';
+  let html = template.html_template || '';
+
+  Object.entries(variables).forEach(([key, value]) => {
+    const placeholder = `{{${key}}}`;
+    const regex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    subject = subject.replace(regex, String(value));
+    body = body.replace(regex, String(value));
+    html = html.replace(regex, String(value));
+  });
+
+  return { subject, body, html };
 }
 
 // Helper function to determine notification priority

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { CompanySettingsForm } from "@/components/company/CompanySettingsForm";
 import { TeamManagement } from "@/components/settings/TeamManagement";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
+import { NotificationTemplateManager } from "@/components/notifications/NotificationTemplateManager";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -96,7 +97,29 @@ export function Settings() {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6">
-          <NotificationPreferences />
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Preferences</CardTitle>
+              <CardDescription>
+                Manage how and when you receive notifications.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NotificationPreferences />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Notification Templates</CardTitle>
+              <CardDescription>
+                Customize notification messages for different events and channels.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NotificationTemplateManager />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
