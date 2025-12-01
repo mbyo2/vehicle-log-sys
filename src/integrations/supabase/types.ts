@@ -1175,6 +1175,75 @@ export type Database = {
           },
         ]
       }
+      notification_templates: {
+        Row: {
+          body_template: string
+          company_id: string | null
+          created_at: string | null
+          created_by: string | null
+          delivery_method: string
+          html_template: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          notification_type: string
+          styling_config: Json | null
+          subject_template: string | null
+          template_name: string
+          updated_at: string | null
+          variables: Json | null
+        }
+        Insert: {
+          body_template: string
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivery_method: string
+          html_template?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notification_type: string
+          styling_config?: Json | null
+          subject_template?: string | null
+          template_name: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Update: {
+          body_template?: string
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          delivery_method?: string
+          html_template?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          notification_type?: string
+          styling_config?: Json | null
+          subject_template?: string | null
+          template_name?: string
+          updated_at?: string | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_templates_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parts_inventory: {
         Row: {
           company_id: string | null
