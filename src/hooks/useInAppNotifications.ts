@@ -1,0 +1,143 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
+
+export interface InAppNotification {
+  id: string;
+  user_id: string;
+  company_id: string | null;
+  type: string;
+  title: string;
+  message: string;
+  data: Record<string, unknown>;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export function useInAppNotifications() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: notifications = [], isLoading } = useQuery({
+    queryKey: ['in-app-notifications', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) {
+        console.error('Error fetching notifications:', error);
+        throw error;
+      }
+
+      return data as InAppNotification[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Real-time subscription for new notifications
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
+
+  const markAsRead = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+    },
+  });
+
+  const markAllAsRead = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true, read_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+    },
+  });
+
+  const deleteNotification = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+    },
+  });
+
+  const clearAll = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+    },
+  });
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  return {
+    notifications,
+    isLoading,
+    unreadCount,
+    markAsRead: markAsRead.mutate,
+    markAllAsRead: markAllAsRead.mutate,
+    deleteNotification: deleteNotification.mutate,
+    clearAll: clearAll.mutate,
+  };
+}

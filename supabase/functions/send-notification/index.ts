@@ -110,30 +110,27 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Process in-app notifications
     if (delivery === 'in_app' || delivery === 'all') {
-      const notificationsToSend = usersWithPreferences
+      const notificationsToInsert = usersWithPreferences
         .filter(user => shouldSendNotification(user.preferences, 'in_app'))
         .map(user => ({
-          type,
-          message: details.message || subject,
-          priority: getPriorityFromType(type),
+          user_id: user.id,
           company_id: companyId || user.company_id,
-          metadata: {
-            ...details,
-            user_id: user.id,
-            subject
-          },
-          status: 'unread'
+          type,
+          title: subject,
+          message: details.message || subject,
+          data: details,
+          is_read: false,
         }));
 
-      if (notificationsToSend.length > 0) {
+      if (notificationsToInsert.length > 0) {
         const { error: notifError } = await supabase
-          .from('vehicle_notifications')
-          .insert(notificationsToSend);
+          .from('notifications')
+          .insert(notificationsToInsert);
 
         if (notifError) {
           console.error('Error creating in-app notifications:', notifError);
         } else {
-          console.log(`Created ${notificationsToSend.length} in-app notifications`);
+          console.log(`Created ${notificationsToInsert.length} in-app notifications`);
         }
       }
     }
