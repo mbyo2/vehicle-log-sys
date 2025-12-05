@@ -1,7 +1,15 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 type NotificationPermission = 'default' | 'denied' | 'granted';
+
+interface PushNotificationOptions {
+  title: string;
+  body: string;
+  icon?: string;
+  tag?: string;
+  data?: Record<string, unknown>;
+  onClick?: () => void;
+}
 
 export function usePushNotifications() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -17,7 +25,7 @@ export function usePushNotifications() {
   const requestPermission = async () => {
     if (!('Notification' in window)) {
       console.log('This browser does not support notifications');
-      return;
+      return 'denied' as NotificationPermission;
     }
 
     try {
@@ -30,25 +38,50 @@ export function usePushNotifications() {
     }
   };
 
-  const sendTestNotification = () => {
-    if (permission === 'granted') {
-      // Show a test notification
-      const notification = new Notification('Test Notification', {
-        body: 'This is a test notification from the vehicle management system.',
-        icon: '/placeholder.svg'
+  const showNotification = useCallback((options: PushNotificationOptions) => {
+    if (permission !== 'granted') {
+      console.log('Notification permission not granted');
+      return null;
+    }
+
+    if (!('Notification' in window)) {
+      console.log('This browser does not support notifications');
+      return null;
+    }
+
+    try {
+      const notification = new Notification(options.title, {
+        body: options.body,
+        icon: options.icon || '/favicon.ico',
+        tag: options.tag,
+        data: options.data,
       });
 
       notification.onclick = () => {
-        console.log('Notification clicked');
         window.focus();
         notification.close();
+        options.onClick?.();
       };
+
+      return notification;
+    } catch (error) {
+      console.error('Error showing notification:', error);
+      return null;
     }
-  };
+  }, [permission]);
+
+  const sendTestNotification = useCallback(() => {
+    return showNotification({
+      title: 'Test Notification',
+      body: 'This is a test notification from the vehicle management system.',
+    });
+  }, [showNotification]);
 
   return {
     permission,
     requestPermission,
-    sendTestNotification
+    showNotification,
+    sendTestNotification,
+    isSupported: 'Notification' in window,
   };
 }

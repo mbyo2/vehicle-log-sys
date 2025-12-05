@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { usePushNotifications } from './usePushNotifications';
 
 export interface InAppNotification {
   id: string;
@@ -20,6 +21,8 @@ export interface InAppNotification {
 export function useInAppNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { permission, showNotification } = usePushNotifications();
+  const shownNotifications = useRef<Set<string>>(new Set());
 
   const { data: notifications = [], isLoading } = useQuery({
     queryKey: ['in-app-notifications', user?.id],
@@ -43,7 +46,7 @@ export function useInAppNotifications() {
     enabled: !!user?.id,
   });
 
-  // Real-time subscription for new notifications
+  // Real-time subscription for new notifications with push notification support
   useEffect(() => {
     if (!user?.id) return;
 
@@ -52,7 +55,43 @@ export function useInAppNotifications() {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newNotification = payload.new as InAppNotification;
+          
+          // Show browser push notification if permission granted and not already shown
+          if (permission === 'granted' && !shownNotifications.current.has(newNotification.id)) {
+            shownNotifications.current.add(newNotification.id);
+            showNotification({
+              title: newNotification.title,
+              body: newNotification.message,
+              tag: newNotification.id,
+            });
+          }
+          
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
@@ -66,7 +105,7 @@ export function useInAppNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, permission, showNotification]);
 
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
