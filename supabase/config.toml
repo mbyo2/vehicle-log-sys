@@ -28,3 +28,6 @@ verify_jwt = true
 
 [functions.disable-totp]
 verify_jwt = true
+
+[functions.send-notification-digest]
+verify_jwt = false
