@@ -41,16 +41,40 @@ async function sendEmailNotification(
   }
 }
 
-// Create in-app notification in the database
+// Create in-app notification in both tables for comprehensive coverage
 async function createInAppNotification(notificationData: {
   vehicle_id?: string;
   company_id: string;
   type: string;
   message: string;
   priority: string;
+  user_ids?: string[];
 }) {
   try {
-    await supabase.from('vehicle_notifications').insert(notificationData);
+    // Create vehicle notification (legacy)
+    await supabase.from('vehicle_notifications').insert({
+      vehicle_id: notificationData.vehicle_id,
+      company_id: notificationData.company_id,
+      type: notificationData.type,
+      message: notificationData.message,
+      priority: notificationData.priority,
+    });
+
+    // Create in-app notifications for each user (new notification center)
+    if (notificationData.user_ids && notificationData.user_ids.length > 0) {
+      const notifications = notificationData.user_ids.map(userId => ({
+        user_id: userId,
+        company_id: notificationData.company_id,
+        type: notificationData.type,
+        title: notificationData.type === 'document_expiry' ? 'Document Expiring' : 'Alert',
+        message: notificationData.message,
+        data: { vehicle_id: notificationData.vehicle_id, priority: notificationData.priority },
+        is_read: false,
+      }));
+      
+      await supabase.from('notifications').insert(notifications);
+    }
+    
     console.log(`Notification created: ${notificationData.message}`);
   } catch (error) {
     console.error("Error creating notification:", error);
@@ -109,16 +133,51 @@ async function fetchExpiringDocuments(
 
 // Fetch company admins for a specific company
 async function fetchCompanyAdmins(companyId: string) {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('email, full_name')
+  // Get admins from user_roles table
+  const { data: roleData, error: roleError } = await supabase
+    .from('user_roles')
+    .select('user_id')
     .eq('company_id', companyId)
     .eq('role', 'company_admin');
+
+  if (roleError || !roleData?.length) {
+    console.error('Error fetching admin roles:', roleError);
+    return [];
+  }
+
+  const userIds = roleData.map(r => r.user_id);
+  
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, full_name')
+    .in('id', userIds);
 
   if (error) {
     console.error('Error fetching admins:', error);
     return [];
   }
+  return data || [];
+}
+
+// Fetch drivers with expiring licenses
+async function fetchDriversWithExpiringLicenses(today: Date, thirtyDaysFromNow: Date) {
+  const { data, error } = await supabase
+    .from('drivers')
+    .select(`
+      id,
+      man_number,
+      license_expiry,
+      company_id,
+      profile_id,
+      profiles:profile_id (
+        full_name,
+        email
+      )
+    `)
+    .gte('license_expiry', today.toISOString().split('T')[0])
+    .lte('license_expiry', thirtyDaysFromNow.toISOString().split('T')[0]);
+
+  if (error) throw error;
   return data || [];
 }
 
@@ -292,6 +351,55 @@ async function processDocumentExpirations(
   }
 }
 
+// Process driver license expirations
+async function processDriverLicenseExpirations(
+  drivers: any[], 
+  companyAdmins: Map<string, any[]>
+) {
+  const today = new Date();
+  
+  for (const driver of drivers) {
+    if (!driver.license_expiry || !driver.company_id) continue;
+    
+    const admins = companyAdmins.get(driver.company_id) || [];
+    const adminEmails = admins.map(admin => admin.email);
+    const adminIds = admins.map(admin => admin.id);
+    
+    if (adminEmails.length === 0) {
+      console.log(`No admins found for company ${driver.company_id}`);
+      continue;
+    }
+
+    const daysToExpiry = Math.ceil(
+      (new Date(driver.license_expiry).getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    
+    const driverName = driver.profiles?.full_name || driver.man_number;
+    
+    const emailHtml = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Driver License Expiry Reminder</h2>
+        <p>The driving license for ${driverName} will expire in ${daysToExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${new Date(driver.license_expiry).toLocaleDateString()}</p>
+      </div>
+    `;
+
+    await sendEmailNotification(
+      adminEmails,
+      `Driver License Expiry - ${driverName}`,
+      emailHtml
+    );
+
+    await createInAppNotification({
+      company_id: driver.company_id,
+      type: 'document_expiry',
+      message: `Driving license for ${driverName} will expire in ${daysToExpiry} days`,
+      priority: daysToExpiry <= 7 ? 'high' : 'medium',
+      user_ids: adminIds,
+    });
+  }
+}
+
 // Main handler function
 const handler = async (req: Request): Promise<Response> => {
   console.log("Starting document reminders check...");
@@ -309,14 +417,17 @@ const handler = async (req: Request): Promise<Response> => {
     // Fetch data
     const vehicles = await fetchVehiclesWithExpiringDocuments(today, thirtyDaysFromNow);
     const documents = await fetchExpiringDocuments(today, thirtyDaysFromNow);
+    const drivers = await fetchDriversWithExpiringLicenses(today, thirtyDaysFromNow);
 
     console.log(`Found ${vehicles.length} vehicles with upcoming document expiries`);
     console.log(`Found ${documents.length} documents expiring soon`);
+    console.log(`Found ${drivers.length} drivers with expiring licenses`);
 
     // Get company admins for notifications
     const allCompanyIds = new Set([
       ...(vehicles.map(v => v.company_id) || []),
-      ...(documents.map(d => d.company_id) || [])
+      ...(documents.map(d => d.company_id) || []),
+      ...(drivers.map(d => d.company_id) || [])
     ].filter(Boolean));
     
     const companyAdmins = new Map();
@@ -333,12 +444,14 @@ const handler = async (req: Request): Promise<Response> => {
     // Process expirations
     await processVehicleExpirations(vehicles, companyAdmins);
     await processDocumentExpirations(documents, companyAdmins);
+    await processDriverLicenseExpirations(drivers, companyAdmins);
 
     return new Response(JSON.stringify({ 
       success: true,
       processed: {
         vehicles: vehicles.length || 0,
-        documents: documents.length || 0
+        documents: documents.length || 0,
+        drivers: drivers.length || 0
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
