@@ -87,6 +87,11 @@ const handler = async (req: Request): Promise<Response> => {
       if (type === 'approval_required' && !prefs.approval_required) return false;
       if (type === 'urgent' && !prefs.urgent_alerts) return false;
 
+      // Check digest mode - if enabled and not urgent, queue for digest
+      if (prefs.digest_mode && type !== 'urgent' && deliveryMethod === 'email') {
+        return 'digest';
+      }
+
       // Check quiet hours (skip for urgent)
       if (prefs.quiet_hours_enabled && type !== 'urgent') {
         const now = new Date();
@@ -137,9 +142,41 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Process email notifications
     if (delivery === 'email' || delivery === 'all') {
-      const usersToEmail = usersWithPreferences.filter(user => 
-        user.email && shouldSendNotification(user.preferences, 'email')
-      );
+      const usersToEmail: any[] = [];
+      const usersToDigest: any[] = [];
+      
+      usersWithPreferences.forEach(user => {
+        if (!user.email) return;
+        const result = shouldSendNotification(user.preferences, 'email');
+        if (result === true) {
+          usersToEmail.push(user);
+        } else if (result === 'digest') {
+          usersToDigest.push(user);
+        }
+      });
+
+      // Queue digest notifications
+      if (usersToDigest.length > 0) {
+        const digestEntries = usersToDigest.map(user => ({
+          user_id: user.id,
+          company_id: companyId || user.company_id,
+          notification_type: type,
+          subject,
+          message: details.message || subject,
+          data: details,
+          delivery_method: 'email'
+        }));
+
+        const { error: digestError } = await supabase
+          .from('notification_digest_queue')
+          .insert(digestEntries);
+
+        if (digestError) {
+          console.error('Error queuing digest notifications:', digestError);
+        } else {
+          console.log(`Queued ${usersToDigest.length} notifications for digest`);
+        }
+      }
 
       await Promise.all(usersToEmail.map(async (user) => {
         // Try to get custom template from database

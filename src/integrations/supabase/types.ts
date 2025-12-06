@@ -1095,6 +1095,50 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_digest_queue: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          data: Json | null
+          delivery_method: string
+          id: string
+          message: string
+          notification_type: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          data?: Json | null
+          delivery_method?: string
+          id?: string
+          message: string
+          notification_type: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          data?: Json | null
+          delivery_method?: string
+          id?: string
+          message?: string
+          notification_type?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_digest_queue_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           approval_required: boolean | null
