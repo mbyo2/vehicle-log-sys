@@ -1,9 +1,16 @@
-
 import { useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  isAdminRole, 
+  isSuperAdmin, 
+  canManageUser, 
+  getAssignableRoles as getAssignableRolesFromLib,
+  getAllRoles as getAllRolesFromLib,
+  getRoleDisplayName 
+} from '@/lib/permissions';
 
 export function useRoleManagement() {
   const { profile } = useAuth();
@@ -21,19 +28,46 @@ export function useRoleManagement() {
     return userProfile.role === role;
   }, [profile]);
 
-  // Check if user is a company admin or above
+  // Check if user is a company admin or above - full access
   const isAdminOrAbove = useCallback((): boolean => {
-    return hasRole(['super_admin', 'company_admin']);
-  }, [hasRole]);
+    const userProfile = profile.get();
+    return isAdminRole(userProfile?.role);
+  }, [profile]);
+
+  // Check if user is super admin - ultimate access
+  const isSuperAdminUser = useCallback((): boolean => {
+    const userProfile = profile.get();
+    return isSuperAdmin(userProfile?.role);
+  }, [profile]);
 
   // Update user role (for admins)
   const updateUserRole = useCallback(async (userId: string, newRole: UserRole): Promise<boolean> => {
     try {
-      if (!isAdminOrAbove()) {
+      const userProfile = profile.get();
+      
+      if (!isAdminRole(userProfile?.role)) {
         toast({
           variant: "destructive",
           title: "Permission Denied",
           description: "You don't have permission to update user roles"
+        });
+        return false;
+      }
+
+      // Get target user's current role to check if we can manage them
+      const { data: targetRoleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      const targetRole = (targetRoleData?.role || 'driver') as UserRole;
+      
+      if (!canManageUser(userProfile?.role, targetRole)) {
+        toast({
+          variant: "destructive",
+          title: "Permission Denied",
+          description: "You cannot modify this user's role"
         });
         return false;
       }
@@ -65,7 +99,7 @@ export function useRoleManagement() {
 
       toast({
         title: "Role Updated",
-        description: "User role has been updated successfully"
+        description: `User role has been updated to ${getRoleDisplayName(newRole)}`
       });
       
       return true;
@@ -78,31 +112,23 @@ export function useRoleManagement() {
       });
       return false;
     }
-  }, [isAdminOrAbove, toast]);
+  }, [profile, toast]);
 
   // Get all available roles 
   const getAllRoles = useCallback((): UserRole[] => {
-    return ['super_admin', 'company_admin', 'supervisor', 'driver'];
+    return getAllRolesFromLib();
   }, []);
 
   // Get assignable roles based on current user's role
   const getAssignableRoles = useCallback((): UserRole[] => {
     const userProfile = profile.get();
-    if (!userProfile) return [];
-    
-    switch (userProfile.role) {
-      case 'super_admin':
-        return ['super_admin', 'company_admin', 'supervisor', 'driver'];
-      case 'company_admin':
-        return ['company_admin', 'supervisor', 'driver'];
-      default:
-        return [];
-    }
+    return getAssignableRolesFromLib(userProfile?.role);
   }, [profile]);
 
   return {
     hasRole,
     isAdminOrAbove,
+    isSuperAdminUser,
     updateUserRole,
     getAllRoles,
     getAssignableRoles

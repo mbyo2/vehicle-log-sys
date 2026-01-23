@@ -4,6 +4,7 @@ import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield } from 'lucide-react';
+import { isAdminRole } from '@/lib/permissions';
 
 interface RoleBasedRouteProps {
   children: ReactNode;
@@ -18,7 +19,7 @@ export function RoleBasedRoute({
   requiredPermission,
   fallbackPath = '/signin'
 }: RoleBasedRouteProps) {
-  const { user, profile, loading, hasPermission } = useEnhancedAuth();
+  const { user, profile, loading, hasPermission, role } = useEnhancedAuth();
 
   if (loading) {
     return (
@@ -45,7 +46,12 @@ export function RoleBasedRoute({
     );
   }
 
-  // Check role-based access
+  // Super admin and company admin have FULL access - bypass all role checks
+  if (isAdminRole(role)) {
+    return <>{children}</>;
+  }
+
+  // Check role-based access for non-admin users
   if (allowedRoles.length > 0 && !allowedRoles.includes(profile.role)) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -59,7 +65,7 @@ export function RoleBasedRoute({
     );
   }
 
-  // Check permission-based access
+  // Check permission-based access for non-admin users
   if (requiredPermission && !hasPermission(requiredPermission.resource, requiredPermission.action)) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">

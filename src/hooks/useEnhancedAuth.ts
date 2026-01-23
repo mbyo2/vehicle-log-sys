@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User, Session } from '@supabase/supabase-js';
+import { 
+  hasPermission as checkPermission, 
+  getPermissionsForRole,
+  isAdminRole,
+  isSuperAdmin,
+  RESOURCES,
+  ACTIONS,
+  type Resource,
+  type Action
+} from '@/lib/permissions';
+import { UserRole } from '@/types/auth';
 
 interface EnhancedAuthState {
   user: User | null;
@@ -9,6 +20,7 @@ interface EnhancedAuthState {
   profile: any | null;
   loading: boolean;
   permissions: string[];
+  role: UserRole | null;
 }
 
 interface AuthError {
@@ -22,13 +34,20 @@ export function useEnhancedAuth() {
     session: null,
     profile: null,
     loading: true,
-    permissions: []
+    permissions: [],
+    role: null
   });
   
   const { toast } = useToast();
 
-  // Fetch user permissions based on role
+  // Get permissions for role - admins get full access
   const fetchUserPermissions = async (userRole: string, companyId?: string) => {
+    // Super admin and company admin get ALL permissions
+    if (userRole === 'super_admin' || userRole === 'company_admin') {
+      return ['*:*']; // Wildcard for full access
+    }
+    
+    // For other roles, try to fetch from database first, fallback to local permissions
     try {
       const { data, error } = await supabase
         .from('role_permissions')
@@ -36,15 +55,15 @@ export function useEnhancedAuth() {
         .eq('role', userRole)
         .eq('is_granted', true);
 
-      if (error) {
-        console.error('Error fetching permissions:', error);
-        return [];
+      if (error || !data || data.length === 0) {
+        // Fallback to local permissions
+        return getPermissionsForRole(userRole as UserRole);
       }
 
-      return data?.map(p => `${p.resource}:${p.action}`) || [];
+      return data.map(p => `${p.resource}:${p.action}`);
     } catch (error) {
-      console.error('Permission fetch failed:', error);
-      return [];
+      console.error('Permission fetch failed, using local permissions:', error);
+      return getPermissionsForRole(userRole as UserRole);
     }
   };
 
@@ -195,7 +214,8 @@ export function useEnhancedAuth() {
         session: null,
         profile: null,
         loading: false,
-        permissions: []
+        permissions: [],
+        role: null
       });
 
       toast({
@@ -209,9 +229,10 @@ export function useEnhancedAuth() {
     }
   };
 
-  // Check if user has specific permission
+  // Check if user has specific permission - admins always have access
   const hasPermission = (resource: string, action: string): boolean => {
-    return authState.permissions.includes(`${resource}:${action}`);
+    // Use centralized permission check which handles admin wildcard access
+    return checkPermission(authState.role, resource, action);
   };
 
   // Enhanced profile fetching with retries
@@ -246,12 +267,12 @@ export function useEnhancedAuth() {
             .limit(1)
             .maybeSingle();
           
-          const userRole = roleData?.role || 'driver';
+          const userRole = (roleData?.role || 'driver') as UserRole;
           console.log('Profile loaded with role:', userRole);
           
           // Fetch permissions for this user
           const permissions = await fetchUserPermissions(userRole, data.company_id);
-          setAuthState(prev => ({ ...prev, permissions }));
+          setAuthState(prev => ({ ...prev, permissions, role: userRole }));
           
           // Return profile with role attached
           return { ...data, role: userRole };
@@ -292,7 +313,8 @@ export function useEnhancedAuth() {
               session,
               profile: profileData,
               loading: false,
-              permissions: authState.permissions
+              permissions: authState.permissions,
+              role: profileData?.role || null
             });
           }
         } else if (mounted) {
@@ -319,7 +341,8 @@ export function useEnhancedAuth() {
             session: null,
             profile: null,
             loading: false,
-            permissions: []
+            permissions: [],
+            role: null
           });
           return;
         }
