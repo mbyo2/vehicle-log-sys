@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserInvitationForm } from "@/components/user/UserInvitationForm";
 import { UserRoleManager } from "@/components/user/UserRoleManager";
+import { AdminPasswordReset } from "@/components/admin/AdminPasswordReset";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function UserManagement() {
@@ -31,7 +32,7 @@ export function UserManagement() {
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-muted-foreground">
-            Manage user invitations and roles for your organization.
+            Manage user invitations, roles, and password resets for your organization.
           </p>
         </div>
 
@@ -39,6 +40,7 @@ export function UserManagement() {
           <TabsList>
             <TabsTrigger value="invite">Invite Users</TabsTrigger>
             <TabsTrigger value="manage">Manage Roles</TabsTrigger>
+            <TabsTrigger value="password">Password Reset</TabsTrigger>
           </TabsList>
 
           <TabsContent value="invite" className="space-y-4">
@@ -67,6 +69,10 @@ export function UserManagement() {
                 <UserRoleManager />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="password" className="space-y-4">
+            <AdminPasswordReset />
           </TabsContent>
         </Tabs>
       </div>
