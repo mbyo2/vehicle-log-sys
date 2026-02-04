@@ -52,23 +52,22 @@ export function AdminPasswordReset() {
       setGeneratingFor(userId);
       setResetLink(null);
 
-      // Generate a password reset link using Supabase Admin API
-      // This creates a recovery link that the admin can share with the user
-      const { data, error } = await supabase.auth.resetPasswordForEmail(userEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke("admin-auth-tools", {
+        body: {
+          action: "generate_reset_link",
+          email: userEmail,
+          redirectTo: `${window.location.origin}/reset-password`,
+        },
       });
 
       if (error) throw error;
+      if (!data?.actionLink) throw new Error("No reset link returned");
 
-      // Since resetPasswordForEmail sends an email, we'll inform the admin
-      // For a "generate link" approach, we create a custom flow
-      const resetUrl = `${window.location.origin}/reset-password?email=${encodeURIComponent(userEmail)}`;
-      
-      setResetLink({ userId, link: resetUrl });
+      setResetLink({ userId, link: data.actionLink as string });
       
       toast({
-        title: "Password Reset Initiated",
-        description: `A password reset email has been sent to ${userEmail}. You can also share the reset page link below.`,
+        title: "Reset link generated",
+        description: `Share this link with ${userEmail} to set a new password.`,
       });
     } catch (error: any) {
       console.error("Error generating reset link:", error);
@@ -154,7 +153,7 @@ export function AdminPasswordReset() {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Share this link with the user. An email has also been sent to their address.
+              Share this link with the user. It opens a secure Supabase recovery flow.
             </p>
           </div>
         )}
