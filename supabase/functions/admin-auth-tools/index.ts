@@ -116,18 +116,12 @@ serve(async (req) => {
         .upsert({ id: userId, email, full_name: fullName }, { onConflict: "id" });
       if (profileError) return json(500, { error: profileError.message });
 
-      // Ensure role exists
-      const { data: existingRole } = await admin
-        .from("user_roles")
-        .select("id")
-        .eq("user_id", userId)
-        .eq("role", "super_admin")
-        .maybeSingle();
-
-      if (!existingRole) {
-        const { error: roleError } = await admin
-          .from("user_roles")
-          .insert({ user_id: userId, role: "super_admin", company_id: null });
+      // Ensure role exists using RPC function to avoid enum comparison issues
+      const { data: hasRole } = await admin.rpc("user_has_super_admin_role", { _user_id: userId });
+      
+      if (!hasRole) {
+        // Insert super_admin role using RPC function
+        const { error: roleError } = await admin.rpc("insert_super_admin_role", { _user_id: userId });
         if (roleError) return json(500, { error: roleError.message });
       }
 
@@ -171,20 +165,14 @@ serve(async (req) => {
       const caller = userData.user;
       if (!caller) return json(401, { error: "Not authenticated" });
 
-      // Check caller role (roles are stored in user_roles)
-      const { data: callerRoleRow, error: callerRoleError } = await admin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", caller.id)
-        .in("role", ["super_admin", "company_admin"])
-        .limit(1)
-        .maybeSingle();
-
+      // Check caller role using RPC function to avoid enum comparison issues
+      const { data: callerRole, error: callerRoleError } = await admin.rpc("user_has_admin_role", { _user_id: caller.id });
+      
       if (callerRoleError) return json(500, { error: callerRoleError.message });
-      if (!callerRoleRow) return json(403, { error: "Insufficient permissions" });
+      if (!callerRole) return json(403, { error: "Insufficient permissions" });
 
       // If company_admin, only allow resets within the same company
-      if (callerRoleRow.role === "company_admin") {
+      if (callerRole === "company_admin") {
         const [{ data: callerProfile }, { data: targetProfile }] = await Promise.all([
           admin.from("profiles").select("company_id").eq("id", caller.id).maybeSingle(),
           admin.from("profiles").select("company_id").eq("email", targetEmail).maybeSingle(),
