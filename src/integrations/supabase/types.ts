@@ -2732,6 +2732,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      insert_super_admin_role: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       log_error: {
         Args: {
           p_company_id?: string
@@ -2768,8 +2772,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_has_admin_role: { Args: { _user_id: string }; Returns: string }
       user_has_permission: {
         Args: { p_action: string; p_company_id?: string; p_resource: string }
+        Returns: boolean
+      }
+      user_has_super_admin_role: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       verify_backup_integrity: { Args: { backup_id: string }; Returns: boolean }
