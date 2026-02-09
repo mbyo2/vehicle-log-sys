@@ -106,7 +106,7 @@ export const router = createBrowserRouter([
           {
             path: "security",
             element: (
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
                 <Security />
               </ProtectedRoute>
             ),
@@ -114,7 +114,7 @@ export const router = createBrowserRouter([
           {
             path: "fleet",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Fleet />
               </ProtectedRoute>
             ),
@@ -126,7 +126,7 @@ export const router = createBrowserRouter([
           {
             path: "drivers",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Drivers />
               </ProtectedRoute>
             ),
@@ -134,7 +134,7 @@ export const router = createBrowserRouter([
           {
             path: "users",
             element: (
-              <ProtectedRoute allowedRoles={['super_admin']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
                 <Users />
               </ProtectedRoute>
             ),
@@ -154,7 +154,7 @@ export const router = createBrowserRouter([
           {
             path: "trip-management",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <TripManagement />
               </ProtectedRoute>
             ),
@@ -162,7 +162,7 @@ export const router = createBrowserRouter([
           {
             path: "trip-approvals",
             element: (
-              <ProtectedRoute allowedRoles={['supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <TripApprovals />
               </ProtectedRoute>
             ),
@@ -186,7 +186,7 @@ export const router = createBrowserRouter([
           {
             path: "maintenance",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Maintenance />
               </ProtectedRoute>
             ),
@@ -194,7 +194,7 @@ export const router = createBrowserRouter([
           {
             path: "reports",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Reports />
               </ProtectedRoute>
             ),
@@ -274,7 +274,7 @@ export const router = createBrowserRouter([
           {
             path: "analytics",
             element: (
-              <ProtectedRoute allowedRoles={['company_admin', 'supervisor']}>
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Analytics />
               </ProtectedRoute>
             ),

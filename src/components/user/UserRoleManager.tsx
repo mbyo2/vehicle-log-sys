@@ -22,14 +22,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { UserRole } from "@/types/auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Trash2 } from "lucide-react";
 
-interface UserWithProfile {
+interface UserWithRole {
   id: string;
   email: string;
-  full_name: string;
-  role: UserRole;
-  company_id: string;
+  full_name: string | null;
+  company_id: string | null;
   created_at: string;
+  role: UserRole;
 }
 
 export function UserRoleManager() {
@@ -38,42 +39,77 @@ export function UserRoleManager() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
 
+  const currentProfile = profile.get();
+  const isSuperAdmin = currentProfile?.role === "super_admin";
+
   const { data: users, isLoading } = useQuery({
-    queryKey: ["company-users", profile.get()?.company_id],
+    queryKey: ["company-users-with-roles", currentProfile?.company_id, isSuperAdmin],
     queryFn: async () => {
-      const currentProfile = profile.get();
-      if (!currentProfile?.company_id) return [];
+      if (!currentProfile) return [];
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("company_id", currentProfile.company_id)
-        .order("created_at", { ascending: false });
+      // Fetch profiles
+      let profileQuery = supabase.from("profiles").select("*");
+      
+      if (!isSuperAdmin && currentProfile.company_id) {
+        profileQuery = profileQuery.eq("company_id", currentProfile.company_id);
+      }
 
-      if (error) throw error;
-      return data as UserWithProfile[];
+      const { data: profiles, error: profileError } = await profileQuery.order("created_at", { ascending: false });
+      if (profileError) throw profileError;
+      if (!profiles) return [];
+
+      // Fetch roles for all these users
+      const userIds = profiles.map(p => p.id);
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds);
+      
+      if (rolesError) throw rolesError;
+
+      // Merge profiles with roles
+      const roleMap = new Map<string, UserRole>();
+      roles?.forEach(r => {
+        // Keep highest priority role if multiple
+        const existing = roleMap.get(r.user_id);
+        if (!existing) roleMap.set(r.user_id, r.role as UserRole);
+      });
+
+      return profiles.map(p => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        company_id: p.company_id,
+        created_at: p.created_at,
+        role: roleMap.get(p.id) || ("driver" as UserRole),
+      })) as UserWithRole[];
     },
-    enabled: !!profile.get()?.company_id,
+    enabled: !!currentProfile,
   });
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
       setUpdatingUser(userId);
+      const user = users?.find(u => u.id === userId);
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", userId);
+      // Delete existing role(s) for this user
+      await supabase.from("user_roles").delete().eq("user_id", userId);
+
+      // Insert new role
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: newRole,
+        company_id: user?.company_id || currentProfile?.company_id,
+      });
 
       if (error) throw error;
 
       toast({
         title: "Role Updated",
-        description: "User role has been updated successfully.",
+        description: `User role has been updated to ${newRole.replace("_", " ")}.`,
       });
 
-      // Refresh the users list
-      queryClient.invalidateQueries({ queryKey: ["company-users"] });
+      queryClient.invalidateQueries({ queryKey: ["company-users-with-roles"] });
     } catch (error: any) {
       console.error("Error updating user role:", error);
       toast({
@@ -86,36 +122,58 @@ export function UserRoleManager() {
     }
   };
 
-  const getRoleBadgeVariant = (role: UserRole) => {
-    switch (role) {
-      case "super_admin":
-        return "destructive";
-      case "company_admin":
-        return "default";
-      case "supervisor":
-        return "secondary";
-      case "driver":
-        return "outline";
-      default:
-        return "outline";
+  const removeUser = async (userId: string) => {
+    try {
+      setUpdatingUser(userId);
+      
+      // Remove role assignment (effectively removes from company)
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "User Removed",
+        description: "User has been removed from the company.",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["company-users-with-roles"] });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Remove Failed",
+        description: error.message || "Failed to remove user.",
+      });
+    } finally {
+      setUpdatingUser(null);
     }
   };
 
-  const getAvailableRoles = (currentUserRole: UserRole): UserRole[] => {
-    const currentProfile = profile.get();
-    if (!currentProfile) return [];
+  const getRoleBadgeVariant = (role: UserRole) => {
+    switch (role) {
+      case "super_admin":
+        return "destructive" as const;
+      case "company_admin":
+        return "default" as const;
+      case "supervisor":
+        return "secondary" as const;
+      case "driver":
+        return "outline" as const;
+      default:
+        return "outline" as const;
+    }
+  };
 
-    // Super admins can assign any role
+  const getAvailableRoles = (): UserRole[] => {
+    if (!currentProfile) return [];
     if (currentProfile.role === "super_admin") {
       return ["super_admin", "company_admin", "supervisor", "driver"];
     }
-
-    // Company admins can assign roles below them
     if (currentProfile.role === "company_admin") {
       return ["company_admin", "supervisor", "driver"];
     }
-
-    // Others cannot assign roles
     return [];
   };
 
@@ -127,15 +185,11 @@ export function UserRoleManager() {
     );
   }
 
-  const currentProfile = profile.get();
   const canManageRoles = currentProfile?.role === "super_admin" || currentProfile?.role === "company_admin";
-
   if (!canManageRoles) {
     return (
       <div className="text-center p-8">
-        <p className="text-muted-foreground">
-          You don't have permission to manage user roles.
-        </p>
+        <p className="text-muted-foreground">You don't have permission to manage user roles.</p>
       </div>
     );
   }
@@ -153,46 +207,62 @@ export function UserRoleManager() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users?.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">
-                  {user.full_name || "N/A"}
-                </TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Badge variant={getRoleBadgeVariant(user.role)}>
-                    {user.role.replace("_", " ").toUpperCase()}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {user.id !== currentProfile?.id && (
-                    <Select
-                      value={user.role}
-                      onValueChange={(newRole: UserRole) =>
-                        updateUserRole(user.id, newRole)
-                      }
-                      disabled={updatingUser === user.id}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAvailableRoles(user.role).map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role.replace("_", " ").toUpperCase()}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {user.id === currentProfile?.id && (
-                    <span className="text-sm text-muted-foreground">
-                      (You)
-                    </span>
-                  )}
+            {users && users.length > 0 ? (
+              users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">
+                    {user.full_name || "N/A"}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleBadgeVariant(user.role)}>
+                      {user.role.replace("_", " ").toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {user.id !== currentProfile?.id ? (
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={user.role}
+                          onValueChange={(newRole: string) =>
+                            updateUserRole(user.id, newRole as UserRole)
+                          }
+                          disabled={updatingUser === user.id}
+                        >
+                          <SelectTrigger className="w-40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getAvailableRoles().map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role.replace("_", " ").toUpperCase()}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => removeUser(user.id)}
+                          disabled={updatingUser === user.id}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">(You)</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  No users found
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

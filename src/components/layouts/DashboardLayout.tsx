@@ -3,34 +3,50 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3, UserCog } from "lucide-react";
+import { Menu, LayoutDashboard, Car, Users, FileText, Wrench, Settings, LogOut, Calendar, Building2, MessageSquare, GraduationCap, ClipboardCheck, BarChart3, UserCog, Shield, Plug, MapPin } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { UserRole } from "@/types/auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const navigation = {
+const navigation: Record<UserRole, { name: string; href: string; icon: any }[]> = {
   super_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Companies', href: '/companies', icon: Building2 },
+    { name: 'Fleet', href: '/fleet', icon: Car },
+    { name: 'Drivers', href: '/drivers', icon: Users },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+    { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Maintenance', href: '/maintenance', icon: Wrench },
     { name: 'Users', href: '/users', icon: Users },
     { name: 'User Management', href: '/user-management', icon: UserCog },
+    { name: 'Documents', href: '/documents', icon: FileText },
+    { name: 'Security', href: '/security', icon: Shield },
+    { name: 'Integrations', href: '/integrations', icon: Plug },
     { name: 'Settings', href: '/settings', icon: Settings },
   ],
   company_admin: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Fleet Management', href: '/fleet', icon: Car },
+    { name: 'Fleet', href: '/fleet', icon: Car },
+    { name: 'Drivers', href: '/drivers', icon: Users },
+    { name: 'Trip Management', href: '/trip-management', icon: MapPin },
+    { name: 'Maintenance', href: '/maintenance', icon: Wrench },
     { name: 'User Management', href: '/user-management', icon: UserCog },
-    { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Reports', href: '/reports', icon: BarChart3 },
+    { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
     { name: 'Documents', href: '/documents', icon: FileText },
+    { name: 'Integrations', href: '/integrations', icon: Plug },
     { name: 'Settings', href: '/settings', icon: Settings },
   ],
   supervisor: [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Fleet Overview', href: '/fleet', icon: Car },
+    { name: 'Drivers', href: '/drivers', icon: Users },
     { name: 'Trip Approvals', href: '/trip-approvals', icon: ClipboardCheck },
+    { name: 'Trip Management', href: '/trip-management', icon: MapPin },
+    { name: 'Maintenance', href: '/maintenance', icon: Wrench },
+    { name: 'Reports', href: '/reports', icon: BarChart3 },
     { name: 'Service Bookings', href: '/service-bookings', icon: Calendar },
     { name: 'Documents', href: '/documents', icon: FileText },
   ],
@@ -73,9 +89,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             key={item.name}
             to={item.href}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50",
+              "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground",
               isActive
-                ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
+                ? "bg-accent text-foreground"
                 : ""
             )}
             onClick={() => setIsMobileMenuOpen(false)}
@@ -96,7 +112,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex h-14 items-center border-b px-4 font-semibold">
             Fleet Manager
           </div>
-          <nav className="flex flex-1 flex-col gap-2">
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
             <NavLinks />
           </nav>
           <div className="border-t pt-4">
@@ -128,7 +144,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="flex h-14 items-center border-b px-4 font-semibold">
               Fleet Manager
             </div>
-            <nav className="flex flex-1 flex-col gap-2 py-4">
+            <nav className="flex flex-1 flex-col gap-1 py-4 overflow-y-auto">
               <NavLinks />
             </nav>
             <div className="border-t pt-4">
