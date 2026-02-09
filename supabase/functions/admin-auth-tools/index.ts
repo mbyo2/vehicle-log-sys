@@ -6,7 +6,7 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type Action = "bootstrap_super_admin" | "generate_reset_link";
+type Action = "bootstrap_super_admin" | "generate_reset_link" | "set_password";
 
 async function findUserIdByEmail(
   admin: ReturnType<typeof createClient>,
@@ -202,6 +202,25 @@ serve(async (req) => {
         actionLink,
         redirectTo: linkData?.properties?.redirect_to,
       });
+    }
+
+    if (action === "set_password") {
+      const targetEmail = (body?.email || "").trim().toLowerCase();
+      const newPassword = (body as any)?.password || "";
+      if (!targetEmail || !newPassword) return json(400, { error: "Missing 'email' or 'password'" });
+
+      let userId: string | null = null;
+      try {
+        userId = await findUserIdByEmail(admin, targetEmail);
+      } catch (e) {
+        return json(500, { error: e instanceof Error ? e.message : "Failed to find user" });
+      }
+      if (!userId) return json(404, { error: "User not found" });
+
+      const { error: updateError } = await admin.auth.admin.updateUserById(userId, { password: newPassword });
+      if (updateError) return json(500, { error: updateError.message });
+
+      return json(200, { success: true, email: targetEmail });
     }
 
     return json(400, { error: `Unknown action '${action}'` });
