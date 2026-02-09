@@ -23,7 +23,13 @@ import {
   LineChart,
   Menu,
   X,
-  UserCog
+  UserCog,
+  Shield,
+  Plug,
+  MessageSquare,
+  GraduationCap,
+  Calendar,
+  MapPin
 } from 'lucide-react';
 
 interface NavItem {
@@ -56,25 +62,72 @@ export function MobileNavigation() {
       title: 'Fleet',
       href: '/fleet',
       icon: <Car className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Drivers',
+      href: '/drivers',
+      icon: <Users className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Users',
       href: '/users',
       icon: <Users className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin'],
     },
     {
       title: 'User Management',
       href: '/user-management',
       icon: <UserCog className="h-5 w-5" />,
-      roles: ['company_admin', 'super_admin'],
+      roles: ['super_admin', 'company_admin'],
+    },
+    {
+      title: 'Trip Management',
+      href: '/trip-management',
+      icon: <MapPin className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Approvals',
+      href: '/trip-approvals',
+      icon: <ClipboardCheck className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Maintenance',
+      href: '/maintenance',
+      icon: <Wrench className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Reports',
+      href: '/reports',
+      icon: <LineChart className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Analytics',
+      href: '/analytics',
+      icon: <LineChart className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Documents',
       href: '/documents',
       icon: <FileText className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor', 'driver'],
+    },
+    {
+      title: 'Service Bookings',
+      href: '/service-bookings',
+      icon: <Calendar className="h-5 w-5" />,
+    },
+    // Driver-specific
+    {
+      title: 'Driver Portal',
+      href: '/driver-portal',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      roles: ['driver'],
     },
     {
       title: 'My Trips',
@@ -89,29 +142,29 @@ export function MobileNavigation() {
       roles: ['driver'],
     },
     {
-      title: 'Trip Management',
-      href: '/trip-management',
-      icon: <Map className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor'],
+      title: 'Messages',
+      href: '/driver/messages',
+      icon: <MessageSquare className="h-5 w-5" />,
+      roles: ['driver'],
     },
     {
-      title: 'Approvals',
-      href: '/trip-approvals',
-      icon: <ClipboardCheck className="h-5 w-5" />,
-      roles: ['supervisor'],
-      badge: 'New'
+      title: 'Training',
+      href: '/driver/trainings',
+      icon: <GraduationCap className="h-5 w-5" />,
+      roles: ['driver'],
+    },
+    // Admin-only
+    {
+      title: 'Security',
+      href: '/security',
+      icon: <Shield className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin'],
     },
     {
-      title: 'Maintenance',
-      href: '/maintenance',
-      icon: <Wrench className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor'],
-    },
-    {
-      title: 'Reports',
-      href: '/reports',
-      icon: <LineChart className="h-5 w-5" />,
-      roles: ['company_admin', 'supervisor'],
+      title: 'Integrations',
+      href: '/integrations',
+      icon: <Plug className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin'],
     },
     {
       title: 'Settings',
@@ -175,7 +228,7 @@ export function MobileNavigation() {
           </div>
           
           <ScrollArea className="flex-1 p-4">
-            <nav className="space-y-2">
+            <nav className="space-y-1">
               {filteredNavItems.map((item, index) => (
                 <Link
                   key={index}
@@ -202,7 +255,7 @@ export function MobileNavigation() {
           <div className="p-4 border-t">
             <Button
               variant="ghost"
-              className="w-full justify-start text-red-500 hover:bg-red-100 hover:text-red-600"
+              className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => {
                 signOut();
                 setIsOpen(false);

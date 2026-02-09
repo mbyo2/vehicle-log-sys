@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserInvitationForm } from "@/components/auth/UserInvitationForm";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { UserProfile, UserRole } from "@/types/auth";
+import { UserRole } from "@/types/auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, User, Check, X } from "lucide-react";
@@ -18,50 +18,76 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 
+interface UserWithRole {
+  id: string;
+  email: string;
+  full_name: string | null;
+  company_id: string | null;
+  role: UserRole;
+}
+
 export function Users() {
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const { profile } = useAuth();
   const { hasRole, updateUserRole, getAssignableRoles } = useRoleManagement();
-  const { toast } = useToast();
   const assignableRoles = getAssignableRoles();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const currentProfile = profile.get();
-      if (!currentProfile?.company_id) return;
+  const fetchUsers = async () => {
+    const currentProfile = profile.get();
+    if (!currentProfile) return;
 
-      try {
-        let query = supabase.from("profiles").select("*");
-        
-        if (hasRole('super_admin')) {
-          query = query;
-        } else if (hasRole('company_admin')) {
-          query = query.eq("company_id", currentProfile.company_id);
-        } else {
-          setError("You don't have permission to view user management");
-          setLoading(false);
-          return;
+    try {
+      setLoading(true);
+
+      // Fetch profiles
+      let profileQuery = supabase.from("profiles").select("*");
+      
+      if (hasRole('company_admin') && !hasRole('super_admin')) {
+        if (currentProfile.company_id) {
+          profileQuery = profileQuery.eq("company_id", currentProfile.company_id);
         }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setUsers(data || []);
-      } catch (error: any) {
-        console.error("Error fetching users:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
       }
-    };
 
+      const { data: profiles, error: profileError } = await profileQuery;
+      if (profileError) throw profileError;
+      if (!profiles) { setUsers([]); return; }
+
+      // Fetch roles for all users
+      const userIds = profiles.map(p => p.id);
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds);
+
+      if (rolesError) throw rolesError;
+
+      const roleMap = new Map<string, UserRole>();
+      roles?.forEach(r => {
+        if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, r.role as UserRole);
+      });
+
+      setUsers(profiles.map(p => ({
+        id: p.id,
+        email: p.email,
+        full_name: p.full_name,
+        company_id: p.company_id,
+        role: roleMap.get(p.id) || "driver",
+      })));
+    } catch (error: any) {
+      console.error("Error fetching users:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, [profile, hasRole]);
 
@@ -79,7 +105,7 @@ export function Users() {
     }
   };
 
-  const startEditing = (user: UserProfile) => {
+  const startEditing = (user: UserWithRole) => {
     setEditingUserId(user.id);
     setSelectedRole(user.role);
   };
@@ -127,9 +153,9 @@ export function Users() {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>Company Users</CardTitle>
+                <CardTitle>All Users</CardTitle>
                 <CardDescription>
-                  Manage users and their roles within your company
+                  Manage users and their roles across the system
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -153,7 +179,7 @@ export function Users() {
                             <User className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="font-medium">{user.full_name}</p>
+                            <p className="font-medium">{user.full_name || "Unnamed"}</p>
                             <p className="text-sm text-muted-foreground">
                               {user.email}
                             </p>

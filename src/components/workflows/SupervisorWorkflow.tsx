@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Car, ClipboardCheck, Calendar, FileText } from 'lucide-react';
+import { Car, ClipboardCheck, Calendar, FileText, Users, Wrench, BarChart3, MapPin } from 'lucide-react';
 
 export function SupervisorWorkflow() {
   const navigate = useNavigate();
@@ -22,6 +22,30 @@ export function SupervisorWorkflow() {
       icon: Car,
       action: () => navigate('/fleet'),
       primary: true
+    },
+    {
+      title: 'Driver Management',
+      description: 'View and manage assigned drivers',
+      icon: Users,
+      action: () => navigate('/drivers')
+    },
+    {
+      title: 'Trip Management',
+      description: 'View and manage all trips',
+      icon: MapPin,
+      action: () => navigate('/trip-management')
+    },
+    {
+      title: 'Maintenance',
+      description: 'Track vehicle maintenance schedules',
+      icon: Wrench,
+      action: () => navigate('/maintenance')
+    },
+    {
+      title: 'Reports',
+      description: 'View fleet performance reports',
+      icon: BarChart3,
+      action: () => navigate('/reports')
     },
     {
       title: 'Service Bookings',
@@ -44,7 +68,7 @@ export function SupervisorWorkflow() {
         <p className="text-muted-foreground">Oversee fleet operations and approve requests</p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {workflows.map((workflow, index) => {
           const Icon = workflow.icon;
           return (

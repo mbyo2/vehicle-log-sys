@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent,  CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Car, FileText, Calendar, Settings, BarChart3 } from 'lucide-react';
+import { Users, Car, FileText, Calendar, Settings, BarChart3, Wrench, MapPin } from 'lucide-react';
 import { CompanyManagementWorkflow } from '@/components/company/CompanyManagementWorkflow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -22,12 +22,30 @@ export function CompanyAdminWorkflow() {
       title: 'User Management',
       description: 'Add and manage company users (supervisors, drivers)',
       icon: Users,
-      action: () => navigate('/users'),
+      action: () => navigate('/user-management'),
       primary: true
     },
     {
+      title: 'Driver Management',
+      description: 'Manage driver profiles and assignments',
+      icon: Users,
+      action: () => navigate('/drivers')
+    },
+    {
+      title: 'Trip Management',
+      description: 'View and manage company trips',
+      icon: MapPin,
+      action: () => navigate('/trip-management')
+    },
+    {
+      title: 'Maintenance',
+      description: 'Schedule and track vehicle maintenance',
+      icon: Wrench,
+      action: () => navigate('/maintenance')
+    },
+    {
       title: 'Service Bookings',
-      description: 'Schedule and manage vehicle maintenance',
+      description: 'Schedule and manage vehicle service appointments',
       icon: Calendar,
       action: () => navigate('/service-bookings')
     },
@@ -58,15 +76,11 @@ export function CompanyAdminWorkflow() {
         <p className="text-muted-foreground">Manage your company's fleet and operations</p>
       </div>
       
-      <Tabs defaultValue="setup" className="w-full">
+      <Tabs defaultValue="actions" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="setup">Setup Progress</TabsTrigger>
           <TabsTrigger value="actions">Quick Actions</TabsTrigger>
+          <TabsTrigger value="setup">Setup Progress</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="setup" className="space-y-6">
-          <CompanyManagementWorkflow />
-        </TabsContent>
         
         <TabsContent value="actions" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,6 +108,10 @@ export function CompanyAdminWorkflow() {
               );
             })}
           </div>
+        </TabsContent>
+        
+        <TabsContent value="setup" className="space-y-6">
+          <CompanyManagementWorkflow />
         </TabsContent>
       </Tabs>
     </div>
