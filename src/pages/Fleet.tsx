@@ -1,5 +1,4 @@
 
-import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { VehicleList } from '@/components/vehicle/VehicleList';
 import { EnhancedVehicleForm } from '@/components/vehicle/EnhancedVehicleForm';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +26,7 @@ export function Fleet() {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -62,6 +61,6 @@ export function Fleet() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

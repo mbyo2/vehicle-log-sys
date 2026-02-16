@@ -146,15 +146,15 @@ export const useAuthActions = () => {
               } else {
                 // Check if super_admin (no company required)
                 const { data: roleData } = await supabase
-                  .from('user_roles')
+.from('user_roles')
                   .select('role, company_id')
                   .eq('user_id', data.user.id)
-                  .order('role')
+                  .order('role', { ascending: false })
                   .limit(1)
                   .maybeSingle();
                 
-                if (roleData?.role === 'super_admin') {
-                  profileData = { ...profile, role: 'super_admin', company_id: roleData.company_id };
+                if (roleData) {
+                  profileData = { ...profile, role: roleData.role, company_id: roleData.company_id };
                   authState.profile.set(profileData);
                   break;
                 }
