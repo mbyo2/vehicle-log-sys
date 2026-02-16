@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -166,7 +166,7 @@ export function Trips() {
   });
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
           <h1 className={`text-2xl md:text-3xl font-bold ${isMobile ? 'text-center' : ''}`}>
@@ -363,6 +363,6 @@ export function Trips() {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 }

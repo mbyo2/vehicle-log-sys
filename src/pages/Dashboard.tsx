@@ -1,6 +1,5 @@
 
 import { useEffect } from 'react';
-import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { WorkflowManager } from '@/components/workflows/WorkflowManager';
 
 export default function Dashboard() {
@@ -8,9 +7,5 @@ export default function Dashboard() {
     document.title = 'Dashboard | Fleet Manager';
   }, []);
   
-  return (
-    <DashboardLayout>
-      <WorkflowManager />
-    </DashboardLayout>
-  );
+  return <WorkflowManager />;
 }

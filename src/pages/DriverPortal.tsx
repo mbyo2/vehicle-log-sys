@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DriverDashboard } from "@/components/driver/DriverDashboard";
 import { MessageList } from "@/components/driver/MessageList";
 import { TrainingList } from "@/components/driver/TrainingList";
-import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { LayoutDashboard, MessageSquare, GraduationCap } from "lucide-react";
@@ -29,7 +29,7 @@ export default function DriverPortal() {
   }, [location.pathname]);
   
   return (
-    <DashboardLayout>
+    <>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={`${isMobile ? 'mb-4 w-full grid grid-cols-3' : 'mb-8'}`}>
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
@@ -58,6 +58,6 @@ export default function DriverPortal() {
           <TrainingList />
         </TabsContent>
       </Tabs>
-    </DashboardLayout>
+    </>
   );
 }

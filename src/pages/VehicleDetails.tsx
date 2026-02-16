@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Vehicle } from '@/types/vehicle';
-import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+
 import { VehicleAssignmentManager } from '@/components/vehicle/VehicleAssignmentManager';
 import { EnhancedVehicleForm } from '@/components/vehicle/EnhancedVehicleForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,30 +70,26 @@ export default function VehicleDetails() {
 
   if (loading) {
     return (
-      <DashboardLayout>
-        <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </DashboardLayout>
     );
   }
 
   if (!vehicle) {
     return (
-      <DashboardLayout>
-        <div className="text-center py-8">
+      <div className="text-center py-8">
           <p className="text-muted-foreground">Vehicle not found</p>
           <Button onClick={() => navigate('/fleet')} className="mt-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Fleet
           </Button>
         </div>
-      </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -222,6 +218,6 @@ export default function VehicleDetails() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </>
   );
 }

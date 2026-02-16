@@ -103,18 +103,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log('Profile loaded successfully with role:', userRole, 'for company:', targetCompanyId);
             return { ...data, role: userRole, company_id: targetCompanyId };
           } else {
-            // Fallback: check if user is super_admin (no company)
+            // Fallback: check user_roles without company filter (e.g. super_admin)
             const { data: roleData } = await supabase
               .from('user_roles')
               .select('role, company_id')
               .eq('user_id', userId)
-              .order('role')
+              .order('role', { ascending: false })
               .limit(1)
               .maybeSingle();
             
-            if (roleData?.role === 'super_admin') {
-              console.log('Super admin user - no company required');
-              return { ...data, role: 'super_admin', company_id: roleData.company_id };
+            if (roleData) {
+              console.log('User role found without company:', roleData.role);
+              return { ...data, role: roleData.role, company_id: roleData.company_id };
             }
           }
         }
