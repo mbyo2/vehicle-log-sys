@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { authState } from './AuthState';
+import { fetchUserProfile } from './fetchUserProfile';
 import { DEFAULT_ROUTES } from '@/components/auth/ProtectedRoute';
 import { SecurityUtils } from '@/lib/security';
 
@@ -13,14 +14,13 @@ interface AuthResult {
   user?: any;
 }
 
-// Enhanced security logging with rate limiting detection
 const logSecurityEvent = async (eventType: string, riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low', eventData: Record<string, any> = {}) => {
   try {
     await supabase.rpc('log_security_event', {
       p_event_type: eventType,
       p_user_id: eventData.user_id || null,
       p_company_id: null,
-      p_ip_address: null, // Would be captured server-side
+      p_ip_address: null,
       p_user_agent: navigator.userAgent,
       p_event_data: {
         ...eventData,
@@ -30,7 +30,7 @@ const logSecurityEvent = async (eventType: string, riskLevel: 'low' | 'medium' |
       p_risk_level: riskLevel,
     });
   } catch (error) {
-    console.error('Failed to log security event:', error);
+    console.error('[Auth] Failed to log security event:', error);
   }
 };
 
@@ -42,7 +42,7 @@ export const useAuthActions = () => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoadingState(true);
-      console.log('Attempting to sign in user:', email);
+      console.log('[Auth] Signing in:', email);
 
       // Rate limiting check
       const canProceed = await supabase.rpc('check_rate_limit', {
@@ -53,146 +53,63 @@ export const useAuthActions = () => {
       });
 
       if (!canProceed.data) {
-        const error = "Too many login attempts. Please try again in 15 minutes.";
         await logSecurityEvent('rate_limit_exceeded', 'high', { email, action: 'login' });
-        throw new Error(error);
+        throw new Error("Too many login attempts. Please try again in 15 minutes.");
       }
 
-      // Input validation and sanitization
+      // Input validation
       const emailValidation = SecurityUtils.validateEmail(email);
       if (!emailValidation.isValid) {
         throw new Error("Invalid email format");
       }
-
-      const sanitizedEmail = emailValidation.sanitized;
       
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: sanitizedEmail,
+        email: emailValidation.sanitized,
         password,
       });
 
       if (error) {
-        // Log failed login attempt with enhanced details
-        await logSecurityEvent('user_login_failure', 'high', {
-          email,
-          error: error.message,
-          attempt_count: 1, // Could be enhanced to track actual attempts
-          risk_indicators: ['failed_password']
-        });
+        await logSecurityEvent('user_login_failure', 'high', { email, error: error.message });
         throw error;
       }
 
-      if (data?.user) {
-        console.log('Sign in successful for user:', data.user.id);
-        authState.user.set(data.user);
-        // Don't set authState.loading here - it causes ProtectedRoute to show spinner
-
-        // Log successful login
-        await logSecurityEvent('user_login_success', 'low', {
-          user_id: data.user.id,
-          email: data.user.email,
-          timestamp: new Date().toISOString()
-        });
-
-        // Fetch user profile data with retry
-        let retries = 3;
-        let profileData = null;
-        
-        while (retries > 0) {
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (profileError) {
-              console.error('Error fetching profile:', profileError);
-              if (retries === 1) {
-                throw new Error('Profile not found. Please contact support.');
-              }
-            } else if (profile) {
-              // Fetch all companies for this user
-              const { data: companiesData } = await supabase.rpc('get_user_companies', {
-                p_user_id: data.user.id
-              });
-              
-              if (companiesData && companiesData.length > 0) {
-                // Get saved company or use first one
-                const savedCompanyId = localStorage.getItem('current_company_id');
-                let targetCompanyId = savedCompanyId;
-                const validCompany = companiesData.find((c: any) => c.company_id === savedCompanyId);
-                
-                if (!validCompany) {
-                  targetCompanyId = companiesData[0].company_id;
-                  localStorage.setItem('current_company_id', targetCompanyId);
-                }
-                
-                // Fetch user role from user_roles table for the specific company
-                const { data: roleData, error: roleError } = await supabase
-                  .from('user_roles')
-                  .select('role')
-                  .eq('user_id', data.user.id)
-                  .eq('company_id', targetCompanyId)
-                  .maybeSingle();
-                
-                const userRole = roleData?.role || 'driver';
-                console.log('Profile loaded with role:', userRole, 'for company:', targetCompanyId);
-                
-                profileData = { ...profile, role: userRole, company_id: targetCompanyId };
-                authState.profile.set(profileData);
-                authState.currentCompanyId.set(targetCompanyId);
-                break;
-              } else {
-                // Check if super_admin (no company required)
-                const { data: roleData } = await supabase
-.from('user_roles')
-                  .select('role, company_id')
-                  .eq('user_id', data.user.id)
-                  .order('role', { ascending: true })
-                  .limit(1)
-                  .maybeSingle();
-                
-                if (roleData) {
-                  profileData = { ...profile, role: roleData.role, company_id: roleData.company_id };
-                  authState.profile.set(profileData);
-                  break;
-                }
-              }
-            }
-            
-            retries--;
-            if (retries > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (err) {
-            retries--;
-            if (retries === 0) {
-              throw err;
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-
-        if (profileData) {
-          const defaultRoute = DEFAULT_ROUTES[profileData.role] || '/dashboard';
-          console.log('Navigating to default route:', defaultRoute);
-          navigate(defaultRoute);
-        } else {
-          throw new Error('Unable to load user profile');
-        }
-
-        toast({
-          title: 'Success',
-          description: 'Signed in successfully.',
-        });
+      if (!data?.user) {
+        throw new Error('Sign in failed - no user returned');
       }
+
+      console.log('[Auth] Sign in successful:', data.user.id);
+      authState.user.set(data.user);
+
+      // Log successful login (fire and forget)
+      logSecurityEvent('user_login_success', 'low', {
+        user_id: data.user.id,
+        email: data.user.email,
+      });
+
+      // Fetch profile and navigate
+      const profileData = await fetchUserProfile(data.user.id);
+      
+      if (!profileData) {
+        throw new Error('Unable to load user profile. Please contact support.');
+      }
+
+      authState.profile.set(profileData);
+      
+      const defaultRoute = DEFAULT_ROUTES[profileData.role as keyof typeof DEFAULT_ROUTES] || '/dashboard';
+      console.log('[Auth] Navigating to:', defaultRoute, 'with role:', profileData.role);
+      
+      toast({
+        title: 'Success',
+        description: 'Signed in successfully.',
+      });
+
+      navigate(defaultRoute);
     } catch (error: any) {
-      console.error('Error signing in:', error.message);
+      console.error('[Auth] Sign in error:', error.message);
       toast({
         variant: "destructive",
         title: 'Sign In Error',
-        description: error.message || 'Failed to sign in. Please check your credentials.',
+        description: error.message || 'Failed to sign in.',
       });
       throw error;
     } finally {
@@ -203,9 +120,9 @@ export const useAuthActions = () => {
   const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean, companyName?: string, subscriptionType?: string): Promise<AuthResult> => {
     try {
       setLoadingState(true);
-      console.log("Starting signup process with isFirstUser =", isFirstUser);
+      console.log("[Auth] Starting signup, isFirstUser =", isFirstUser);
 
-      // Rate limiting check
+      // Rate limiting
       const canProceed = await supabase.rpc('check_rate_limit', {
         p_identifier: email,
         p_action_type: 'signup',
@@ -214,12 +131,10 @@ export const useAuthActions = () => {
       });
 
       if (!canProceed.data) {
-        const error = "Too many signup attempts. Please try again in 1 hour.";
         await logSecurityEvent('rate_limit_exceeded', 'high', { email, action: 'signup' });
-        return { success: false, error };
+        return { success: false, error: "Too many signup attempts. Please try again in 1 hour." };
       }
 
-      // Input validation and sanitization
       const emailValidation = SecurityUtils.validateEmail(email);
       if (!emailValidation.isValid) {
         return { success: false, error: "Invalid email format" };
@@ -234,35 +149,23 @@ export const useAuthActions = () => {
       const sanitizedFullName = SecurityUtils.sanitizeString(fullName);
       const sanitizedCompanyName = companyName ? SecurityUtils.sanitizeString(companyName) : undefined;
 
-      // Check for suspicious activity
       const suspiciousCheck = SecurityUtils.detectSuspiciousActivity(email + fullName + (companyName || ''));
       if (suspiciousCheck.isSuspicious) {
         await logSecurityEvent('suspicious_signup_attempt', 'critical', { 
           email: sanitizedEmail, 
           reasons: suspiciousCheck.reasons 
         });
-        return { success: false, error: "Signup blocked due to security concerns. Please contact support." };
+        return { success: false, error: "Signup blocked due to security concerns." };
       }
       
-      // Prepare metadata for the user
-      const metadata: any = {
-        full_name: sanitizedFullName,
-      };
+      const metadata: any = { full_name: sanitizedFullName };
 
-      // For first user (super admin), don't add role to metadata - let the trigger handle it
       if (!isFirstUser) {
         metadata.role = 'company_admin';
-        if (sanitizedCompanyName) {
-          metadata.company_name = sanitizedCompanyName;
-        }
-        if (subscriptionType) {
-          metadata.subscription_type = subscriptionType;
-        }
+        if (sanitizedCompanyName) metadata.company_name = sanitizedCompanyName;
+        if (subscriptionType) metadata.subscription_type = subscriptionType;
       }
       
-      console.log("Creating account with metadata:", metadata);
-      
-      // Sign up the user with metadata that will be used by the trigger
       const { data, error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
@@ -273,147 +176,68 @@ export const useAuthActions = () => {
       });
 
       if (error) {
-        console.error("Signup error:", error);
-        await logSecurityEvent('user_signup_failure', 'medium', {
-          email,
-          error: error.message,
-          isFirstUser,
-          timestamp: new Date().toISOString()
-        });
-        return {
-          success: false,
-          error: error.message
-        };
+        await logSecurityEvent('user_signup_failure', 'medium', { email, error: error.message });
+        return { success: false, error: error.message };
       }
 
       if (!data.user) {
-        console.error("No user returned from signUp");
-        return {
-          success: false,
-          error: "Failed to create user account"
-        };
+        return { success: false, error: "Failed to create user account" };
       }
 
-      console.log("Account created successfully:", data.user.id);
-      
-      // Log successful signup
-      await logSecurityEvent('user_signup_success', 'low', {
-        user_id: data.user.id,
-        email: data.user.email,
-        isFirstUser,
-        timestamp: new Date().toISOString()
-      });
+      console.log("[Auth] Account created:", data.user.id);
+      await logSecurityEvent('user_signup_success', 'low', { user_id: data.user.id, email: data.user.email });
 
-      // Send verification email
-      try {
-        const confirmationUrl = `${window.location.origin}/`;
-        await supabase.functions.invoke('send-email', {
-          body: {
-            type: 'verification',
-            email: sanitizedEmail,
-            data: {
-              confirmationUrl,
-              userEmail: sanitizedEmail
-            }
-          }
-        });
-        console.log('Verification email sent successfully');
-      } catch (emailError) {
-        console.error('Failed to send verification email:', emailError);
-        // Don't block signup if email fails
-      }
+      // Send verification email (fire and forget)
+      supabase.functions.invoke('send-email', {
+        body: {
+          type: 'verification',
+          email: sanitizedEmail,
+          data: { confirmationUrl: `${window.location.origin}/`, userEmail: sanitizedEmail }
+        }
+      }).catch(err => console.error('[Auth] Verification email failed:', err));
 
-      // For the first user (super admin), they should get automatically signed in
+      // For first user (super admin) with auto-session
       if (isFirstUser && data.session) {
-        console.log("First user created and signed in automatically");
-        
-        // Set the auth state
         authState.user.set(data.user);
         
-        // Wait for the database trigger to create the profile
+        // Wait for trigger to create profile
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        // Try to fetch the profile multiple times
-        let profileAttempts = 0;
         let profile = null;
-        
-        while (profileAttempts < 5 && !profile) {
-          try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-
-            if (profileData) {
-              // Fetch user role from user_roles table
-              const { data: roleData } = await supabase
-                .from('user_roles')
-                .select('role')
-                .eq('user_id', data.user.id)
-                .order('role')
-                .limit(1)
-                .maybeSingle();
-              
-              const userRole = roleData?.role || 'super_admin';
-              profile = { ...profileData, role: userRole };
-              authState.profile.set(profile);
-              console.log('Super admin profile loaded with role:', userRole);
-              break;
-            } else {
-              console.log('Profile not ready yet, attempt', profileAttempts + 1);
-              profileAttempts++;
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (profileErr) {
-            console.error('Error fetching profile attempt', profileAttempts + 1, ':', profileErr);
-            profileAttempts++;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
+        for (let i = 0; i < 5; i++) {
+          profile = await fetchUserProfile(data.user.id);
+          if (profile) break;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         if (profile) {
-          toast({
-            title: 'Welcome!',
-            description: 'Super admin account created successfully.',
-          });
+          authState.profile.set(profile);
+          authState.loading.set(false);
+          toast({ title: 'Welcome!', description: 'Super admin account created successfully.' });
           navigate('/dashboard');
         } else {
-          console.error('Could not load profile after multiple attempts');
-          toast({
-            title: 'Account created',
-            description: 'Please sign in with your new super admin account.',
-          });
+          toast({ title: 'Account created', description: 'Please sign in with your new account.' });
           navigate('/signin');
         }
       } else {
-        // For regular users or if first user didn't get auto-signed in
         const message = isFirstUser 
-          ? 'Super admin account created. Please sign in to continue.' 
+          ? 'Super admin account created. Please sign in.'
           : companyName 
-            ? `Account and company "${companyName}" created successfully. Please sign in.`
-            : 'Your account has been created successfully. Please sign in.';
-            
-        toast({
-          title: 'Account created',
-          description: message,
-        });
+            ? `Account and company "${companyName}" created. Please sign in.`
+            : 'Account created. Please sign in.';
+        toast({ title: 'Account created', description: message });
         navigate('/signin');
       }
       
       return { success: true, user: data.user };
-      
     } catch (error: any) {
-      console.error('Error signing up:', error.message);
+      console.error('[Auth] Signup error:', error.message);
       toast({
         variant: "destructive",
         title: 'Registration Error',
         description: error.message || 'Failed to create account.',
       });
-      return {
-        success: false,
-        error: error.message
-      };
+      return { success: false, error: error.message };
     } finally {
       setLoadingState(false);
     }
@@ -422,44 +246,25 @@ export const useAuthActions = () => {
   const signOut = async () => {
     try {
       setLoadingState(true);
-      
-      // Log logout before clearing state
       const currentUser = authState.user.get();
       if (currentUser) {
-        await logSecurityEvent('user_logout', 'low', {
-          user_id: currentUser.id,
-          timestamp: new Date().toISOString()
-        });
+        logSecurityEvent('user_logout', 'low', { user_id: currentUser.id });
       }
       
       await supabase.auth.signOut();
-      
-      // Clear the auth state
       authState.user.set(null);
       authState.profile.set(null);
+      authState.loading.set(false);
       
       navigate('/signin');
-      
-      toast({
-        title: 'Signed out',
-        description: 'You have been signed out successfully.',
-      });
+      toast({ title: 'Signed out', description: 'You have been signed out successfully.' });
     } catch (error: any) {
-      console.error('Error signing out:', error.message);
-      toast({
-        variant: "destructive",
-        title: 'Error',
-        description: error.message,
-      });
+      console.error('[Auth] Sign out error:', error.message);
+      toast({ variant: "destructive", title: 'Error', description: error.message });
     } finally {
       setLoadingState(false);
     }
   };
 
-  return {
-    signIn,
-    signUp,
-    signOut,
-    loading: loadingState,
-  };
+  return { signIn, signUp, signOut, loading: loadingState };
 };

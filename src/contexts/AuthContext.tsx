@@ -1,9 +1,10 @@
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { enableReactTracking } from "@legendapp/state/config/enableReactTracking";
 import { authState } from './auth/AuthState';
+import { fetchUserProfile } from './auth/fetchUserProfile';
 import { useToast } from '@/hooks/use-toast';
 
 enableReactTracking({
@@ -19,188 +20,83 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-let authInitialized = false;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const signOut = async () => {
     try {
-      console.log('Signing out user...');
       await supabase.auth.signOut();
       authState.user.set(null);
       authState.profile.set(null);
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
+      authState.loading.set(false);
+      toast({ title: "Logged out", description: "You have been successfully logged out" });
       navigate('/signin');
     } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sign out"
-      });
-    }
-  };
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      console.log(`Fetching profile for user ${userId}`);
-      
-      // Get the saved company ID from localStorage
-      const savedCompanyId = localStorage.getItem('current_company_id');
-      
-      // Add retries for profile fetching
-      let retries = 3;
-      while (retries > 0) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .maybeSingle();
-      
-        if (error) {
-          console.error('Profile fetch error:', error);
-          retries--;
-          if (retries > 0) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            continue;
-          }
-          return null;
-        }
-        
-        if (data) {
-          // Fetch all companies for this user
-          const { data: companiesData } = await supabase.rpc('get_user_companies', {
-            p_user_id: userId
-          });
-          
-          if (companiesData && companiesData.length > 0) {
-            // Determine which company to use
-            let targetCompanyId = savedCompanyId;
-            const validCompany = companiesData.find((c: any) => c.company_id === savedCompanyId);
-            
-            if (!validCompany) {
-              // Use first company as default
-              targetCompanyId = companiesData[0].company_id;
-              localStorage.setItem('current_company_id', targetCompanyId);
-            }
-            
-            // Get role for the current company
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', userId)
-              .eq('company_id', targetCompanyId)
-              .maybeSingle();
-            
-            const userRole = roleData?.role || 'driver';
-            authState.currentCompanyId.set(targetCompanyId);
-            
-            console.log('Profile loaded successfully with role:', userRole, 'for company:', targetCompanyId);
-            return { ...data, role: userRole, company_id: targetCompanyId };
-          } else {
-            // Fallback: check user_roles without company filter (e.g. super_admin)
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role, company_id')
-              .eq('user_id', userId)
-              .order('role', { ascending: true })
-              .limit(1)
-              .maybeSingle();
-            
-            if (roleData) {
-              console.log('User role found without company:', roleData.role);
-              return { ...data, role: roleData.role, company_id: roleData.company_id };
-            }
-          }
-        }
-        
-        retries--;
-        if (retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-      
-      console.warn('No profile found for user after retries:', userId);
-      return null;
-    } catch (err) {
-      console.error('Profile fetch failed:', err);
-      return null;
+      console.error('[Auth] Sign out error:', error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to sign out" });
     }
   };
 
   useEffect(() => {
-    if (authInitialized) {
-      console.log('Auth already initialized, skipping...');
-      return;
-    }
-    
     let mounted = true;
-    
-    const initializeAuth = async () => {
-      if (!mounted || authInitialized) return;
-      
-      try {
-        console.log('Initializing auth system...');
-        authInitialized = true;
-        authState.loading.set(true);
-        
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-        } else if (session?.user && mounted) {
-          console.log('Found existing session for user:', session.user.id);
-          authState.user.set(session.user);
-          
-          const profileData = await fetchUserProfile(session.user.id);
-          if (mounted) {
-            authState.profile.set(profileData);
-          }
-        } else {
-          console.log('No existing session found');
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        if (mounted) {
-          authState.loading.set(false);
-          authState.initialized.set(true);
-        }
-      }
-    };
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Step 1: Restore session from storage
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (!mounted) return;
       
-      console.log('Auth state changed:', event, session?.user?.id || 'no user');
-      
-      if (event === 'SIGNED_OUT' || !session) {
-        authState.user.set(null);
-        authState.profile.set(null);
+      if (error) {
+        console.error('[Auth] getSession error:', error);
+        authState.loading.set(false);
+        authState.initialized.set(true);
         return;
       }
-      
-      authState.user.set(session.user);
 
-      if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-        // Skip if profile already loaded by useAuthActions
-        const currentProfile = authState.profile.get();
-        if (!currentProfile || currentProfile.id !== session.user.id) {
-          const profileData = await fetchUserProfile(session.user.id);
-          if (mounted) {
-            authState.profile.set(profileData);
-          }
+      if (session?.user) {
+        console.log('[Auth] Restored session for:', session.user.id);
+        authState.user.set(session.user);
+        
+        const profileData = await fetchUserProfile(session.user.id);
+        if (mounted) {
+          authState.profile.set(profileData);
         }
+      } else {
+        console.log('[Auth] No existing session');
+      }
+
+      if (mounted) {
+        authState.loading.set(false);
+        authState.initialized.set(true);
       }
     });
 
-    initializeAuth();
+    // Step 2: Listen for subsequent auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        
+        console.log('[Auth] State changed:', event);
+
+        if (event === 'SIGNED_OUT' || !session) {
+          authState.user.set(null);
+          authState.profile.set(null);
+          authState.loading.set(false);
+          return;
+        }
+
+        authState.user.set(session.user);
+
+        // For TOKEN_REFRESHED, re-fetch profile in background
+        // For SIGNED_IN, useAuthActions handles profile loading
+        if (event === 'TOKEN_REFRESHED') {
+          fetchUserProfile(session.user.id).then(profileData => {
+            if (mounted) {
+              authState.profile.set(profileData);
+            }
+          });
+        }
+      }
+    );
 
     return () => {
       mounted = false;
