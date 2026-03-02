@@ -24,15 +24,19 @@ export function useInAppNotifications() {
   const { permission, showNotification } = usePushNotifications();
   const shownNotifications = useRef<Set<string>>(new Set());
 
+  // Extract the actual user value from the observable
+  const currentUser = user.get();
+  const userId = currentUser?.id;
+
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ['in-app-notifications', user?.id],
+    queryKey: ['in-app-notifications', userId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!userId) return [];
       
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -43,12 +47,12 @@ export function useInAppNotifications() {
 
       return data as InAppNotification[];
     },
-    enabled: !!user?.id,
+    enabled: !!userId,
   });
 
   // Real-time subscription for new notifications with push notification support
   useEffect(() => {
-    if (!user?.id) return;
+    if (!userId) return;
 
     const channel = supabase
       .channel('notifications-changes')
@@ -58,12 +62,11 @@ export function useInAppNotifications() {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           const newNotification = payload.new as InAppNotification;
           
-          // Show browser push notification if permission granted and not already shown
           if (permission === 'granted' && !shownNotifications.current.has(newNotification.id)) {
             shownNotifications.current.add(newNotification.id);
             showNotification({
@@ -73,7 +76,7 @@ export function useInAppNotifications() {
             });
           }
           
-          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
         }
       )
       .on(
@@ -82,10 +85,10 @@ export function useInAppNotifications() {
           event: 'UPDATE',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
         }
       )
       .on(
@@ -94,10 +97,10 @@ export function useInAppNotifications() {
           event: 'DELETE',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
         }
       )
       .subscribe();
@@ -105,7 +108,7 @@ export function useInAppNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient, permission, showNotification]);
+  }, [userId, queryClient, permission, showNotification]);
 
   const markAsRead = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -117,24 +120,24 @@ export function useInAppNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
     },
   });
 
   const markAllAsRead = useMutation({
     mutationFn: async () => {
-      if (!user?.id) return;
+      if (!userId) return;
       
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('is_read', false);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
     },
   });
 
@@ -148,23 +151,23 @@ export function useInAppNotifications() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
     },
   });
 
   const clearAll = useMutation({
     mutationFn: async () => {
-      if (!user?.id) return;
+      if (!userId) return;
       
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['in-app-notifications', userId] });
     },
   });
 
