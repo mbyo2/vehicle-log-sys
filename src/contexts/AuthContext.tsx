@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .from('user_roles')
               .select('role, company_id')
               .eq('user_id', userId)
-              .order('role', { ascending: false })
+              .order('role', { ascending: true })
               .limit(1)
               .maybeSingle();
             
@@ -157,14 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Found existing session for user:', session.user.id);
           authState.user.set(session.user);
           
-          // Fetch profile with delay to avoid race conditions
-          setTimeout(async () => {
-            if (!mounted) return;
-            const profileData = await fetchUserProfile(session.user.id);
-            if (mounted) {
-              authState.profile.set(profileData);
-            }
-          }, 500);
+          const profileData = await fetchUserProfile(session.user.id);
+          if (mounted) {
+            authState.profile.set(profileData);
+          }
         } else {
           console.log('No existing session found');
         }
@@ -193,15 +189,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authState.user.set(session.user);
 
       if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-        // Fetch profile with delay to avoid blocking
-        setTimeout(async () => {
-          if (!mounted) return;
-          
+        // Skip if profile already loaded by useAuthActions
+        const currentProfile = authState.profile.get();
+        if (!currentProfile || currentProfile.id !== session.user.id) {
           const profileData = await fetchUserProfile(session.user.id);
           if (mounted) {
             authState.profile.set(profileData);
           }
-        }, 200);
+        }
       }
     });
 

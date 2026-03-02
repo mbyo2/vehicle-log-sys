@@ -263,7 +263,7 @@ export function useEnhancedAuth() {
             .from('user_roles')
             .select('role')
             .eq('user_id', userId)
-            .order('role', { ascending: false })
+            .order('role', { ascending: true })
             .limit(1)
             .maybeSingle();
           
