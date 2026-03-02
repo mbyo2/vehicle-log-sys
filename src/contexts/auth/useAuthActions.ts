@@ -85,7 +85,7 @@ export const useAuthActions = () => {
       if (data?.user) {
         console.log('Sign in successful for user:', data.user.id);
         authState.user.set(data.user);
-        authState.loading.set(true);
+        // Don't set authState.loading here - it causes ProtectedRoute to show spinner
 
         // Log successful login
         await logSecurityEvent('user_login_success', 'low', {
@@ -149,7 +149,7 @@ export const useAuthActions = () => {
 .from('user_roles')
                   .select('role, company_id')
                   .eq('user_id', data.user.id)
-                  .order('role', { ascending: false })
+                  .order('role', { ascending: true })
                   .limit(1)
                   .maybeSingle();
                 
@@ -197,7 +197,6 @@ export const useAuthActions = () => {
       throw error;
     } finally {
       setLoadingState(false);
-      authState.loading.set(false);
     }
   };
 

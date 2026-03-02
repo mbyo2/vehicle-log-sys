@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { useAuthActions } from "@/contexts/auth/useAuthActions";
 import { AlertTriangle } from "lucide-react";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ConnectionStatus } from "@/components/ui/connection-status";
 import { PasswordResetDialog } from './PasswordResetDialog';
 
@@ -18,11 +17,7 @@ export function SignInForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [showResetDialog, setShowResetDialog] = useState(false);
-  const { signIn, loading } = useEnhancedAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const from = location.state?.from?.pathname || '/dashboard';
+  const { signIn, loading } = useAuthActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +28,11 @@ export function SignInForm() {
       return;
     }
 
-    const { data, error: signInError } = await signIn(email, password);
-
-    if (signInError) {
-      setError(signInError.message);
-      return;
-    }
-
-    if (data) {
-      navigate(from, { replace: true });
+    try {
+      await signIn(email, password);
+      // Navigation is handled by useAuthActions
+    } catch (err: any) {
+      setError(err.message || "Sign in failed");
     }
   };
 
