@@ -42,16 +42,28 @@ export function DriverSelector({ value, onChange, disabled = false }: DriverSele
       try {
         setLoading(true);
         
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, full_name, role')
+        // Get driver user_ids from user_roles
+        const { data: driverRoles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('user_id')
           .eq('role', 'driver');
           
-        if (error) {
-          throw error;
-        }
+        if (rolesError) throw rolesError;
         
-        // Transform the data into the format needed for the dropdown
+        const driverUserIds = driverRoles?.map(r => r.user_id) || [];
+        
+        if (driverUserIds.length === 0) {
+          setDrivers([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .in('id', driverUserIds);
+          
+        if (error) throw error;
+        
         const driverOptions = data.map(driver => ({
           value: driver.id,
           label: driver.full_name || 'Unknown Driver'

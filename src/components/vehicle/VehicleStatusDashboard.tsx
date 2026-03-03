@@ -13,12 +13,7 @@ export const VehicleStatusDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicles')
-        .select(`
-          *,
-          assigned_driver:drivers!vehicles_assigned_to_fkey(
-            profile:profiles(full_name)
-          )
-        `);
+        .select('*');
       if (error) throw error;
       return data;
     },

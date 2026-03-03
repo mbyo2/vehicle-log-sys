@@ -25,8 +25,7 @@ export function useVehicles() {
             id,
             text,
             timestamp
-          ),
-          assigned_profile:profiles(full_name)
+          )
         `)
         .order('created_at', { ascending: false });
 

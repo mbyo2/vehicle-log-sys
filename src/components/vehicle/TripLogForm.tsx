@@ -54,11 +54,7 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
       if (user) {
         const { data, error } = await supabase
           .from("drivers")
-          .select(`
-            id,
-            man_number,
-            profiles(full_name)
-          `)
+          .select('id, man_number')
           .eq("profile_id", user.id)
           .single();
           

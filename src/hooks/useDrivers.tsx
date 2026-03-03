@@ -9,6 +9,7 @@ interface Driver {
   man_number: string;
   license_number: string | null;
   license_expiry: string | null;
+  company_id: string | null;
   profile: {
     full_name: string;
     email: string;
@@ -20,6 +21,7 @@ interface DriverFormData {
   man_number: string;
   license_number?: string;
   license_expiry?: string;
+  company_id?: string;
 }
 
 export function useDrivers() {
@@ -30,15 +32,31 @@ export function useDrivers() {
   const { data: drivers, isLoading: isLoadingDrivers } = useQuery({
     queryKey: ['drivers'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Fetch drivers
+      const { data: driversData, error: driversError } = await supabase
         .from('drivers')
-        .select(`
-          *,
-          profile:profiles(full_name, email)
-        `);
+        .select('*');
 
-      if (error) throw error;
-      return data as Driver[];
+      if (driversError) throw driversError;
+      if (!driversData || driversData.length === 0) return [];
+
+      // Fetch profiles for all drivers
+      const profileIds = driversData.map(d => d.profile_id);
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', profileIds);
+
+      if (profilesError) throw profilesError;
+
+      const profileMap = new Map(
+        (profilesData || []).map(p => [p.id, { full_name: p.full_name || 'Unknown', email: p.email }])
+      );
+
+      return driversData.map(d => ({
+        ...d,
+        profile: profileMap.get(d.profile_id) || { full_name: 'Unknown', email: '' }
+      })) as Driver[];
     },
   });
 
@@ -51,11 +69,24 @@ export function useDrivers() {
 
       const existingProfileIds = existingDrivers?.map(d => d.profile_id) || [];
 
+      // Get profiles that have 'driver' role from user_roles table
+      const { data: driverRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'driver');
+
+      const driverUserIds = driverRoles?.map(r => r.user_id) || [];
+      
+      if (driverUserIds.length === 0) return [];
+
+      const availableIds = driverUserIds.filter(id => !existingProfileIds.includes(id));
+      
+      if (availableIds.length === 0) return [];
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name')
-        .eq('role', 'driver')
-        .not('id', 'in', `(${existingProfileIds.join(',')})`);
+        .in('id', availableIds);
 
       if (error) throw error;
       return data;
@@ -72,6 +103,7 @@ export function useDrivers() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['available-profiles'] });
       toast({
         title: "Success",
         description: "Driver added successfully",
