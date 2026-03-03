@@ -48,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('[Auth] getSession error:', error);
         authState.loading.set(false);
-        authState.initialized.set(true);
         return;
       }
 
@@ -56,9 +55,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('[Auth] Restored session for:', session.user.id);
         authState.user.set(session.user);
         
-        const profileData = await fetchUserProfile(session.user.id);
-        if (mounted) {
-          authState.profile.set(profileData);
+        try {
+          const profileData = await fetchUserProfile(session.user.id);
+          if (mounted) {
+            authState.profile.set(profileData);
+          }
+        } catch (err) {
+          console.error('[Auth] Profile fetch error:', err);
         }
       } else {
         console.log('[Auth] No existing session');
@@ -66,7 +69,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (mounted) {
         authState.loading.set(false);
-        authState.initialized.set(true);
       }
     });
 
@@ -87,7 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authState.user.set(session.user);
 
         // For TOKEN_REFRESHED, re-fetch profile in background
-        // For SIGNED_IN, useAuthActions handles profile loading
         if (event === 'TOKEN_REFRESHED') {
           fetchUserProfile(session.user.id).then(profileData => {
             if (mounted) {
