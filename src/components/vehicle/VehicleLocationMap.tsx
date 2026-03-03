@@ -43,8 +43,6 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
           .select(`
             id, 
             vehicle_id,
-            vehicles(plate_number),
-            drivers(profiles(full_name)),
             start_location,
             end_location,
             start_time

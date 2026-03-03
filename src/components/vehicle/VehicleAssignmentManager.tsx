@@ -49,11 +49,23 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
       const currentProfile = profile.get();
       if (!currentProfile?.company_id) return;
 
+      // Get driver user_ids from user_roles for this company
+      const { data: driverRoles } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'driver')
+        .eq('company_id', currentProfile.company_id);
+
+      const driverIds = driverRoles?.map(r => r.user_id) || [];
+      if (driverIds.length === 0) {
+        setDrivers([]);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email')
-        .eq('company_id', currentProfile.company_id)
-        .eq('role', 'driver')
+        .in('id', driverIds)
         .order('full_name');
 
       if (error) throw error;

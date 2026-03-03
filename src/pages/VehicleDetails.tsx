@@ -41,10 +41,7 @@ export default function VehicleDetails() {
       setLoading(true);
       const { data, error } = await supabase
         .from('vehicles')
-        .select(`
-          *,
-          assigned_profile:profiles(full_name, email)
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
