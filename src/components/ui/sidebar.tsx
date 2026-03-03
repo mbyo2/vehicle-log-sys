@@ -29,7 +29,6 @@ import {
   GraduationCap,
   TrendingUp,
   ExternalLink,
-  Inbox,
 } from 'lucide-react';
 
 interface NavItem {
@@ -51,93 +50,87 @@ export function Sidebar() {
       icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
     },
     
-    // Super Admin
+    // Super Admin only
     {
       title: 'Companies',
       href: '/companies',
       icon: <Building className="mr-2 h-4 w-4" />,
       roles: ['super_admin'],
     },
-    {
-      title: 'Advertisements',
-      href: '/advertisements',
-      icon: <Megaphone className="mr-2 h-4 w-4" />,
-      roles: ['super_admin'],
-    },
-    {
-      title: 'System Security',
-      href: '/security',
-      icon: <Shield className="mr-2 h-4 w-4" />,
-      roles: ['super_admin'],
-    },
-    {
-      title: 'Setup',
-      href: '/setup',
-      icon: <Cog className="mr-2 h-4 w-4" />,
-      roles: ['super_admin'],
-    },
     
-    // Company Admin & Supervisor
-    {
-      title: 'Analytics',
-      href: '/analytics',
-      icon: <BarChart3 className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
-    },
+    // Fleet management - admin roles
     {
       title: 'Fleet',
       href: '/fleet',
       icon: <Car className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Drivers',
       href: '/drivers',
       icon: <Users className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Trip Management',
       href: '/trip-management',
       icon: <Map className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Trip Approvals',
+      href: '/trip-approvals',
+      icon: <ClipboardCheck className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Maintenance',
       href: '/maintenance',
       icon: <Wrench className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    
+    // Analytics & Reports
+    {
+      title: 'Analytics',
+      href: '/analytics',
+      icon: <BarChart3 className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     {
       title: 'Reports',
       href: '/reports',
       icon: <LineChart className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     
-    // Company Admin Only
+    // User management
+    {
+      title: 'Users',
+      href: '/users',
+      icon: <Users className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
+    },
     {
       title: 'User Management',
       href: '/user-management',
       icon: <UserCog className="mr-2 h-4 w-4" />,
-      roles: ['company_admin'],
-    },
-    {
-      title: 'Integrations',
-      href: '/integrations',
-      icon: <ExternalLink className="mr-2 h-4 w-4" />,
-      roles: ['company_admin'],
+      roles: ['super_admin', 'company_admin', 'supervisor'],
     },
     
-    // Supervisor
+    // Documents & Bookings
     {
-      title: 'Trip Approvals',
-      href: '/trip-approvals',
-      icon: <ClipboardCheck className="mr-2 h-4 w-4" />,
-      roles: ['supervisor'],
+      title: 'Documents',
+      href: '/documents',
+      icon: <FileText className="mr-2 h-4 w-4" />,
     },
-    
-    // Driver
+    {
+      title: 'Service Bookings',
+      href: '/service-bookings',
+      icon: <Calendar className="mr-2 h-4 w-4" />,
+    },
+
+    // Driver-specific
     {
       title: 'Driver Portal',
       href: '/driver-portal',
@@ -174,28 +167,40 @@ export function Sidebar() {
       icon: <GraduationCap className="mr-2 h-4 w-4" />,
       roles: ['driver'],
     },
-    
-    // Shared - Multiple Roles
+
+    // Admin tools
     {
-      title: 'Service Bookings',
-      href: '/service-bookings',
-      icon: <Calendar className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor', 'driver'],
+      title: 'Advertisements',
+      href: '/advertisements',
+      icon: <Megaphone className="mr-2 h-4 w-4" />,
+      roles: ['super_admin'],
     },
     {
-      title: 'Documents',
-      href: '/documents',
-      icon: <FileText className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'supervisor', 'driver'],
+      title: 'Security',
+      href: '/security',
+      icon: <Shield className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
+    },
+    {
+      title: 'Integrations',
+      href: '/integrations',
+      icon: <ExternalLink className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
     },
     {
       title: 'Settings',
       href: '/settings',
       icon: <Settings className="mr-2 h-4 w-4" />,
-      roles: ['company_admin', 'super_admin'],
+      roles: ['super_admin', 'company_admin'],
     },
-    
-    // All Users
+    {
+      title: 'Setup',
+      href: '/setup',
+      icon: <Cog className="mr-2 h-4 w-4" />,
+      roles: ['super_admin'],
+    },
+
+    // All users
     {
       title: 'Profile',
       href: '/profile',
@@ -203,7 +208,6 @@ export function Sidebar() {
     },
   ];
 
-  // Get the actual value of profile.role using .get()
   const userRole = profile?.get()?.role;
   const currentUser = user?.get();
 
@@ -212,14 +216,14 @@ export function Sidebar() {
   }
 
   const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true; // Items without roles are shown to everyone
+    if (!item.roles) return true;
     return item.roles.includes(userRole);
   });
 
   return (
     <div className="flex h-full flex-col border-r bg-background">
       <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
+        <Link to="/dashboard" className="flex items-center gap-2 font-semibold">
           <Car className="h-6 w-6" />
           <span className="text-lg">Fleet Manager</span>
         </Link>
@@ -247,7 +251,7 @@ export function Sidebar() {
           ))}
           <Button
             variant="ghost"
-            className="justify-start text-red-500 hover:bg-red-100 hover:text-red-600"
+            className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={signOut}
           >
             <LogOut className="mr-2 h-4 w-4" />
