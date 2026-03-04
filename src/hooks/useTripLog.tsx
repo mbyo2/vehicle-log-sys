@@ -174,7 +174,12 @@ export function useTripLog() {
           end_time: tripLog.endTime ? new Date(`${tripLog.date}T${tripLog.endTime}`).toISOString() : null,
           purpose: tripLog.purpose,
           comments: tripLog.comment || null,
-          approval_status: 'pending'
+          approval_status: 'pending',
+          cargo_description: (tripLog as any).cargo_description || null,
+          cargo_weight_kg: (tripLog as any).cargo_weight_kg || null,
+          work_order_number: (tripLog as any).work_order_number || null,
+          client_name: (tripLog as any).client_name || null,
+          delivery_address: (tripLog as any).delivery_address || null,
         });
 
       if (error) throw error;

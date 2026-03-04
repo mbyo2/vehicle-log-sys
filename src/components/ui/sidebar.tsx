@@ -89,6 +89,12 @@ export function Sidebar() {
       icon: <Wrench className="mr-2 h-4 w-4" />,
       roles: ['super_admin', 'company_admin', 'supervisor'],
     },
+    {
+      title: 'Fuel Management',
+      href: '/fuel',
+      icon: <TrendingUp className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
     
     // Analytics & Reports
     {
@@ -102,6 +108,12 @@ export function Sidebar() {
       href: '/reports',
       icon: <LineChart className="mr-2 h-4 w-4" />,
       roles: ['super_admin', 'company_admin', 'supervisor'],
+    },
+    {
+      title: 'Export & Accounting',
+      href: '/exports',
+      icon: <ExternalLink className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
     },
     
     // User management

@@ -22,6 +22,8 @@ import { Advertisements } from "./pages/Advertisements";
 import { Analytics } from "./pages/Analytics";
 import { Reports } from "./pages/Reports";
 import TripManagement from "./pages/TripManagement";
+import { FuelManagement } from "./pages/FuelManagement";
+import { Exports } from "./pages/Exports";
 import Users from "./pages/Users";
 import { UserManagement } from "./pages/UserManagement";
 import { Integrations } from "./pages/Integrations";
@@ -196,6 +198,22 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
                 <Reports />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "fuel",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}>
+                <FuelManagement />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: "exports",
+            element: (
+              <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}>
+                <Exports />
               </ProtectedRoute>
             ),
           },

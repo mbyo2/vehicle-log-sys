@@ -673,7 +673,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           last_sync_at: string | null
-          sync_frequency: unknown
+          sync_frequency: string | null
           system_type: Database["public"]["Enums"]["erp_system_type"]
           updated_at: string | null
         }
@@ -686,7 +686,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
-          sync_frequency?: unknown
+          sync_frequency?: string | null
           system_type: Database["public"]["Enums"]["erp_system_type"]
           updated_at?: string | null
         }
@@ -699,7 +699,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           last_sync_at?: string | null
-          sync_frequency?: unknown
+          sync_frequency?: string | null
           system_type?: Database["public"]["Enums"]["erp_system_type"]
           updated_at?: string | null
         }
@@ -818,9 +818,14 @@ export type Database = {
           company_id: string | null
           cost_per_liter: number
           created_at: string
+          driver_id: string | null
+          fuel_type: string | null
           id: string
           liters_added: number
+          notes: string | null
           odometer_reading: number
+          receipt_image_path: string | null
+          station_name: string | null
           total_cost: number
           updated_at: string
           vehicle_id: string
@@ -829,9 +834,14 @@ export type Database = {
           company_id?: string | null
           cost_per_liter: number
           created_at?: string
+          driver_id?: string | null
+          fuel_type?: string | null
           id?: string
           liters_added: number
+          notes?: string | null
           odometer_reading: number
+          receipt_image_path?: string | null
+          station_name?: string | null
           total_cost: number
           updated_at?: string
           vehicle_id: string
@@ -840,9 +850,14 @@ export type Database = {
           company_id?: string | null
           cost_per_liter?: number
           created_at?: string
+          driver_id?: string | null
+          fuel_type?: string | null
           id?: string
           liters_added?: number
+          notes?: string | null
           odometer_reading?: number
+          receipt_image_path?: string | null
+          station_name?: string | null
           total_cost?: number
           updated_at?: string
           vehicle_id?: string
@@ -853,6 +868,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuel_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
             referencedColumns: ["id"]
           },
           {
@@ -1875,8 +1897,12 @@ export type Database = {
         Row: {
           approval_comment: string | null
           approval_status: string | null
+          cargo_description: string | null
+          cargo_weight_kg: number | null
+          client_name: string | null
           comments: string | null
           created_at: string | null
+          delivery_address: string | null
           driver_id: string | null
           end_kilometers: number | null
           end_location: Json | null
@@ -1888,12 +1914,17 @@ export type Database = {
           start_time: string
           updated_at: string | null
           vehicle_id: string | null
+          work_order_number: string | null
         }
         Insert: {
           approval_comment?: string | null
           approval_status?: string | null
+          cargo_description?: string | null
+          cargo_weight_kg?: number | null
+          client_name?: string | null
           comments?: string | null
           created_at?: string | null
+          delivery_address?: string | null
           driver_id?: string | null
           end_kilometers?: number | null
           end_location?: Json | null
@@ -1905,12 +1936,17 @@ export type Database = {
           start_time: string
           updated_at?: string | null
           vehicle_id?: string | null
+          work_order_number?: string | null
         }
         Update: {
           approval_comment?: string | null
           approval_status?: string | null
+          cargo_description?: string | null
+          cargo_weight_kg?: number | null
+          client_name?: string | null
           comments?: string | null
           created_at?: string | null
+          delivery_address?: string | null
           driver_id?: string | null
           end_kilometers?: number | null
           end_location?: Json | null
@@ -1922,6 +1958,7 @@ export type Database = {
           start_time?: string
           updated_at?: string | null
           vehicle_id?: string | null
+          work_order_number?: string | null
         }
         Relationships: [
           {
@@ -2294,9 +2331,13 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           approved_by: string | null
+          cargo_description: string | null
+          cargo_weight_kg: number | null
+          client_name: string | null
           comments: string | null
           company_id: string | null
           created_at: string
+          delivery_address: string | null
           driver_id: string
           end_kilometers: number
           end_time: string
@@ -2306,15 +2347,20 @@ export type Database = {
           start_time: string
           updated_at: string
           vehicle_id: string
+          work_order_number: string | null
         }
         Insert: {
           approval_comment?: string | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          cargo_description?: string | null
+          cargo_weight_kg?: number | null
+          client_name?: string | null
           comments?: string | null
           company_id?: string | null
           created_at?: string
+          delivery_address?: string | null
           driver_id: string
           end_kilometers: number
           end_time: string
@@ -2324,15 +2370,20 @@ export type Database = {
           start_time: string
           updated_at?: string
           vehicle_id: string
+          work_order_number?: string | null
         }
         Update: {
           approval_comment?: string | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          cargo_description?: string | null
+          cargo_weight_kg?: number | null
+          client_name?: string | null
           comments?: string | null
           company_id?: string | null
           created_at?: string
+          delivery_address?: string | null
           driver_id?: string
           end_kilometers?: number
           end_time?: string
@@ -2342,6 +2393,7 @@ export type Database = {
           start_time?: string
           updated_at?: string
           vehicle_id?: string
+          work_order_number?: string | null
         }
         Relationships: [
           {
