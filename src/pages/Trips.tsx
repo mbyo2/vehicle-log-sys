@@ -342,6 +342,29 @@ export function Trips() {
                       <p className="text-muted-foreground">{trip.comments}</p>
                     </div>
                   )}
+
+                  {(trip.cargo_description || trip.work_order_number || trip.client_name) && (
+                    <div className="mt-4 text-sm grid grid-cols-1 sm:grid-cols-3 gap-2 p-3 bg-muted rounded-md">
+                      {trip.cargo_description && (
+                        <div>
+                          <h4 className="font-medium">Cargo/Work</h4>
+                          <p className="text-muted-foreground">{trip.cargo_description}</p>
+                        </div>
+                      )}
+                      {trip.work_order_number && (
+                        <div>
+                          <h4 className="font-medium">Work Order</h4>
+                          <p className="text-muted-foreground">{trip.work_order_number}</p>
+                        </div>
+                      )}
+                      {trip.client_name && (
+                        <div>
+                          <h4 className="font-medium">Client</h4>
+                          <p className="text-muted-foreground">{trip.client_name}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   
                   {trip.approval_comment && (
                     <div className="mt-4 text-sm p-3 bg-muted rounded-md">

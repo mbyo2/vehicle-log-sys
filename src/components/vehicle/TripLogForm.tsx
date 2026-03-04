@@ -229,6 +229,60 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
         )}
       </div>
       
+      {/* Cargo / Work Details */}
+      <div className="border-t pt-4 mt-4">
+        <h3 className="text-sm font-semibold mb-3">Cargo / Work Details</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="workOrder">Work Order #</Label>
+            <Input
+              id="workOrder"
+              value={(tripLog as any).work_order_number || ''}
+              onChange={(e) => onTripLogChange({ work_order_number: e.target.value } as any)}
+              placeholder="e.g. WO-2024-001"
+            />
+          </div>
+          <div>
+            <Label htmlFor="clientName">Client Name</Label>
+            <Input
+              id="clientName"
+              value={(tripLog as any).client_name || ''}
+              onChange={(e) => onTripLogChange({ client_name: e.target.value } as any)}
+              placeholder="Client or company name"
+            />
+          </div>
+        </div>
+        <div className="mt-3">
+          <Label htmlFor="cargoDescription">Cargo / Work Description</Label>
+          <Textarea
+            id="cargoDescription"
+            value={(tripLog as any).cargo_description || ''}
+            onChange={(e) => onTripLogChange({ cargo_description: e.target.value } as any)}
+            placeholder="What is being transported or the work being done"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-3">
+          <div>
+            <Label htmlFor="cargoWeight">Cargo Weight (kg)</Label>
+            <Input
+              id="cargoWeight"
+              type="number"
+              value={(tripLog as any).cargo_weight_kg || ''}
+              onChange={(e) => onTripLogChange({ cargo_weight_kg: Number(e.target.value) } as any)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="deliveryAddress">Delivery Address</Label>
+            <Input
+              id="deliveryAddress"
+              value={(tripLog as any).delivery_address || ''}
+              onChange={(e) => onTripLogChange({ delivery_address: e.target.value } as any)}
+              placeholder="Delivery destination"
+            />
+          </div>
+        </div>
+      </div>
+
       <div>
         <Label htmlFor="comments">Additional Comments</Label>
         <Textarea
