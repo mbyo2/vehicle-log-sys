@@ -28,7 +28,7 @@ export default function TripManagement() {
         .select(`
           *,
           vehicles:vehicle_id (plate_number),
-          profiles:driver_id (full_name)
+          drivers:driver_id (id, man_number, profiles:profile_id (full_name))
         `)
         .order('start_time', { ascending: false });
 
@@ -67,7 +67,7 @@ export default function TripManagement() {
           endKilometers: Number(endKilometers),
           totalKilometers: totalKilometers,
           plateNumber: tripLog.vehicles?.plate_number || 'Unknown',
-          driver: tripLog.profiles?.full_name || 'Unknown',
+          driver: tripLog.drivers?.profiles?.full_name || 'Unknown',
           comment: tripLog.comments || '',
           timestamp: timestamp || '',
         };
