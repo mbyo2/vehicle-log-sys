@@ -50,7 +50,7 @@ export function Trips() {
         .select(`
           *,
           vehicles:vehicle_id (plate_number, make, model),
-          profiles:driver_id (full_name)
+          drivers:driver_id (id, man_number, profiles:profile_id (full_name))
         `)
         .order('start_time', { ascending: false });
         
@@ -331,7 +331,7 @@ export function Trips() {
                     <div className="space-y-1">
                       <h4 className="text-sm font-medium">Driver</h4>
                       <p className="text-sm">
-                        {trip.profiles?.full_name || 'Unknown'}
+                        {trip.drivers?.profiles?.full_name || 'Unknown'}
                       </p>
                     </div>
                   </div>
