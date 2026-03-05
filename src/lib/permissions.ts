@@ -185,7 +185,7 @@ export function getAssignableRoles(currentRole: UserRole | null | undefined): Us
   
   switch (currentRole) {
     case 'super_admin':
-      return ['super_admin', 'company_admin', 'supervisor', 'driver'];
+      return ['company_admin', 'supervisor', 'driver'];
     case 'company_admin':
       return ['company_admin', 'supervisor', 'driver'];
     default:
