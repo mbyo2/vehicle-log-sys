@@ -35,11 +35,16 @@ export function Users() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const { profile } = useAuth();
-  const { hasRole, updateUserRole, getAssignableRoles } = useRoleManagement();
+  const { updateUserRole, getAssignableRoles } = useRoleManagement();
+  
+  // Extract profile once at top level to avoid Legend-state hook ordering issues
+  const currentProfile = profile.get();
+  const currentRole = currentProfile?.role;
+  const isAdmin = currentRole === 'super_admin' || currentRole === 'company_admin';
+  const isSuperAdmin = currentRole === 'super_admin';
   const assignableRoles = getAssignableRoles();
 
   const fetchUsers = async () => {
-    const currentProfile = profile.get();
     if (!currentProfile) return;
 
     try {
@@ -48,7 +53,7 @@ export function Users() {
       // Fetch profiles
       let profileQuery = supabase.from("profiles").select("*");
       
-      if (hasRole('company_admin') && !hasRole('super_admin')) {
+      if (currentRole === 'company_admin' && !isSuperAdmin) {
         if (currentProfile.company_id) {
           profileQuery = profileQuery.eq("company_id", currentProfile.company_id);
         }
@@ -89,7 +94,7 @@ export function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, [profile, hasRole]);
+  }, [currentProfile?.id, currentRole]);
 
   const handleRoleChange = async (userId: string) => {
     if (!selectedRole) return;
@@ -219,7 +224,7 @@ export function Users() {
                             <Badge variant="outline" className="capitalize">
                               {user.role.replace('_', ' ')}
                             </Badge>
-                            {hasRole(['super_admin', 'company_admin']) && (
+                            {isAdmin && (
                               <Button 
                                 size="sm" 
                                 variant="ghost"
