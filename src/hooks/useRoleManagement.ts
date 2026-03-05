@@ -94,6 +94,9 @@ export function useRoleManagement() {
         });
 
       if (error) {
+        if (error.code === '23505' && error.message?.includes('super_admin')) {
+          throw new Error('Only one Super Admin is allowed in the system');
+        }
         throw error;
       }
 
