@@ -209,6 +209,24 @@ serve(async (req) => {
       const newPassword = (body as any)?.password || "";
       if (!targetEmail || !newPassword) return json(400, { error: "Missing 'email' or 'password'" });
 
+      // Require a valid logged-in user with super_admin role
+      const authHeader = req.headers.get("Authorization") || "";
+      if (!authHeader) return json(401, { error: "Missing Authorization header" });
+
+      const authed = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { persistSession: false },
+      });
+
+      const { data: userData, error: userError } = await authed.auth.getUser();
+      if (userError) return json(401, { error: userError.message });
+      const caller = userData.user;
+      if (!caller) return json(401, { error: "Not authenticated" });
+
+      // Only super_admin can directly set passwords
+      const { data: isSuperAdmin } = await admin.rpc("user_has_super_admin_role", { _user_id: caller.id });
+      if (!isSuperAdmin) return json(403, { error: "Only super admins can set passwords directly" });
+
       let userId: string | null = null;
       try {
         userId = await findUserIdByEmail(admin, targetEmail);
