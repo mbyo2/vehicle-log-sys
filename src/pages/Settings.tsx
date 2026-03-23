@@ -28,7 +28,7 @@ export function Settings() {
       if (error) throw error;
       return data as Company;
     },
-    enabled: !!profile?.company_id,
+    enabled: !!currentProfile?.company_id,
   });
 
   if (isLoading) {
