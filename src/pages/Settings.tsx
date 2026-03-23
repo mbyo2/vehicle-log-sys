@@ -22,7 +22,7 @@ export function Settings() {
       const { data, error } = await supabase
         .from("companies")
         .select("*")
-        .eq("id", profile.company_id)
+        .eq("id", currentProfile!.company_id)
         .single();
 
       if (error) throw error;
