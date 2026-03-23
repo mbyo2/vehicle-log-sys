@@ -13,21 +13,22 @@ import { Building2, Users, Bell } from "lucide-react";
 
 export function Settings() {
   const { profile } = useAuth();
+  const currentProfile = profile.get();
 
   const { data: company, isLoading } = useQuery({
-    queryKey: ["company", profile?.company_id],
+    queryKey: ["company", currentProfile?.company_id],
     queryFn: async () => {
-      if (!profile?.company_id) return null;
+      if (!currentProfile?.company_id) return null;
       const { data, error } = await supabase
         .from("companies")
         .select("*")
-        .eq("id", profile.company_id)
+        .eq("id", currentProfile!.company_id)
         .single();
 
       if (error) throw error;
       return data as Company;
     },
-    enabled: !!profile?.company_id,
+    enabled: !!currentProfile?.company_id,
   });
 
   if (isLoading) {
