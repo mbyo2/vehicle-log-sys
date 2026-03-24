@@ -163,7 +163,23 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
+          {/* Vehicle Category - industry specific */}
+          {vehicleCategories.length > 0 && (
+            <FormItem>
+              <FormLabel>{industryInfo.termForVehicle} Category</FormLabel>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${industryInfo.termForVehicle.toLowerCase()} category`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicleCategories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+
             control={form.control}
             name="plate_number"
             render={({ field }) => (
