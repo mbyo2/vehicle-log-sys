@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Company } from "@/types/auth";
+import { Company, INDUSTRY_TYPES } from "@/types/auth";
 import { Switch } from "@/components/ui/switch";
 import { CompanyLogoUpload } from "./CompanyLogoUpload";
 
@@ -29,6 +29,7 @@ const companySchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
   subscription_type: z.enum(["trial", "full"]),
   is_active: z.boolean(),
+  industry_type: z.string(),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
