@@ -45,6 +45,7 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
     defaultValues: {
       name: "",
       subscription_type: "trial",
+      industry_type: "general",
     },
   });
 
