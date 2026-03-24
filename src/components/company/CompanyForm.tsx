@@ -55,6 +55,7 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
       const { error } = await supabase.from("companies").insert({
         name: values.name,
         subscription_type: values.subscription_type,
+        industry_type: values.industry_type,
         trial_start_date:
           values.subscription_type === "trial" ? new Date().toISOString() : null,
         trial_end_date:
