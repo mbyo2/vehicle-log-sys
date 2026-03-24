@@ -180,6 +180,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
             </FormItem>
           )}
 
+          <FormField
             control={form.control}
             name="plate_number"
             render={({ field }) => (
