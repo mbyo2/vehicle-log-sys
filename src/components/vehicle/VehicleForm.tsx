@@ -60,6 +60,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { validateAndSanitizeVehicleData } = useEnhancedSecurity();
+  const { vehicleCategories, vehicleFields, industryInfo } = useIndustryConfig();
   
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
