@@ -49,6 +49,7 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
       name: company.name,
       subscription_type: company.subscription_type,
       is_active: company.is_active,
+      industry_type: company.industry_type || 'general',
     },
   });
 
