@@ -22,9 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { INDUSTRY_TYPES } from "@/types/auth";
+
 const companySchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
   subscription_type: z.enum(["trial", "full"]),
+  industry_type: z.string().default("general"),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -42,6 +45,7 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
     defaultValues: {
       name: "",
       subscription_type: "trial",
+      industry_type: "general",
     },
   });
 
@@ -51,6 +55,7 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
       const { error } = await supabase.from("companies").insert({
         name: values.name,
         subscription_type: values.subscription_type,
+        industry_type: values.industry_type,
         trial_start_date:
           values.subscription_type === "trial" ? new Date().toISOString() : null,
         trial_end_date:
@@ -90,6 +95,31 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
               <FormControl>
                 <Input placeholder="Enter company name" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="industry_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Industry Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {INDUSTRY_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

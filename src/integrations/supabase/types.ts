@@ -276,6 +276,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          industry_type: string
           is_active: boolean | null
           logo_url: string | null
           name: string
@@ -290,6 +291,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          industry_type?: string
           is_active?: boolean | null
           logo_url?: string | null
           name: string
@@ -304,6 +306,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          industry_type?: string
           is_active?: boolean | null
           logo_url?: string | null
           name?: string

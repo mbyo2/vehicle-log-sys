@@ -10,6 +10,18 @@ export interface UserProfile {
   two_factor_method?: string;
 }
 
+export type IndustryType = 'mining' | 'transport' | 'logistics' | 'construction' | 'agriculture' | 'general' | 'other';
+
+export const INDUSTRY_TYPES: { value: IndustryType; label: string }[] = [
+  { value: 'mining', label: 'Mining' },
+  { value: 'transport', label: 'Transport' },
+  { value: 'logistics', label: 'Logistics' },
+  { value: 'construction', label: 'Construction' },
+  { value: 'agriculture', label: 'Agriculture' },
+  { value: 'general', label: 'General' },
+  { value: 'other', label: 'Other' },
+];
+
 export interface Company {
   id: string;
   name: string;
@@ -23,6 +35,7 @@ export interface Company {
   logo_url?: string;
   branding_primary_color?: string;
   branding_secondary_color?: string;
+  industry_type: IndustryType;
 }
 
 export interface UserCompanyMembership {

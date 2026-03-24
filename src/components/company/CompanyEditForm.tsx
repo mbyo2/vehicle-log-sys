@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Company } from "@/types/auth";
+import { Company, INDUSTRY_TYPES } from "@/types/auth";
 import { Switch } from "@/components/ui/switch";
 import { CompanyLogoUpload } from "./CompanyLogoUpload";
 
@@ -29,6 +29,7 @@ const companySchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
   subscription_type: z.enum(["trial", "full"]),
   is_active: z.boolean(),
+  industry_type: z.string(),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -48,6 +49,7 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
       name: company.name,
       subscription_type: company.subscription_type,
       is_active: company.is_active,
+      industry_type: company.industry_type || 'general',
     },
   });
 
@@ -60,6 +62,7 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
           name: values.name,
           subscription_type: values.subscription_type,
           is_active: values.is_active,
+          industry_type: values.industry_type,
           updated_at: new Date().toISOString(),
         })
         .eq("id", company.id);
@@ -95,6 +98,31 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
               <FormControl>
                 <Input placeholder="Enter company name" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="industry_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Industry Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {INDUSTRY_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

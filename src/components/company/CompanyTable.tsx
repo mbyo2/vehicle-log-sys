@@ -82,6 +82,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
           <TableRow>
             <TableHead>Logo</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Industry</TableHead>
             <TableHead>Subscription</TableHead>
             <TableHead>Trial Period</TableHead>
             <TableHead>Status</TableHead>
@@ -106,6 +107,11 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                 )}
               </TableCell>
               <TableCell className="font-medium">{company.name}</TableCell>
+              <TableCell>
+                <Badge variant="outline" className="capitalize">
+                  {company.industry_type || 'general'}
+                </Badge>
+              </TableCell>
               <TableCell>
                 <Badge variant={company.subscription_type === 'trial' ? 'secondary' : 'default'}>
                   {company.subscription_type}
