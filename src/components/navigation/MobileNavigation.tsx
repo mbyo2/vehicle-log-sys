@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useIndustryConfig } from '@/hooks/useIndustryConfig';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
