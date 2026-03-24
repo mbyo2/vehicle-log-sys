@@ -158,6 +158,11 @@ export function CompanyDetails({ companyId, onClose }: CompanyDetailsProps) {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
+                    Industry Type
+                  </p>
+                  <p className="text-lg capitalize">{(company as any).industry_type || 'General'}</p>
+                </div>
+                  <p className="text-sm font-medium text-muted-foreground">
                     Created At
                   </p>
                   <p className="text-lg">
