@@ -62,6 +62,7 @@ export function CompanyEditForm({ company, onSuccess }: CompanyEditFormProps) {
           name: values.name,
           subscription_type: values.subscription_type,
           is_active: values.is_active,
+          industry_type: values.industry_type,
           updated_at: new Date().toISOString(),
         })
         .eq("id", company.id);
