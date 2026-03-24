@@ -1,0 +1,2 @@
+ALTER TABLE public.companies ADD COLUMN industry_type text NOT NULL DEFAULT 'general';
+COMMENT ON COLUMN public.companies.industry_type IS 'Industry classification: mining, transport, logistics, construction, agriculture, general, other';
