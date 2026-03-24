@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Vehicle } from '@/types/vehicle';
 import { useEnhancedSecurity } from '@/hooks/useEnhancedSecurity';
 import { EnhancedSecurityValidation } from '@/components/security/EnhancedSecurityValidation';
+import { useIndustryConfig } from '@/hooks/useIndustryConfig';
 import {
   Form,
   FormControl,
@@ -19,6 +20,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define the form schema using zod
 const vehicleSchema = z.object({
@@ -52,6 +60,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { validateAndSanitizeVehicleData } = useEnhancedSecurity();
+  const { vehicleCategories, vehicleFields, industryInfo } = useIndustryConfig();
   
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
@@ -154,6 +163,23 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
         />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Vehicle Category - industry specific */}
+          {vehicleCategories.length > 0 && (
+            <FormItem>
+              <FormLabel>{industryInfo.termForVehicle} Category</FormLabel>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder={`Select ${industryInfo.termForVehicle.toLowerCase()} category`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicleCategories.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormItem>
+          )}
+
           <FormField
             control={form.control}
             name="plate_number"
@@ -294,6 +320,41 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
             )}
           />
         </div>
+
+        {/* Industry-specific extra fields */}
+        {vehicleFields.length > 0 && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              {industryInfo.name}-Specific Fields
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vehicleFields.map((field) => (
+                <FormItem key={field.name}>
+                  <FormLabel>{field.label}</FormLabel>
+                  <FormControl>
+                    {field.type === 'select' && field.options ? (
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                        placeholder={field.placeholder}
+                      />
+                    )}
+                  </FormControl>
+                </FormItem>
+              ))}
+            </div>
+          </div>
+        )}
 
         <FormField
           control={form.control}

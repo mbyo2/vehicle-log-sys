@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useIndustryConfig } from '@/hooks/useIndustryConfig';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -181,14 +182,15 @@ export function MobileNavigation() {
 
   const userRole = profile?.get()?.role;
   const currentUser = user?.get();
+  const { isNavItemVisible } = useIndustryConfig();
 
   if (!currentUser || !userRole || !isMobile) {
     return null;
   }
 
   const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true;
-    return item.roles.includes(userRole);
+    if (!item.roles) return isNavItemVisible(item.href);
+    return item.roles.includes(userRole) && isNavItemVisible(item.href);
   });
 
   const handleNavClick = () => {

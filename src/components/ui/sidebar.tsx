@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useIndustryConfig } from '@/hooks/useIndustryConfig';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/AuthContext';
@@ -222,14 +223,15 @@ export function Sidebar() {
 
   const userRole = profile?.get()?.role;
   const currentUser = user?.get();
+  const { isNavItemVisible, industryInfo } = useIndustryConfig();
 
   if (!currentUser || !userRole) {
     return null;
   }
 
   const filteredNavItems = navItems.filter((item) => {
-    if (!item.roles) return true;
-    return item.roles.includes(userRole);
+    if (!item.roles) return isNavItemVisible(item.href);
+    return item.roles.includes(userRole) && isNavItemVisible(item.href);
   });
 
   return (
