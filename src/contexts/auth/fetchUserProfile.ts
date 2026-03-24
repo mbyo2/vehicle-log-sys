@@ -48,11 +48,19 @@ export const fetchUserProfile = async (userId: string) => {
         .eq('company_id', targetCompanyId!)
         .maybeSingle();
       
+      // Fetch the company's industry_type
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('industry_type')
+        .eq('id', targetCompanyId!)
+        .maybeSingle();
+      
       const userRole = roleData?.role || 'driver';
+      const industryType = (companyData as any)?.industry_type || 'general';
       authState.currentCompanyId.set(targetCompanyId);
       
-      console.log('[Auth] Profile loaded with role:', userRole, 'for company:', targetCompanyId);
-      return { ...data, role: userRole, company_id: targetCompanyId };
+      console.log('[Auth] Profile loaded with role:', userRole, 'for company:', targetCompanyId, 'industry:', industryType);
+      return { ...data, role: userRole, company_id: targetCompanyId, industry_type: industryType };
     } else {
       // Fallback: super_admin or user without company
       const { data: roleData } = await supabase
