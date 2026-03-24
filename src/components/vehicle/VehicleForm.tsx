@@ -356,6 +356,7 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
           </div>
         )}
 
+        <FormField
           control={form.control}
           name="comments"
           render={({ field }) => (
