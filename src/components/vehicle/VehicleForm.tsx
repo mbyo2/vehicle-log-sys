@@ -320,7 +320,41 @@ export function VehicleForm({ vehicle, onSuccess }: VehicleFormProps) {
           />
         </div>
 
-        <FormField
+        {/* Industry-specific extra fields */}
+        {vehicleFields.length > 0 && (
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              {industryInfo.name}-Specific Fields
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vehicleFields.map((field) => (
+                <FormItem key={field.name}>
+                  <FormLabel>{field.label}</FormLabel>
+                  <FormControl>
+                    {field.type === 'select' && field.options ? (
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+                        placeholder={field.placeholder}
+                      />
+                    )}
+                  </FormControl>
+                </FormItem>
+              ))}
+            </div>
+          </div>
+        )}
+
           control={form.control}
           name="comments"
           render={({ field }) => (
