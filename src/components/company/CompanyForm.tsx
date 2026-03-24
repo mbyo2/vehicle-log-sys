@@ -22,9 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { INDUSTRY_TYPES } from "@/types/auth";
+
 const companySchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
   subscription_type: z.enum(["trial", "full"]),
+  industry_type: z.string().default("general"),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
