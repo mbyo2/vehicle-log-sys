@@ -102,6 +102,31 @@ export function CompanyForm({ onSuccess }: CompanyFormProps) {
 
         <FormField
           control={form.control}
+          name="industry_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Industry Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry type" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {INDUSTRY_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
           name="subscription_type"
           render={({ field }) => (
             <FormItem>
