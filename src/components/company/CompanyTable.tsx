@@ -82,6 +82,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
           <TableRow>
             <TableHead>Logo</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Industry</TableHead>
             <TableHead>Subscription</TableHead>
             <TableHead>Trial Period</TableHead>
             <TableHead>Status</TableHead>
