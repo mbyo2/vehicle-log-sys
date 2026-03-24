@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Vehicle } from '@/types/vehicle';
 import { useEnhancedSecurity } from '@/hooks/useEnhancedSecurity';
 import { EnhancedSecurityValidation } from '@/components/security/EnhancedSecurityValidation';
+import { useIndustryConfig } from '@/hooks/useIndustryConfig';
 import {
   Form,
   FormControl,
@@ -19,6 +20,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define the form schema using zod
 const vehicleSchema = z.object({
