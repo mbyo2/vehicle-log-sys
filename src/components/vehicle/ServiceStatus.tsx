@@ -156,7 +156,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
               )}
             </div>
             {vehicle.road_tax_expiry && (
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Expires: {format(new Date(vehicle.road_tax_expiry), 'dd MMM yyyy')}
               </p>
             )}
@@ -180,7 +180,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
               )}
             </div>
             {vehicle.insurance_expiry && (
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Expires: {format(new Date(vehicle.insurance_expiry), 'dd MMM yyyy')}
               </p>
             )}
