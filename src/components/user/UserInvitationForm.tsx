@@ -55,8 +55,8 @@ export function UserInvitationForm({ onSuccess }: UserInvitationFormProps) {
       setLoading(true);
       const currentProfile = profile.get();
 
-      if (!currentProfile) {
-        throw new Error("User profile not found");
+      if (!currentProfile?.company_id) {
+        throw new Error("Company not found for current user");
       }
 
       // Generate a unique invitation token
@@ -81,15 +81,25 @@ export function UserInvitationForm({ onSuccess }: UserInvitationFormProps) {
         throw error;
       }
 
+      // Resolve company name for the email
+      let companyName = 'Fleet Management';
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('name')
+        .eq('id', currentProfile.company_id)
+        .maybeSingle();
+      if (companyData?.name) companyName = companyData.name;
+
       // Send invitation email using edge function
       try {
         await supabase.functions.invoke('send-invitation', {
           body: {
             email: values.email,
             role: values.role,
-            companyName: currentProfile.company_id || 'Fleet Management',
+            companyName,
             inviterName: currentProfile.full_name || 'Admin',
-            invitationToken: token
+            invitationToken: token,
+            appUrl: window.location.origin,
           }
         });
       } catch (emailError) {
