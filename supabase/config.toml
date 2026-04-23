@@ -31,3 +31,9 @@ verify_jwt = true
 
 [functions.send-notification-digest]
 verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false
+
+[functions.send-invitation]
+verify_jwt = false
