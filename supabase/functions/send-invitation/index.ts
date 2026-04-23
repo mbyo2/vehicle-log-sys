@@ -16,6 +16,7 @@ interface InvitationRequest {
   companyName: string;
   inviterName: string;
   invitationToken: string;
+  appUrl?: string;
 }
 
 serve(async (req) => {
@@ -24,13 +25,13 @@ serve(async (req) => {
   }
 
   try {
-    const { email, role, companyName, inviterName, invitationToken }: InvitationRequest = await req.json();
+    const { email, role, companyName, inviterName, invitationToken, appUrl }: InvitationRequest = await req.json();
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get the app URL from environment or construct it
-    const appUrl = Deno.env.get('APP_URL') || 'https://15badcdd-8ca7-416c-b40d-6f21369afb4f.lovableproject.com';
-    const invitationUrl = `${appUrl}/signup?token=${invitationToken}`;
+    // Prefer the caller-provided URL (origin of the app), fall back to env or default.
+    const baseUrl = appUrl || Deno.env.get('APP_URL') || 'https://vehicle-log-journal-73.lovable.app';
+    const invitationUrl = `${baseUrl.replace(/\/$/, '')}/accept-invitation?token=${invitationToken}`;
 
     const emailHtml = `
       <!DOCTYPE html>

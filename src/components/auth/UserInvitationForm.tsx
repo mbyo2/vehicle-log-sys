@@ -62,16 +62,41 @@ export function UserInvitationForm() {
 
     setLoading(true);
     try {
+      const token = crypto.randomUUID();
       const { error } = await supabase.from("user_invitations").insert({
         email: values.email,
         role: values.role,
         company_id: currentProfile.company_id,
         invited_by: currentProfile.id,
-        token: crypto.randomUUID(),
+        token,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
       });
 
       if (error) throw error;
+
+      // Resolve company name and send invitation email
+      let companyName = "Fleet Management";
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("id", currentProfile.company_id)
+        .maybeSingle();
+      if (companyData?.name) companyName = companyData.name;
+
+      try {
+        await supabase.functions.invoke("send-invitation", {
+          body: {
+            email: values.email,
+            role: values.role,
+            companyName,
+            inviterName: currentProfile.full_name || "Admin",
+            invitationToken: token,
+            appUrl: window.location.origin,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send invitation email:", emailError);
+      }
 
       toast({
         title: "Success",
