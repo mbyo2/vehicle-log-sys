@@ -39,6 +39,7 @@ import Security from "./pages/Security";
 import { SecurityAuditDashboard } from "./components/security/SecurityAuditDashboard";
 import { ResponsiveDashboardLayout } from "./components/layouts/ResponsiveDashboardLayout";
 import { ErrorMonitoringBoundary } from "./components/security/ErrorMonitoringBoundary";
+import NotFound from "./pages/NotFound";
 
 // Create a layout route with the providers
 const RootLayout = () => {
@@ -314,6 +315,10 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
     ],
   },

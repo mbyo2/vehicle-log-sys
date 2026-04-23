@@ -117,7 +117,7 @@ export default function Documents() {
         </TabsList>
         
         <TabsContent value="documents">
-          <div className="bg-white rounded-md shadow">
+          <div className="bg-card rounded-md shadow">
             <EnhancedDocumentList 
               showVerification={isAdmin} 
               companyId={companyId}

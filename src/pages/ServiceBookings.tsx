@@ -113,7 +113,7 @@ export function ServiceBookings() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-card rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
@@ -132,7 +132,7 @@ export function ServiceBookings() {
                 <TableCell>
                   {booking.vehicle.make} {booking.vehicle.model}
                   <br />
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-muted-foreground">
                     {booking.vehicle.plate_number}
                   </span>
                 </TableCell>

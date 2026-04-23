@@ -126,7 +126,7 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
             id="driver"
             value={driverName}
             readOnly
-            className="bg-gray-100"
+            className="bg-muted"
           />
         </div>
         
@@ -179,7 +179,7 @@ export function TripLogForm({ tripLog, onTripLogChange }: TripLogFormProps) {
             type="number"
             value={tripLog.startKilometers}
             readOnly
-            className="bg-gray-100"
+            className="bg-muted"
           />
         </div>
         

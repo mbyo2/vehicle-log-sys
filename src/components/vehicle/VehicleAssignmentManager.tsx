@@ -225,12 +225,12 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
             </Button>
           </div>
         ) : (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="p-4 bg-muted border border-border rounded-lg">
             <div className="flex items-center gap-3">
-              <UserX className="h-5 w-5 text-gray-400" />
+              <UserX className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium text-gray-900">Not Assigned</p>
-                <p className="text-sm text-gray-600">This vehicle is available for assignment</p>
+                <p className="font-medium text-foreground">Not Assigned</p>
+                <p className="text-sm text-muted-foreground">This vehicle is available for assignment</p>
               </div>
               <Badge variant="outline" className="ml-auto">
                 Available
@@ -242,7 +242,7 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
         {/* Assignment Form */}
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-foreground mb-2 block">
               {currentDriver ? 'Reassign to Different Driver' : 'Assign to Driver'}
             </label>
             <Select value={selectedDriverId} onValueChange={setSelectedDriverId}>
@@ -254,7 +254,7 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
                   <SelectItem key={driver.id} value={driver.id}>
                     <div className="flex flex-col">
                       <span>{driver.full_name}</span>
-                      <span className="text-xs text-gray-500">{driver.email}</span>
+                      <span className="text-xs text-muted-foreground">{driver.email}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -272,7 +272,7 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
         </div>
 
         {drivers.length === 0 && (
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-muted-foreground">
             <p className="text-sm">No drivers available for assignment</p>
             <p className="text-xs mt-1">Add drivers to your company first</p>
           </div>

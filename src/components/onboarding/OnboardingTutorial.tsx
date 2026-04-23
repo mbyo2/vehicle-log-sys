@@ -182,7 +182,7 @@ export function OnboardingTutorial() {
         </SheetContent>
       </Sheet>
       
-      <Card className="fixed bottom-4 right-4 z-50 shadow-lg bg-white dark:bg-gray-800 hidden md:block">
+      <Card className="fixed bottom-4 right-4 z-50 shadow-lg bg-card hidden md:block">
         <CardContent className="p-4">
           <Button onClick={() => setIsOpen(true)}>
             Take a Tour

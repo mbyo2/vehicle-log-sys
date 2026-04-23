@@ -65,13 +65,13 @@ export function MaintenanceSchedules() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
+        return <Badge variant="secondary">Pending</Badge>;
       case 'completed':
-        return <Badge className="bg-green-500">Completed</Badge>;
+        return <Badge className="bg-green-600 hover:bg-green-700 text-white">Completed</Badge>;
       case 'overdue':
-        return <Badge className="bg-red-500">Overdue</Badge>;
+        return <Badge variant="destructive">Overdue</Badge>;
       default:
-        return <Badge className="bg-gray-500">{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
