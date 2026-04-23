@@ -149,7 +149,7 @@ export function MessageList() {
                   {filteredSent.map((message) => (
                     <div 
                       key={message.id} 
-                      className="flex items-center py-2 cursor-pointer hover:bg-gray-50"
+                      className="flex items-center py-2 cursor-pointer hover:bg-muted/50"
                       onClick={() => handleViewMessage(message)}
                     >
                       <div className="flex-1">
