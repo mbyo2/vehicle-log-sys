@@ -36,35 +36,14 @@ serve(async (req) => {
       );
     }
 
-    // 1) Load invitation
-    const { data: invite, error: invErr } = await admin
-      .from("user_invitations")
-      .select("id, email, role, company_id, status, expires_at")
-      .eq("token", token)
-      .maybeSingle();
+    // 1) Load invitation via SECURITY DEFINER RPC (table is no longer publicly readable)
+    const { data: inviteRows, error: invErr } = await admin.rpc('get_invitation_by_token', { _token: token });
+    const invite = Array.isArray(inviteRows) ? inviteRows[0] : inviteRows;
 
     if (invErr || !invite) {
       return new Response(
-        JSON.stringify({ error: "Invalid invitation" }),
+        JSON.stringify({ error: "Invalid or expired invitation" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (invite.status !== "pending") {
-      return new Response(
-        JSON.stringify({ error: "Invitation already used or expired" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-
-    if (new Date(invite.expires_at) < new Date()) {
-      await admin
-        .from("user_invitations")
-        .update({ status: "expired" })
-        .eq("id", invite.id);
-      return new Response(
-        JSON.stringify({ error: "Invitation has expired" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
