@@ -25,34 +25,21 @@ export function useSignIn() {
 
     signInState.loading.set(true);
     try {
-      console.log("Checking if first user exists...");
-      
-      // Use the database function to check if this is the first user
       const { data, error } = await supabase.rpc('check_if_first_user');
-      
       if (error) {
-        console.error("Error checking first user:", error);
-        // If there's an error, assume there are users (safer default)
         signInState.isFirstUser.set(false);
         signInState.isFirstUserChecked.set(true);
         return false;
       }
-      
-      console.log("First user check result:", data);
       const isFirst = data === true;
-      
       signInState.isFirstUser.set(isFirst);
       signInState.isFirstUserChecked.set(true);
-      
       if (isFirst) {
-        console.log("No super admin found, directing to first user signup");
         navigate('/signup', { state: { isFirstUser: true }, replace: true });
         return true;
       }
       return false;
-    } catch (error) {
-      console.error("Error checking first user:", error);
-      // If there's an error, assume there are users (safer default)
+    } catch {
       signInState.isFirstUser.set(false);
       signInState.isFirstUserChecked.set(true);
       return false;
@@ -81,7 +68,6 @@ export function useSignIn() {
 
       navigate('/dashboard', { replace: true });
     } catch (error: any) {
-      console.error("Sign in error:", error);
       throw error;
     }
   };
@@ -100,7 +86,6 @@ export function useSignIn() {
     try {
       await handleSignIn(values);
     } catch (error: any) {
-      console.error("Authentication error:", error);
       signInState.attempts.set(prev => prev + 1);
       
       let errorMessage = error.message || "Failed to sign in";
