@@ -2712,6 +2712,18 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_invitation_by_token: {
+        Args: { _token: string }
+        Returns: {
+          company_id: string
+          company_name: string
+          email: string
+          expires_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: string
+        }[]
+      }
       get_notification_preferences: {
         Args: { p_company_id: string; p_user_id: string }
         Returns: {
