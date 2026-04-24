@@ -61,30 +61,18 @@ export default function AcceptInvitation() {
 
   const loadInvitation = async (tok: string) => {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('user_invitations')
-        .select('id, email, role, company_id, expires_at, status')
-        .eq('token', tok)
-        .maybeSingle();
+      // Use the SECURITY DEFINER RPC so anonymous visitors can read ONE invitation by token
+      // (the underlying table is no longer publicly readable).
+      const { data, error: fetchError } = await supabase.rpc('get_invitation_by_token', { _token: tok });
 
-      if (fetchError || !data) {
+      const row = Array.isArray(data) ? data[0] : data;
+      if (fetchError || !row) {
         setError('Invalid or expired invitation');
         setLoading(false);
         return;
       }
-      if (data.status !== 'pending') {
-        setError('This invitation has already been used or expired');
-        setLoading(false);
-        return;
-      }
-      if (new Date(data.expires_at) < new Date()) {
-        setError('This invitation has expired');
-        setLoading(false);
-        return;
-      }
-      setInvitation(data);
+      setInvitation(row as InvitationData);
     } catch (err) {
-      console.error('Error loading invitation:', err);
       setError('Failed to load invitation');
     } finally {
       setLoading(false);

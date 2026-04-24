@@ -25,12 +25,6 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   const { toast } = useToast();
 
   const onSubmit = async (values: SignUpFormValues) => {
-    console.log("SignUpForm: Form submission starting with values:", { 
-      ...values, 
-      email: values.email, 
-      isFirstUser 
-    });
-
     if (!isFirstUser && (values.role === "driver" || values.role === "supervisor")) {
       toast({
         variant: "destructive",
@@ -45,8 +39,6 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
     setSuccessMessage(null);
     
     try {
-      console.log('Creating account with role:', isFirstUser ? 'super_admin' : values.role);
-      
       const result = await signUp(
         values.email,
         values.password,
@@ -55,12 +47,8 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
         values.companyName,
         values.subscriptionType
       );
-      
-      console.log("SignUp result:", result);
-      
+
       if (result && result.success) {
-        console.log("SignUp successful");
-        
         if (isFirstUser) {
           setSuccessMessage("Super admin account created successfully! Redirecting to dashboard...");
           toast({
