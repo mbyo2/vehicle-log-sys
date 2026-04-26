@@ -76,59 +76,68 @@ export function ServiceHistory() {
         <h2 className="text-2xl font-bold">Service History</h2>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead></TableHead>
-            <TableHead>Vehicle</TableHead>
-            <TableHead>Service Date</TableHead>
-            <TableHead>Service Type</TableHead>
-            <TableHead>Kilometers</TableHead>
-            <TableHead>Cost</TableHead>
-            <TableHead>Details</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {services?.map((service) => (
-            <>
-              <TableRow key={service.id} className="hover:bg-muted/50 cursor-pointer">
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleExpand(service.id)}
-                  >
-                    {expandedService === service.id ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  {service.vehicles?.plate_number} - {service.vehicles?.make} {service.vehicles?.model}
-                </TableCell>
-                <TableCell>{format(new Date(service.service_date), 'MMM dd, yyyy')}</TableCell>
-                <TableCell>{service.service_type}</TableCell>
-                <TableCell>{service.kilometers} km</TableCell>
-                <TableCell>${service.cost}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="sm">
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-              {expandedService === service.id && (
-                <TableRow>
-                  <TableCell colSpan={7} className="bg-muted/30">
-                    <ServiceHistoryDetails service={service} />
+      {!services || services.length === 0 ? (
+        <EmptyState
+          icon={Wrench}
+          title="No service records yet"
+          description="Completed maintenance and repairs will appear here once logged."
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead></TableHead>
+              <TableHead>Vehicle</TableHead>
+              <TableHead>Service Date</TableHead>
+              <TableHead>Service Type</TableHead>
+              <TableHead>Kilometers</TableHead>
+              <TableHead>Cost</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {services.map((service) => (
+              <>
+                <TableRow key={service.id} className="hover:bg-muted/50 cursor-pointer">
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpand(service.id)}
+                      aria-label={expandedService === service.id ? 'Collapse details' : 'Expand details'}
+                    >
+                      {expandedService === service.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    {service.vehicles?.plate_number} - {service.vehicles?.make} {service.vehicles?.model}
+                  </TableCell>
+                  <TableCell>{format(new Date(service.service_date), 'MMM dd, yyyy')}</TableCell>
+                  <TableCell>{service.service_type}</TableCell>
+                  <TableCell>{service.kilometers} km</TableCell>
+                  <TableCell>${service.cost}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" aria-label="View service details">
+                      <FileText className="h-4 w-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
-              )}
-            </>
-          ))}
-        </TableBody>
-      </Table>
+                {expandedService === service.id && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="bg-muted/30">
+                      <ServiceHistoryDetails service={service} />
+                    </TableCell>
+                  </TableRow>
+                )}
+              </>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
