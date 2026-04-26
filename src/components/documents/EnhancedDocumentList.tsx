@@ -42,7 +42,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format } from 'date-fns';
 import { DocumentVerification } from './DocumentVerification';
-import { FilePenLine, FileText, MoreVertical, Eye, Download, Trash, Grid, List } from 'lucide-react';
+import { FilePenLine, FileText, MoreVertical, Eye, Download, Trash, Grid, List, Upload } from 'lucide-react';
+import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface EnhancedDocumentListProps {
   vehicleId?: string;
@@ -137,8 +139,9 @@ export function EnhancedDocumentList({
       const url = await getDocumentUrl(document.storage_path);
       setPreviewUrl(url);
       setSelectedDocument(document);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting document URL:', error);
+      toast.error('Could not preview document', { description: error?.message });
     }
   };
 
@@ -149,8 +152,9 @@ export function EnhancedDocumentList({
       link.href = url;
       link.download = document.name;
       link.click();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading document:', error);
+      toast.error('Download failed', { description: error?.message });
     }
   };
 
@@ -330,9 +334,19 @@ export function EnhancedDocumentList({
           )}
 
           {!filteredDocuments.length && (
-            <div className="text-center py-8 text-muted-foreground">
-              No documents found matching your filters.
-            </div>
+            <EmptyState
+              icon={allDocuments && allDocuments.length > 0 ? FileText : Upload}
+              title={
+                allDocuments && allDocuments.length > 0
+                  ? 'No documents match your filters'
+                  : 'No documents uploaded yet'
+              }
+              description={
+                allDocuments && allDocuments.length > 0
+                  ? 'Try clearing your search or filter selections.'
+                  : 'Upload licenses, registrations and other documents to keep them in one place.'
+              }
+            />
           )}
         </TabsContent>
         

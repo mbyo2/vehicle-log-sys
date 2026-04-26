@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -9,9 +10,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, Loader2 } from "lucide-react";
+import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function CostTracking() {
-  const { data: costs, isLoading } = useQuery({
+  const { data: costs, isLoading, error, refetch } = useQuery({
     queryKey: ['maintenance-costs'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -23,17 +27,31 @@ export function CostTracking() {
           )
         `)
         .order('service_date', { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
   });
 
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load maintenance costs', {
+        id: 'maintenance-costs-error',
+        description: (error as Error)?.message,
+        action: { label: 'Retry', onClick: () => refetch() },
+      });
+    }
+  }, [error, refetch]);
+
   const totalCost = costs?.reduce((sum, service) => sum + (service.cost || 0), 0) || 0;
   const averageCost = costs?.length ? totalCost / costs.length : 0;
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -47,7 +65,7 @@ export function CostTracking() {
             <p className="text-2xl font-bold">${totalCost.toFixed(2)}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Average Cost per Service</CardTitle>
@@ -56,7 +74,7 @@ export function CostTracking() {
             <p className="text-2xl font-bold">${averageCost.toFixed(2)}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle>Total Services</CardTitle>
@@ -69,26 +87,34 @@ export function CostTracking() {
 
       <div>
         <h3 className="text-lg font-semibold mb-4">Recent Maintenance Costs</h3>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Vehicle</TableHead>
-              <TableHead>Service Type</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Cost</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {costs?.slice(0, 5).map((service) => (
-              <TableRow key={service.id}>
-                <TableCell>{service.vehicles?.plate_number}</TableCell>
-                <TableCell>{service.service_type}</TableCell>
-                <TableCell>{new Date(service.service_date).toLocaleDateString()}</TableCell>
-                <TableCell>${service.cost}</TableCell>
+        {!costs || costs.length === 0 ? (
+          <EmptyState
+            icon={DollarSign}
+            title="No maintenance costs recorded"
+            description="Cost data will appear here as you log completed services."
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Vehicle</TableHead>
+                <TableHead>Service Type</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Cost</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {costs.slice(0, 5).map((service) => (
+                <TableRow key={service.id}>
+                  <TableCell>{service.vehicles?.plate_number}</TableCell>
+                  <TableCell>{service.service_type}</TableCell>
+                  <TableCell>{new Date(service.service_date).toLocaleDateString()}</TableCell>
+                  <TableCell>${service.cost}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );

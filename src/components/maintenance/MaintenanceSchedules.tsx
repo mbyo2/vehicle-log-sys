@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -19,10 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FilterIcon, AlertTriangle } from "lucide-react";
+import { Calendar, Plus, FilterIcon, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from 'date-fns';
 import { MaintenanceScheduler } from '@/components/vehicle/MaintenanceScheduler';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function MaintenanceSchedules() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -30,7 +32,7 @@ export function MaintenanceSchedules() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const isMobile = useIsMobile();
   
-  const { data: schedules, isLoading, refetch } = useQuery({
+  const { data: schedules, isLoading, error, refetch } = useQuery({
     queryKey: ['maintenance-schedules', filterStatus],
     queryFn: async () => {
       let query = supabase
@@ -56,6 +58,16 @@ export function MaintenanceSchedules() {
       return data;
     },
   });
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load maintenance schedules', {
+        id: 'maintenance-schedules-error',
+        description: (error as Error)?.message,
+        action: { label: 'Retry', onClick: () => refetch() },
+      });
+    }
+  }, [error, refetch]);
 
   const handleScheduleComplete = () => {
     setIsDialogOpen(false);
@@ -139,8 +151,8 @@ export function MaintenanceSchedules() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center p-8">
-          <div className="loader">Loading...</div>
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : schedules && schedules.length > 0 ? (
         <div className={`${isMobile ? 'overflow-x-auto -mx-4 px-4' : ''}`}>
@@ -158,7 +170,7 @@ export function MaintenanceSchedules() {
             <TableBody>
               {schedules?.map((schedule) => (
                 <TableRow key={schedule.id} className={
-                  schedule.status === 'overdue' ? 'bg-red-50 dark:bg-red-900/20' : ''
+                  schedule.status === 'overdue' ? 'bg-destructive/10' : ''
                 }>
                   <TableCell>
                     {schedule.vehicles?.plate_number} - {schedule.vehicles?.make} {schedule.vehicles?.model}
@@ -190,21 +202,31 @@ export function MaintenanceSchedules() {
           </Table>
         </div>
       ) : (
-        <div className="text-center p-8 border rounded-lg bg-muted/10">
-          <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No maintenance schedules found</h3>
-          <p className="text-muted-foreground mb-4">
-            Start by scheduling maintenance for your vehicles to track service history.
-          </p>
-          <Button 
-            onClick={() => {
-              setSelectedVehicleId(null);
-              setIsDialogOpen(true);
-            }}
-          >
-            Schedule First Maintenance
-          </Button>
-        </div>
+        <EmptyState
+          icon={AlertTriangle}
+          title={filterStatus ? `No ${filterStatus} schedules` : 'No maintenance schedules yet'}
+          description={
+            filterStatus
+              ? 'Try clearing the filter to see all scheduled maintenance.'
+              : 'Schedule maintenance for your vehicles to track service intervals.'
+          }
+          action={
+            filterStatus ? (
+              <Button variant="outline" onClick={() => setFilterStatus(null)}>
+                Clear filter
+              </Button>
+            ) : (
+              <Button
+                onClick={() => {
+                  setSelectedVehicleId(null);
+                  setIsDialogOpen(true);
+                }}
+              >
+                Schedule first maintenance
+              </Button>
+            )
+          }
+        />
       )}
     </div>
   );

@@ -8,16 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Loader2, Plus, Fuel, TrendingUp, DollarSign, Droplets } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ExportButton } from "@/components/reports/ExportButton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { format } from "date-fns";
 
 export function FuelManagement() {
   const { profile } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
   const userProfile = profile.get();
@@ -44,7 +44,7 @@ export function FuelManagement() {
     },
   });
 
-  const { data: fuelLogs, isLoading } = useQuery({
+  const { data: fuelLogs, isLoading, error: fuelError, refetch } = useQuery({
     queryKey: ["fuel-logs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,6 +55,15 @@ export function FuelManagement() {
       return data || [];
     },
   });
+
+  // Surface fetch failures via toast
+  if (fuelError) {
+    toast.error("Failed to load fuel logs", {
+      id: "fuel-logs-error",
+      description: (fuelError as Error)?.message,
+      action: { label: "Retry", onClick: () => refetch() },
+    });
+  }
 
   const addFuelLog = useMutation({
     mutationFn: async () => {
@@ -78,12 +87,12 @@ export function FuelManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fuel-logs"] });
-      toast({ title: "Success", description: "Fuel log added successfully" });
+      toast.success("Fuel log added");
       setShowAddForm(false);
       setForm({ vehicle_id: "", liters_added: "", cost_per_liter: "", total_cost: "", odometer_reading: "", fuel_type: "diesel", station_name: "", notes: "" });
     },
     onError: (error: any) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
+      toast.error("Failed to save fuel log", { description: error?.message });
     },
   });
 
@@ -206,13 +215,16 @@ export function FuelManagement() {
           ))}
         </div>
       ) : (
-        <Card className="p-6 text-center">
-          <Fuel className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground mb-4">No fuel logs yet</p>
-          <Button onClick={() => setShowAddForm(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Log First Refill
-          </Button>
-        </Card>
+        <EmptyState
+          icon={Fuel}
+          title="No fuel logs yet"
+          description="Track every refill to monitor consumption, spend and price trends."
+          action={
+            <Button onClick={() => setShowAddForm(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Log first refill
+            </Button>
+          }
+        />
       )}
 
       {/* Add Fuel Log Dialog */}

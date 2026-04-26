@@ -4,16 +4,17 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Filter, MapPin, Plus, RefreshCcw, Search } from 'lucide-react';
+import { Clock, Filter, MapPin, Plus, RefreshCcw, Search, MapPinned } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function Trips() {
   const [trips, setTrips] = useState<any[]>([]);
@@ -24,7 +25,6 @@ export function Trips() {
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const { profile } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -102,10 +102,9 @@ export function Trips() {
       setTrips(data || []);
     } catch (error: any) {
       console.error('Error fetching trips:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load trip data",
+      toast.error("Failed to load trips", {
+        description: error?.message || "Please check your connection and try again.",
+        action: { label: "Retry", onClick: () => fetchTrips() },
       });
     } finally {
       setLoading(false);
@@ -377,13 +376,27 @@ export function Trips() {
             ))}
           </div>
         ) : (
-          <Card className="p-6 text-center">
-            <p className="text-muted-foreground mb-4">No trip logs found</p>
-            <Button onClick={handleNewTrip}>
-              <Plus className="h-4 w-4 mr-2" />
-              Log New Trip
-            </Button>
-          </Card>
+          <EmptyState
+            icon={MapPinned}
+            title={trips.length === 0 ? "No trips logged yet" : "No trips match your filters"}
+            description={
+              trips.length === 0
+                ? "Log your first trip to start tracking distance, time and fuel."
+                : "Try clearing the search or filters to see more results."
+            }
+            action={
+              trips.length === 0 ? (
+                <Button onClick={handleNewTrip}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Log first trip
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={resetFilters}>
+                  Clear filters
+                </Button>
+              )
+            }
+          />
         )}
       </div>
     </>
