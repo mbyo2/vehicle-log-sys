@@ -10,14 +10,17 @@ import {
 } from "@/components/ui/table";
 import { format } from 'date-fns';
 import { ServiceHistoryDetails } from './ServiceHistoryDetails';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, ChevronDown, ChevronUp, Wrench } from 'lucide-react';
+import { toast } from 'sonner';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Loader2 } from 'lucide-react';
 
 export function ServiceHistory() {
   const [expandedService, setExpandedService] = useState<string | null>(null);
 
-  const { data: services, isLoading } = useQuery({
+  const { data: services, isLoading, error, refetch } = useQuery({
     queryKey: ['service-history'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -45,8 +48,22 @@ export function ServiceHistory() {
     },
   });
 
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load service history', {
+        id: 'service-history-error',
+        description: (error as Error)?.message,
+        action: { label: 'Retry', onClick: () => refetch() },
+      });
+    }
+  }, [error, refetch]);
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   const toggleExpand = (serviceId: string) => {
