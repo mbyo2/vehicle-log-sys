@@ -1,7 +1,8 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -19,10 +20,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, FilterIcon, AlertTriangle } from "lucide-react";
+import { Calendar, Plus, FilterIcon, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from 'date-fns';
 import { MaintenanceScheduler } from '@/components/vehicle/MaintenanceScheduler';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function MaintenanceSchedules() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -30,7 +32,7 @@ export function MaintenanceSchedules() {
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const isMobile = useIsMobile();
   
-  const { data: schedules, isLoading, refetch } = useQuery({
+  const { data: schedules, isLoading, error, refetch } = useQuery({
     queryKey: ['maintenance-schedules', filterStatus],
     queryFn: async () => {
       let query = supabase
@@ -56,6 +58,16 @@ export function MaintenanceSchedules() {
       return data;
     },
   });
+
+  useEffect(() => {
+    if (error) {
+      toast.error('Failed to load maintenance schedules', {
+        id: 'maintenance-schedules-error',
+        description: (error as Error)?.message,
+        action: { label: 'Retry', onClick: () => refetch() },
+      });
+    }
+  }, [error, refetch]);
 
   const handleScheduleComplete = () => {
     setIsDialogOpen(false);
