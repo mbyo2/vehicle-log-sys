@@ -244,6 +244,7 @@ export function NotificationTemplateManager() {
                   size="icon"
                   onClick={() => handleEdit(template)}
                   disabled={template.is_default}
+                  aria-label="Edit template"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -252,6 +253,7 @@ export function NotificationTemplateManager() {
                   size="icon"
                   onClick={() => deleteTemplate.mutate(template.id)}
                   disabled={template.is_default}
+                  aria-label="Delete template"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

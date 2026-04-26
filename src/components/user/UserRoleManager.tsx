@@ -246,6 +246,7 @@ export function UserRoleManager() {
                           className="text-destructive hover:text-destructive"
                           onClick={() => removeUser(user.id)}
                           disabled={updatingUser === user.id}
+                          aria-label={`Remove user ${user.email || user.full_name || ''}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

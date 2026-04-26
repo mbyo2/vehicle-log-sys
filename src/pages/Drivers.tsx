@@ -101,6 +101,7 @@ export function Drivers() {
                       setSelectedDriver(driver);
                       setIsDialogOpen(true);
                     }}
+                    aria-label={`Edit driver ${driver.profile?.full_name || driver.man_number}`}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>

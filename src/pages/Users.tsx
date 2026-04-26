@@ -208,6 +208,7 @@ export function Users() {
                               size="icon" 
                               variant="ghost" 
                               onClick={() => handleRoleChange(user.id)}
+                              aria-label="Confirm role change"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
@@ -215,6 +216,7 @@ export function Users() {
                               size="icon" 
                               variant="ghost" 
                               onClick={cancelEditing}
+                              aria-label="Cancel role change"
                             >
                               <X className="h-4 w-4" />
                             </Button>

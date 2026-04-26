@@ -141,6 +141,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                     variant="ghost"
                     size="icon"
                     onClick={() => setSelectedCompany(company.id)}
+                    aria-label={`View ${company.name}`}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -148,6 +149,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                     variant="ghost"
                     size="icon"
                     onClick={() => handleEdit(company)}
+                    aria-label={`Edit ${company.name}`}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
@@ -158,6 +160,7 @@ export function CompanyTable({ companies, onCompanyUpdated }: CompanyTableProps)
                       setCompanyToDelete(company);
                       setDeleteDialogOpen(true);
                     }}
+                    aria-label={`Delete ${company.name}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

@@ -62,6 +62,7 @@ export function HelpCenter() {
         size="icon"
         className="fixed bottom-4 right-4 h-10 w-10 rounded-full shadow-lg z-50"
         onClick={() => setIsOpen(true)}
+        aria-label="Open help center"
       >
         <HelpCircle className="h-5 w-5" />
       </Button>

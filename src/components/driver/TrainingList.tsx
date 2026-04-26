@@ -253,11 +253,11 @@ function TrainingTable({ trainings, onView }: TrainingTableProps) {
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="ghost" size="icon" onClick={() => onView(training)}>
+                <Button variant="ghost" size="icon" onClick={() => onView(training)} aria-label="View training details">
                   <Eye className="h-4 w-4" />
                 </Button>
                 {training.certificate_file_path && (
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Download certificate">
                     <Download className="h-4 w-4" />
                   </Button>
                 )}

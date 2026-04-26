@@ -152,10 +152,10 @@ export function ServiceBookings() {
                 <TableCell>{booking.notes || "-"}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" aria-label="Edit booking">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" aria-label="Delete booking">
                       <Trash className="h-4 w-4" />
                     </Button>
                   </div>

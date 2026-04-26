@@ -125,6 +125,7 @@ export function OnboardingTutorial() {
                 size="icon" 
                 className="absolute right-4 top-4" 
                 onClick={handleComplete}
+                aria-label="Close tutorial"
               >
                 <X className="h-4 w-4" />
               </Button>
