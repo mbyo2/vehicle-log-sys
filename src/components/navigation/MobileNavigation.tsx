@@ -204,6 +204,7 @@ export function MobileNavigation() {
           variant="ghost" 
           size="icon" 
           className="md:hidden fixed top-4 left-4 z-50 bg-background/80 backdrop-blur-sm border"
+          aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
         </Button>
@@ -219,6 +220,7 @@ export function MobileNavigation() {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
+              aria-label="Close navigation menu"
             >
               <X className="h-5 w-5" />
             </Button>

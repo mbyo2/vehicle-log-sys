@@ -39,6 +39,7 @@ export function WelcomeBanner() {
           size="icon" 
           className="absolute right-2 top-2" 
           onClick={handleDismiss}
+          aria-label="Dismiss welcome banner"
         >
           <X className="h-4 w-4" />
         </Button>

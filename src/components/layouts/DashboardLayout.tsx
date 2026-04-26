@@ -135,6 +135,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             variant="ghost"
             className="fixed left-4 top-4 z-40 md:hidden"
             size="icon"
+            aria-label="Open navigation menu"
           >
             <Menu className="h-4 w-4" />
           </Button>
