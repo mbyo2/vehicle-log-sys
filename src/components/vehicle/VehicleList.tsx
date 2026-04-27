@@ -14,7 +14,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-export function VehicleList() {
+interface VehicleListProps {
+  onAddVehicle?: () => void;
+}
+
+export function VehicleList({ onAddVehicle }: VehicleListProps = {}) {
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -136,7 +140,12 @@ export function VehicleList() {
   });
 
   const handleAddVehicle = () => {
-    navigate('/fleet/add');
+    if (onAddVehicle) {
+      onAddVehicle();
+    } else {
+      // Fall back to fleet page where the add-vehicle dialog lives
+      navigate('/fleet');
+    }
   };
 
   const handleVehicleClick = (id: string) => {
@@ -230,10 +239,12 @@ export function VehicleList() {
             </PopoverContent>
           </Popover>
           
-          <Button onClick={handleAddVehicle} className="shrink-0">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Vehicle
-          </Button>
+          {onAddVehicle && (
+            <Button onClick={handleAddVehicle} className="shrink-0">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Vehicle
+            </Button>
+          )}
         </div>
       </div>
       
