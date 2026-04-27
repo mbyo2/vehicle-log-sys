@@ -134,7 +134,7 @@ export function Trips() {
   };
 
   const handleNewTrip = () => {
-    navigate('/trips/new');
+    navigate('/new-trip');
   };
 
   const handleRefresh = () => {

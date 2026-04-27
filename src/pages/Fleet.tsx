@@ -46,7 +46,14 @@ export function Fleet() {
           )}
         </div>
         
-        <VehicleList key={refreshTrigger} />
+        <VehicleList
+          key={refreshTrigger}
+          onAddVehicle={
+            userRole === 'company_admin' || userRole === 'super_admin'
+              ? () => setShowAddForm(true)
+              : undefined
+          }
+        />
 
         {/* Add Vehicle Dialog */}
         <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
