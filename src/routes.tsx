@@ -93,7 +93,7 @@ export const router = createBrowserRouter([
           { path: "companies", element: <ProtectedRoute allowedRoles={['super_admin']}><Companies /></ProtectedRoute> },
           { path: "security", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}><Security /></ProtectedRoute> },
           { path: "fleet", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><Fleet /></ProtectedRoute> },
-          { path: "fleet/:id", element: <VehicleDetails /> },
+          { path: "fleet/:id", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><VehicleDetails /></ProtectedRoute> },
           { path: "drivers", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><Drivers /></ProtectedRoute> },
           { path: "users", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}><Users /></ProtectedRoute> },
           { path: "user-management", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><UserManagement /></ProtectedRoute> },
