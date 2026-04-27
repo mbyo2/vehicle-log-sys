@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        
+
         console.log('[Auth] State changed:', event);
 
         if (event === 'SIGNED_OUT' || !session) {
@@ -88,12 +88,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         authState.user.set(session.user);
 
-        // For TOKEN_REFRESHED, re-fetch profile in background
-        if (event === 'TOKEN_REFRESHED') {
+        // Re-fetch profile on any auth state change that yields a session
+        // (SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, INITIAL_SESSION).
+        // We only skip the very first INITIAL_SESSION since the getSession()
+        // bootstrap above already handles it.
+        if (event !== 'INITIAL_SESSION') {
           fetchUserProfile(session.user.id).then(profileData => {
-            if (mounted) {
+            if (mounted && profileData) {
               authState.profile.set(profileData);
             }
+            if (mounted) {
+              authState.loading.set(false);
+            }
+          }).catch(err => {
+            console.error('[Auth] Profile re-fetch error:', err);
+            if (mounted) authState.loading.set(false);
           });
         }
       }

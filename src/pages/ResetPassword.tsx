@@ -49,18 +49,47 @@ export default function ResetPassword() {
   const password = form.watch('password');
 
   useEffect(() => {
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
+    // Supabase recovery links arrive as a hash fragment by default:
+    //   /reset-password#access_token=...&refresh_token=...&type=recovery
+    // Some templates instead use query params, so support both.
+    const hash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(hash);
+
+    const accessToken =
+      hashParams.get('access_token') || searchParams.get('access_token');
+    const refreshToken =
+      hashParams.get('refresh_token') || searchParams.get('refresh_token');
+    const type = hashParams.get('type') || searchParams.get('type');
+    const errorDescription =
+      hashParams.get('error_description') || searchParams.get('error_description');
+
+    if (errorDescription) {
+      setError(decodeURIComponent(errorDescription));
+      return;
+    }
+
     if (!accessToken || !refreshToken) {
       setError('Invalid or expired reset link. Please request a new password reset.');
       return;
     }
 
-    // Set the session with the tokens from the URL
+    if (type && type !== 'recovery') {
+      setError('This link is not a password reset link.');
+      return;
+    }
+
+    // Set the session with the tokens from the URL so updateUser() works
     supabase.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
+    }).then(({ error: sessionError }) => {
+      if (sessionError) {
+        setError('Reset link is invalid or has expired. Please request a new one.');
+      }
+      // Clean the URL so tokens aren't visible / reusable on refresh
+      window.history.replaceState({}, document.title, window.location.pathname);
     });
   }, [searchParams]);
 
