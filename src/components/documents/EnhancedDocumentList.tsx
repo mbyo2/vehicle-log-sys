@@ -374,26 +374,41 @@ export function EnhancedDocumentList({
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!docToDelete} onOpenChange={() => setDocToDelete(null)}>
+      <AlertDialog open={!!docToDelete} onOpenChange={(open) => !open && setDocToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete this document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this document. This action cannot be undone.
+              This will permanently delete the document and remove it from your records.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteDocument.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (docToDelete) {
-                  deleteDocument.mutate(docToDelete);
+              disabled={deleteDocument.isPending}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!docToDelete) return;
+                const id = docToDelete;
+                try {
+                  await deleteDocument.mutateAsync(id);
+                  setDocToDelete(null);
+                } catch (error: any) {
+                  toast.error('Failed to delete document', {
+                    id: `delete-doc-${id}`,
+                    description: error?.message ?? 'Please try again.',
+                    action: {
+                      label: 'Retry',
+                      onClick: () => setDocToDelete(id),
+                    },
+                  });
                   setDocToDelete(null);
                 }
               }}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {deleteDocument.isPending ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
