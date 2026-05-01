@@ -63,6 +63,7 @@ export function EnhancedDocumentList({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
+  const [verifyDoc, setVerifyDoc] = useState<Document | null>(null);
   const [filters, setFilters] = useState<DocumentFilters>({
     search: '',
     type: '',
@@ -269,20 +270,10 @@ export function EnhancedDocumentList({
                             Download
                           </DropdownMenuItem>
                           {showVerification && document.verification_status === 'pending' && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                  <FilePenLine className="mr-2 h-4 w-4" />
-                                  Verify
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Verify Document</DialogTitle>
-                                </DialogHeader>
-                                <DocumentVerification document={document} />
-                              </DialogContent>
-                            </Dialog>
+                            <DropdownMenuItem onSelect={() => setVerifyDoc(document)}>
+                              <FilePenLine className="mr-2 h-4 w-4" />
+                              Verify
+                            </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-red-600">
                             <Trash className="mr-2 h-4 w-4" />
@@ -413,6 +404,21 @@ export function EnhancedDocumentList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Verify Document Dialog */}
+      <Dialog open={!!verifyDoc} onOpenChange={(open) => !open && setVerifyDoc(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify Document</DialogTitle>
+          </DialogHeader>
+          {verifyDoc && (
+            <DocumentVerification
+              document={verifyDoc}
+              onSuccess={() => setVerifyDoc(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
