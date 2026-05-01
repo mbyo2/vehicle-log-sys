@@ -270,20 +270,10 @@ export function EnhancedDocumentList({
                             Download
                           </DropdownMenuItem>
                           {showVerification && document.verification_status === 'pending' && (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                  <FilePenLine className="mr-2 h-4 w-4" />
-                                  Verify
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Verify Document</DialogTitle>
-                                </DialogHeader>
-                                <DocumentVerification document={document} />
-                              </DialogContent>
-                            </Dialog>
+                            <DropdownMenuItem onSelect={() => setVerifyDoc(document)}>
+                              <FilePenLine className="mr-2 h-4 w-4" />
+                              Verify
+                            </DropdownMenuItem>
                           )}
                           <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-red-600">
                             <Trash className="mr-2 h-4 w-4" />
