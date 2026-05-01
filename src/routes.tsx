@@ -40,6 +40,7 @@ const Users = lazy(() => import("./pages/Users"));
 const UserManagement = lazy(() => import("./pages/UserManagement").then(m => ({ default: m.UserManagement })));
 const Integrations = lazy(() => import("./pages/Integrations").then(m => ({ default: m.Integrations })));
 const VehicleDetails = lazy(() => import("./pages/VehicleDetails"));
+const DriverDetails = lazy(() => import("./pages/DriverDetails"));
 const NewTrip = lazy(() => import("./pages/NewTrip"));
 const Setup = lazy(() => import("./pages/Setup"));
 const Security = lazy(() => import("./pages/Security"));
