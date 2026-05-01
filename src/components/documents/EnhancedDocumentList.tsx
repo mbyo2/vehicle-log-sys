@@ -63,6 +63,7 @@ export function EnhancedDocumentList({
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [docToDelete, setDocToDelete] = useState<string | null>(null);
+  const [verifyDoc, setVerifyDoc] = useState<Document | null>(null);
   const [filters, setFilters] = useState<DocumentFilters>({
     search: '',
     type: '',
