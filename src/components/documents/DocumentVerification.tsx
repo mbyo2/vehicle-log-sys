@@ -9,20 +9,24 @@ import { Label } from '@/components/ui/label';
 
 interface DocumentVerificationProps {
   document: Document;
+  onSuccess?: () => void;
 }
 
-export function DocumentVerification({ document }: DocumentVerificationProps) {
+export function DocumentVerification({ document, onSuccess }: DocumentVerificationProps) {
   const [status, setStatus] = useState<'verified' | 'rejected'>('verified');
   const [notes, setNotes] = useState('');
   const { verifyDocument } = useDocuments();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    verifyDocument.mutate({
-      documentId: document.id,
-      status,
-      notes: notes.trim() || undefined,
-    });
+    verifyDocument.mutate(
+      {
+        documentId: document.id,
+        status,
+        notes: notes.trim() || undefined,
+      },
+      { onSuccess: () => onSuccess?.() }
+    );
   };
 
   return (
