@@ -404,6 +404,21 @@ export function EnhancedDocumentList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Verify Document Dialog */}
+      <Dialog open={!!verifyDoc} onOpenChange={(open) => !open && setVerifyDoc(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Verify Document</DialogTitle>
+          </DialogHeader>
+          {verifyDoc && (
+            <DocumentVerification
+              document={verifyDoc}
+              onSuccess={() => setVerifyDoc(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
