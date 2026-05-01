@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDrivers } from "@/hooks/useDrivers";
 import { Button } from "@/components/ui/button";
 import { DriverForm } from "@/components/driver/DriverForm";
@@ -18,10 +19,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { format } from "date-fns";
-import { UserPlus, Pencil } from "lucide-react";
+import { UserPlus, Pencil, Eye, Users } from "lucide-react";
 
 export function Drivers() {
+  const navigate = useNavigate();
   const { drivers, availableProfiles, isLoading, addDriver, updateDriver } = useDrivers();
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
