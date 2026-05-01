@@ -293,12 +293,12 @@ export default function DriverDetails() {
                   title="No documents uploaded"
                   description="Upload license copies, certifications, or other driver documents."
                   action={
-                    companyId
-                      ? {
-                          label: "Upload Document",
-                          onClick: () => setUploadOpen(true),
-                        }
-                      : undefined
+                    companyId ? (
+                      <Button onClick={() => setUploadOpen(true)}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Document
+                      </Button>
+                    ) : undefined
                   }
                 />
               ) : (
