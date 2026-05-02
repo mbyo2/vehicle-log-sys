@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { format } from 'date-fns';
 import { ServiceHistoryDetails } from './ServiceHistoryDetails';
-import { useState, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, ChevronDown, ChevronUp, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
@@ -97,8 +97,8 @@ export function ServiceHistory() {
           </TableHeader>
           <TableBody>
             {services.map((service) => (
-              <>
-                <TableRow key={service.id} className="hover:bg-muted/50 cursor-pointer">
+              <Fragment key={service.id}>
+                <TableRow className="hover:bg-muted/50 cursor-pointer">
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -133,7 +133,7 @@ export function ServiceHistory() {
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
