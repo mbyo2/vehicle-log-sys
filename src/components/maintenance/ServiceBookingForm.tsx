@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -35,6 +36,8 @@ export function ServiceBookingForm({ onSuccess }: { onSuccess?: () => void }) {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
+  const companyId = profile?.get()?.company_id;
 
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles'],
@@ -110,7 +113,8 @@ export function ServiceBookingForm({ onSuccess }: { onSuccess?: () => void }) {
       booking_date: date.toISOString(),
       service_type: serviceType,
       notes: notes || undefined,
-    });
+      ...(companyId ? { company_id: companyId } : {}),
+    } as any);
   };
 
   return (
