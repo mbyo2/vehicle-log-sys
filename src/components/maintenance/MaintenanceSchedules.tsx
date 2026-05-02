@@ -18,6 +18,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, FilterIcon, AlertTriangle, Loader2 } from "lucide-react";
@@ -93,43 +99,21 @@ export function MaintenanceSchedules() {
         <h2 className="text-2xl font-bold">Maintenance Schedules</h2>
         
         <div className={`${isMobile ? 'flex justify-between gap-2' : ''}`}>
-          <div className="dropdown-menu">
-            <Button variant="outline" className="mr-2">
-              <FilterIcon className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
-            <div className="dropdown-content">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => setFilterStatus(null)}
-              >
-                All
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="mr-2">
+                <FilterIcon className="h-4 w-4 mr-2" />
+                {filterStatus ? `Filter: ${filterStatus}` : 'Filter'}
               </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => setFilterStatus('pending')}
-              >
-                Pending
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => setFilterStatus('completed')}
-              >
-                Completed
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => setFilterStatus('overdue')}
-              >
-                Overdue
-              </Button>
-            </div>
-          </div>
-          
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setFilterStatus(null)}>All</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('pending')}>Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('completed')}>Completed</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setFilterStatus('overdue')}>Overdue</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
