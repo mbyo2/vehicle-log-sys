@@ -16,6 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +45,7 @@ interface UserWithRole {
 
 export function UserRoleManager() {
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<UserWithRole | null>(null);
   const { toast } = useToast();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -63,16 +74,15 @@ export function UserRoleManager() {
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role")
-        .in("user_id", userIds);
-      
+        .in("user_id", userIds)
+        .order("role", { ascending: true });
+
       if (rolesError) throw rolesError;
 
-      // Merge profiles with roles
+      // Highest priority first (postgres enum order); first-seen wins.
       const roleMap = new Map<string, UserRole>();
       roles?.forEach(r => {
-        // Keep highest priority role if multiple
-        const existing = roleMap.get(r.user_id);
-        if (!existing) roleMap.set(r.user_id, r.role as UserRole);
+        if (!roleMap.has(r.user_id)) roleMap.set(r.user_id, r.role as UserRole);
       });
 
       return profiles.map(p => ({
@@ -244,7 +254,7 @@ export function UserRoleManager() {
                           size="icon"
                           variant="ghost"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => removeUser(user.id)}
+                          onClick={() => setRemoveTarget(user)}
                           disabled={updatingUser === user.id}
                           aria-label={`Remove user ${user.email || user.full_name || ''}`}
                         >
@@ -267,6 +277,32 @@ export function UserRoleManager() {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {removeTarget?.full_name || removeTarget?.email} will lose access to the
+              company. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (removeTarget) {
+                  await removeUser(removeTarget.id);
+                  setRemoveTarget(null);
+                }
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

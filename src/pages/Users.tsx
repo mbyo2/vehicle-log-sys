@@ -68,7 +68,8 @@ export function Users() {
       const { data: roles, error: rolesError } = await supabase
         .from("user_roles")
         .select("user_id, role")
-        .in("user_id", userIds);
+        .in("user_id", userIds)
+        .order("role", { ascending: true });
 
       if (rolesError) throw rolesError;
 
