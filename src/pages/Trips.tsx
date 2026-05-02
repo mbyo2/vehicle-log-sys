@@ -46,7 +46,7 @@ export function Trips() {
       
       // Different queries based on user role
       let query = supabase
-        .from('trip_logs')
+        .from('vehicle_logs')
         .select(`
           *,
           vehicles:vehicle_id (plate_number, make, model),

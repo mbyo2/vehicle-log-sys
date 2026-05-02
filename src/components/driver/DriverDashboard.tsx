@@ -41,7 +41,7 @@ export function DriverDashboard() {
       if (!userId) return [];
       
       const { data, error } = await supabase
-        .from('trip_logs')
+        .from('vehicle_logs')
         .select('*')
         .eq('driver_id', userId)
         .order('start_time', { ascending: false })
