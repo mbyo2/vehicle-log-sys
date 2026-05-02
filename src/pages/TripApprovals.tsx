@@ -8,9 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Check, X, Calendar, User, MessageSquare } from "lucide-react";
+import { Check, X, Calendar, User, MessageSquare, Loader2, Inbox } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface TripLog {
   id: string;
@@ -42,6 +45,8 @@ export function TripApprovals() {
   const { sendNotification } = useNotifications();
   const { profile } = useAuth();
   const [selectedTab, setSelectedTab] = useState("pending");
+  const [rejectTripId, setRejectTripId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const profileData = profile?.get();
   const userId = profileData?.id;
@@ -169,10 +174,22 @@ export function TripApprovals() {
 
         <TabsContent value={selectedTab}>
           {isLoading ? (
-            <div>Loading trips...</div>
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : !trips || trips.length === 0 ? (
+            <EmptyState
+              icon={Inbox}
+              title={`No ${selectedTab} trips`}
+              description={
+                selectedTab === "pending"
+                  ? "There are no trip requests waiting for approval."
+                  : `No trips have been ${selectedTab} yet.`
+              }
+            />
           ) : (
             <div className="grid gap-4">
-              {trips?.map((trip) => (
+              {trips.map((trip) => (
                 <Card key={trip.id}>
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="text-xl">
@@ -223,10 +240,8 @@ export function TripApprovals() {
                           <Button
                             variant="destructive"
                             onClick={() => {
-                              const comment = window.prompt("Reason for rejection:");
-                              if (comment) {
-                                handleApproval(trip.id, "rejected", comment);
-                              }
+                              setRejectReason("");
+                              setRejectTripId(trip.id);
                             }}
                           >
                             <X className="mr-2 h-4 w-4" />
@@ -242,6 +257,35 @@ export function TripApprovals() {
           )}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!rejectTripId} onOpenChange={(o) => !o && setRejectTripId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Trip</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            placeholder="Reason for rejection (required)"
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            rows={4}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectTripId(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              disabled={!rejectReason.trim()}
+              onClick={async () => {
+                if (rejectTripId && rejectReason.trim()) {
+                  await handleApproval(rejectTripId, "rejected", rejectReason.trim());
+                  setRejectTripId(null);
+                }
+              }}
+            >
+              Reject Trip
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

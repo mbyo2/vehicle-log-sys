@@ -24,7 +24,7 @@ export default function TripManagement() {
       setLoading(true);
       // Fetch trips along with vehicle and driver information
       const { data, error } = await supabase
-        .from('trip_logs')
+        .from('vehicle_logs')
         .select(`
           *,
           vehicles:vehicle_id (plate_number),

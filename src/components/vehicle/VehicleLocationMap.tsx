@@ -39,7 +39,7 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
       try {
         setIsLoading(true);
         const { data, error } = await supabase
-          .from('trip_logs')
+          .from('vehicle_logs')
           .select(`
             id, 
             vehicle_id,
