@@ -153,7 +153,7 @@ export function Exports() {
 
           (fuelRes.data || []).forEach((f) => {
             ledgerEntries.push({
-              "Date": format(new Date(f.created_at), "yyyy-MM-dd"),
+              "Date": safeDate(f.created_at),
               "Type": "Fuel",
               "Vehicle": f.vehicles?.plate_number || "",
               "Description": `${(f as any).fuel_type || "diesel"} - ${f.liters_added}L`,
@@ -167,7 +167,7 @@ export function Exports() {
 
           (maintRes.data || []).forEach((s: any) => {
             ledgerEntries.push({
-              "Date": s.service_date,
+              "Date": s.service_date || "",
               "Type": "Maintenance",
               "Vehicle": s.vehicles?.plate_number || "",
               "Description": s.service_type + (s.description ? ` - ${s.description}` : ""),
@@ -182,7 +182,7 @@ export function Exports() {
           (tripsRes.data || []).forEach((t) => {
             const km = (t.end_kilometers || 0) - (t.start_kilometers || 0);
             ledgerEntries.push({
-              "Date": format(new Date(t.start_time), "yyyy-MM-dd"),
+              "Date": safeDate(t.start_time),
               "Type": "Trip",
               "Vehicle": t.vehicles?.plate_number || "",
               "Description": `${t.purpose} - ${km}km` + (t.cargo_description ? ` [${t.cargo_description}]` : ""),
@@ -194,7 +194,7 @@ export function Exports() {
             });
           });
 
-          ledgerEntries.sort((a, b) => a.Date.localeCompare(b.Date));
+          ledgerEntries.sort((a, b) => String(a.Date).localeCompare(String(b.Date)));
           data = ledgerEntries;
           filename = `full-ledger-${format(new Date(), "yyyy-MM-dd")}`;
           break;
