@@ -278,6 +278,19 @@ export function Exports() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>From</Label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              </div>
+              <div>
+                <Label>To</Label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Date filter applies to Trips, Fuel and Maintenance exports. Vehicles, Drivers and Full Ledger export all records.
+            </p>
             <Button className="w-full" onClick={handleExport} disabled={exporting}>
               {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               {exporting ? "Exporting..." : "Download Export"}
