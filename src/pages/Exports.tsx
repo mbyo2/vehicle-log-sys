@@ -29,17 +29,23 @@ export function Exports() {
       let data: any[] = [];
       let filename = "";
 
+      const safeDate = (d: string | null | undefined, fmt = "yyyy-MM-dd") =>
+        d ? format(new Date(d), fmt) : "";
+
       switch (exportType) {
         case "trips": {
-          const { data: trips, error } = await supabase
+          let q = supabase
             .from("vehicle_logs")
             .select("*, vehicles(plate_number, make, model)")
             .order("start_time", { ascending: false });
+          if (dateFrom) q = q.gte("start_time", dateFrom);
+          if (dateTo) q = q.lte("start_time", `${dateTo}T23:59:59`);
+          const { data: trips, error } = await q;
           if (error) throw error;
           data = (trips || []).map((t) => ({
-            "Date": format(new Date(t.start_time), "yyyy-MM-dd"),
-            "Start Time": format(new Date(t.start_time), "HH:mm"),
-            "End Time": t.end_time ? format(new Date(t.end_time), "HH:mm") : "",
+            "Date": safeDate(t.start_time),
+            "Start Time": safeDate(t.start_time, "HH:mm"),
+            "End Time": safeDate(t.end_time, "HH:mm"),
             "Vehicle": t.vehicles?.plate_number || "",
             "Start KM": t.start_kilometers,
             "End KM": t.end_kilometers,
@@ -57,13 +63,16 @@ export function Exports() {
           break;
         }
         case "fuel": {
-          const { data: fuel, error } = await supabase
+          let q = supabase
             .from("fuel_logs")
             .select("*, vehicles(plate_number)")
             .order("created_at", { ascending: false });
+          if (dateFrom) q = q.gte("created_at", dateFrom);
+          if (dateTo) q = q.lte("created_at", `${dateTo}T23:59:59`);
+          const { data: fuel, error } = await q;
           if (error) throw error;
           data = (fuel || []).map((f) => ({
-            "Date": format(new Date(f.created_at), "yyyy-MM-dd"),
+            "Date": safeDate(f.created_at),
             "Vehicle": f.vehicles?.plate_number || "",
             "Fuel Type": (f as any).fuel_type || "diesel",
             "Liters": f.liters_added,
@@ -77,10 +86,13 @@ export function Exports() {
           break;
         }
         case "maintenance": {
-          const { data: services, error } = await supabase
+          let q = supabase
             .from("vehicle_services")
             .select("*, vehicles(plate_number)")
             .order("service_date", { ascending: false });
+          if (dateFrom) q = q.gte("service_date", dateFrom);
+          if (dateTo) q = q.lte("service_date", dateTo);
+          const { data: services, error } = await q;
           if (error) throw error;
           data = (services || []).map((s: any) => ({
             "Date": s.service_date,
@@ -141,7 +153,7 @@ export function Exports() {
 
           (fuelRes.data || []).forEach((f) => {
             ledgerEntries.push({
-              "Date": format(new Date(f.created_at), "yyyy-MM-dd"),
+              "Date": safeDate(f.created_at),
               "Type": "Fuel",
               "Vehicle": f.vehicles?.plate_number || "",
               "Description": `${(f as any).fuel_type || "diesel"} - ${f.liters_added}L`,
@@ -155,7 +167,7 @@ export function Exports() {
 
           (maintRes.data || []).forEach((s: any) => {
             ledgerEntries.push({
-              "Date": s.service_date,
+              "Date": s.service_date || "",
               "Type": "Maintenance",
               "Vehicle": s.vehicles?.plate_number || "",
               "Description": s.service_type + (s.description ? ` - ${s.description}` : ""),
@@ -170,7 +182,7 @@ export function Exports() {
           (tripsRes.data || []).forEach((t) => {
             const km = (t.end_kilometers || 0) - (t.start_kilometers || 0);
             ledgerEntries.push({
-              "Date": format(new Date(t.start_time), "yyyy-MM-dd"),
+              "Date": safeDate(t.start_time),
               "Type": "Trip",
               "Vehicle": t.vehicles?.plate_number || "",
               "Description": `${t.purpose} - ${km}km` + (t.cargo_description ? ` [${t.cargo_description}]` : ""),
@@ -182,7 +194,7 @@ export function Exports() {
             });
           });
 
-          ledgerEntries.sort((a, b) => a.Date.localeCompare(b.Date));
+          ledgerEntries.sort((a, b) => String(a.Date).localeCompare(String(b.Date)));
           data = ledgerEntries;
           filename = `full-ledger-${format(new Date(), "yyyy-MM-dd")}`;
           break;
@@ -266,6 +278,19 @@ export function Exports() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>From</Label>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              </div>
+              <div>
+                <Label>To</Label>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Date filter applies to Trips, Fuel and Maintenance exports. Vehicles, Drivers and Full Ledger export all records.
+            </p>
             <Button className="w-full" onClick={handleExport} disabled={exporting}>
               {exporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               {exporting ? "Exporting..." : "Download Export"}
