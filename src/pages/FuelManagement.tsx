@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,14 +56,15 @@ export function FuelManagement() {
     },
   });
 
-  // Surface fetch failures via toast
-  if (fuelError) {
+  // Surface fetch failures via toast (side effect must be in useEffect)
+  useEffect(() => {
+    if (!fuelError) return;
     toast.error("Failed to load fuel logs", {
       id: "fuel-logs-error",
       description: (fuelError as Error)?.message,
       action: { label: "Retry", onClick: () => refetch() },
     });
-  }
+  }, [fuelError, refetch]);
 
   const addFuelLog = useMutation({
     mutationFn: async () => {

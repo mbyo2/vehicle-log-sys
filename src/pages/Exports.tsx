@@ -29,17 +29,23 @@ export function Exports() {
       let data: any[] = [];
       let filename = "";
 
+      const safeDate = (d: string | null | undefined, fmt = "yyyy-MM-dd") =>
+        d ? format(new Date(d), fmt) : "";
+
       switch (exportType) {
         case "trips": {
-          const { data: trips, error } = await supabase
+          let q = supabase
             .from("vehicle_logs")
             .select("*, vehicles(plate_number, make, model)")
             .order("start_time", { ascending: false });
+          if (dateFrom) q = q.gte("start_time", dateFrom);
+          if (dateTo) q = q.lte("start_time", `${dateTo}T23:59:59`);
+          const { data: trips, error } = await q;
           if (error) throw error;
           data = (trips || []).map((t) => ({
-            "Date": format(new Date(t.start_time), "yyyy-MM-dd"),
-            "Start Time": format(new Date(t.start_time), "HH:mm"),
-            "End Time": t.end_time ? format(new Date(t.end_time), "HH:mm") : "",
+            "Date": safeDate(t.start_time),
+            "Start Time": safeDate(t.start_time, "HH:mm"),
+            "End Time": safeDate(t.end_time, "HH:mm"),
             "Vehicle": t.vehicles?.plate_number || "",
             "Start KM": t.start_kilometers,
             "End KM": t.end_kilometers,
@@ -57,13 +63,16 @@ export function Exports() {
           break;
         }
         case "fuel": {
-          const { data: fuel, error } = await supabase
+          let q = supabase
             .from("fuel_logs")
             .select("*, vehicles(plate_number)")
             .order("created_at", { ascending: false });
+          if (dateFrom) q = q.gte("created_at", dateFrom);
+          if (dateTo) q = q.lte("created_at", `${dateTo}T23:59:59`);
+          const { data: fuel, error } = await q;
           if (error) throw error;
           data = (fuel || []).map((f) => ({
-            "Date": format(new Date(f.created_at), "yyyy-MM-dd"),
+            "Date": safeDate(f.created_at),
             "Vehicle": f.vehicles?.plate_number || "",
             "Fuel Type": (f as any).fuel_type || "diesel",
             "Liters": f.liters_added,
@@ -77,10 +86,13 @@ export function Exports() {
           break;
         }
         case "maintenance": {
-          const { data: services, error } = await supabase
+          let q = supabase
             .from("vehicle_services")
             .select("*, vehicles(plate_number)")
             .order("service_date", { ascending: false });
+          if (dateFrom) q = q.gte("service_date", dateFrom);
+          if (dateTo) q = q.lte("service_date", dateTo);
+          const { data: services, error } = await q;
           if (error) throw error;
           data = (services || []).map((s: any) => ({
             "Date": s.service_date,
