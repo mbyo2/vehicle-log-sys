@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,30 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { profile, user } = useAuth();
-  const [fullName, setFullName] = useState(profile.get()?.full_name || "");
+  const currentProfile = profile.get();
+  const [fullName, setFullName] = useState(currentProfile?.full_name || "");
+  const [highestRole, setHighestRole] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    document.title = "Profile | Fleet Manager";
+  }, []);
+
+  useEffect(() => {
+    const loadRole = async () => {
+      if (!currentProfile?.id) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", currentProfile.id)
+        .order("role", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (data?.role) setHighestRole(data.role);
+    };
+    loadRole();
+  }, [currentProfile?.id]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +66,7 @@ const Profile = () => {
     }
   };
 
-  const currentProfile = profile.get();
+  
 
   return (
     <div className="container max-w-2xl py-8">
@@ -87,7 +108,7 @@ const Profile = () => {
               <Input
                 id="role"
                 type="text"
-                value={currentProfile?.role || ""}
+                value={highestRole || "—"}
                 disabled
                 className="bg-muted capitalize"
               />
