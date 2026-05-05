@@ -183,9 +183,10 @@ export function OnboardingTutorial() {
         </SheetContent>
       </Sheet>
       
-      <Card className="fixed bottom-4 right-4 z-50 shadow-lg bg-card hidden md:block">
-        <CardContent className="p-4">
-          <Button onClick={() => setIsOpen(true)}>
+      {/* Positioned to the LEFT of the HelpCenter floating button (which sits at right-4). */}
+      <Card className="fixed bottom-4 right-20 z-40 shadow-lg bg-card hidden md:block">
+        <CardContent className="p-2">
+          <Button size="sm" onClick={() => setIsOpen(true)}>
             Take a Tour
           </Button>
         </CardContent>
