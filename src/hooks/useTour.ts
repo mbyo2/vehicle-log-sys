@@ -2,38 +2,47 @@
 import { useState, useEffect } from 'react';
 import { authState } from '@/contexts/auth/AuthState';
 
+const TOUR_COMPLETED_KEY = 'tour-completed';
+const TOUR_RESET_EVENT = 'tour:reset';
+
 export function useTour() {
   const [shouldShowTour, setShouldShowTour] = useState(false);
-  const tourCompletedKey = 'tour-completed';
-  
+
   useEffect(() => {
-    // Check if the tour has been completed before and if user is logged in
-    const tourCompleted = localStorage.getItem(tourCompletedKey);
+    const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY);
     const user = authState.user.get();
-    
-    // Only show tour if user is logged in and tour hasn't been completed
+
     if (user && !tourCompleted) {
       setShouldShowTour(true);
     }
+
+    // Listen for cross-component reset events so any consumer (e.g. HelpCenter)
+    // can trigger the tour to reopen in OnboardingTutorial.
+    const handleReset = () => {
+      const currentUser = authState.user.get();
+      if (currentUser) {
+        setShouldShowTour(true);
+      }
+    };
+
+    window.addEventListener(TOUR_RESET_EVENT, handleReset);
+    return () => window.removeEventListener(TOUR_RESET_EVENT, handleReset);
   }, []);
-  
+
   const completeTour = () => {
-    localStorage.setItem(tourCompletedKey, 'true');
+    localStorage.setItem(TOUR_COMPLETED_KEY, 'true');
     setShouldShowTour(false);
   };
-  
+
   const resetTour = () => {
-    localStorage.removeItem(tourCompletedKey);
-    const user = authState.user.get();
-    // Only show tour if user is logged in
-    if (user) {
-      setShouldShowTour(true);
-    }
+    localStorage.removeItem(TOUR_COMPLETED_KEY);
+    // Notify all useTour consumers (across components) to re-open the tour.
+    window.dispatchEvent(new CustomEvent(TOUR_RESET_EVENT));
   };
-  
+
   return {
     shouldShowTour,
     completeTour,
-    resetTour
+    resetTour,
   };
 }
