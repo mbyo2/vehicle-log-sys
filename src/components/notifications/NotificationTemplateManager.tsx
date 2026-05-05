@@ -14,8 +14,9 @@ import type { NotificationType, NotificationDelivery } from '@/hooks/useNotifica
 
 export function NotificationTemplateManager() {
   const { profile } = useAuth();
-  const companyId = profile?.company_id?.get() || undefined;
-  const userId = profile?.id?.get() || undefined;
+  const currentProfile = profile.get();
+  const companyId = currentProfile?.company_id || undefined;
+  const userId = currentProfile?.id || undefined;
   const { templates, createTemplate, updateTemplate, deleteTemplate, isLoading } = useNotificationTemplates(companyId);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
