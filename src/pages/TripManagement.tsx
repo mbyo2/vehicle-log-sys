@@ -16,6 +16,7 @@ export default function TripManagement() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = 'Trip Management | Fleet Management';
     fetchTrips();
   }, []);
 
