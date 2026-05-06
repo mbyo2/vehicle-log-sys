@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +16,10 @@ import { Button } from "@/components/ui/button";
 export function Companies() {
   const { toast } = useToast();
   const { openModal } = useModal();
+
+  useEffect(() => {
+    document.title = "Companies | Fleet Management";
+  }, []);
 
   const { data: companies, isLoading, error, refetch } = useQuery({
     queryKey: ["companies"],
