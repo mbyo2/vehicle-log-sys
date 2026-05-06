@@ -10,8 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Edit, Car, FileText, Calendar, User } from 'lucide-react';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { isAdminRole } from '@/lib/permissions';
+import { ArrowLeft, Edit, Car, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -24,15 +25,16 @@ export default function VehicleDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { profile } = useAuth();
+  const { role } = useEnhancedAuth();
+  const canManage = isAdminRole(role);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [showEditForm, setShowEditForm] = useState(false);
-  const userRole = profile.get()?.role;
 
   useEffect(() => {
     if (id) {
       fetchVehicle();
+      document.title = 'Vehicle Details | Fleet Management';
     }
   }, [id]);
 
@@ -103,7 +105,7 @@ export default function VehicleDetails() {
             </div>
           </div>
           
-          {(userRole === 'company_admin' || userRole === 'super_admin') && (
+          {canManage && (
             <Button onClick={() => setShowEditForm(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Vehicle

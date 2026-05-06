@@ -1,24 +1,29 @@
 
 import { VehicleList } from '@/components/vehicle/VehicleList';
 import { EnhancedVehicleForm } from '@/components/vehicle/EnhancedVehicleForm';
-import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, ArrowLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { isAdminRole } from '@/lib/permissions';
 
 export function Fleet() {
-  const { profile } = useAuth();
   const isMobile = useIsMobile();
-  const userRole = profile.get()?.role;
+  const { role } = useEnhancedAuth();
+  const canManage = isAdminRole(role);
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    document.title = 'Fleet | Vehicle Management';
+  }, []);
   
   const handleAddSuccess = () => {
     setShowAddForm(false);
@@ -38,7 +43,7 @@ export function Fleet() {
             </p>
           </div>
           
-          {(userRole === 'company_admin' || userRole === 'super_admin') && (
+          {canManage && (
             <Button onClick={() => setShowAddForm(true)} className="shrink-0">
               <Plus className="h-4 w-4 mr-2" />
               Add Vehicle
@@ -48,11 +53,7 @@ export function Fleet() {
         
         <VehicleList
           key={refreshTrigger}
-          onAddVehicle={
-            userRole === 'company_admin' || userRole === 'super_admin'
-              ? () => setShowAddForm(true)
-              : undefined
-          }
+          onAddVehicle={canManage ? () => setShowAddForm(true) : undefined}
         />
 
         {/* Add Vehicle Dialog */}
