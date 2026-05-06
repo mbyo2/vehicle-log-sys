@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, Plus, Trash2, UserPlus } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import type { UserRole } from '@/types/auth';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { getAssignableRoles } from '@/lib/permissions';
 
 interface UserCompany {
   company_id: string;
@@ -29,8 +31,10 @@ export function MultiCompanyUserManager({ userId, userName, currentRole }: Multi
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { role: currentUserRole } = useEnhancedAuth();
 
-  const roles: UserRole[] = ['company_admin', 'supervisor', 'driver'];
+  // Strictly never expose super_admin assignment in this UI; filter by caller's role.
+  const roles: UserRole[] = getAssignableRoles(currentUserRole).filter((r) => r !== 'super_admin');
 
   useEffect(() => {
     loadData();
