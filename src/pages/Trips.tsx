@@ -28,23 +28,43 @@ export function Trips() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // Read observable at top level only (legend-state rule)
+  const userProfile = profile.get();
+  const userId = userProfile?.id;
+  const companyId = userProfile?.company_id;
+
   useEffect(() => {
+    document.title = 'Trip Logs | Fleet Management';
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
     fetchTrips();
     fetchVehicles();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, companyId]);
 
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const userProfile = profile.get();
-      
-      if (!userProfile) {
+
+      if (!userId) {
         setTrips([]);
         setLoading(false);
         return;
       }
-      
-      // Different queries based on user role
+
+      // Get highest-priority role from user_roles (DB rule: role is NOT on profiles)
+      const { data: roleRow } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .order('role', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      const role = roleRow?.role;
+
       let query = supabase
         .from('vehicle_logs')
         .select(`
@@ -53,21 +73,18 @@ export function Trips() {
           drivers:driver_id (id, man_number, profiles:profile_id (full_name))
         `)
         .order('start_time', { ascending: false });
-        
-      // Apply company filter for company admins and supervisors
-      if (userProfile.role === 'company_admin' || userProfile.role === 'supervisor') {
-        if (!userProfile.company_id) {
+
+      if (role === 'company_admin' || role === 'supervisor') {
+        if (!companyId) {
           setTrips([]);
           setLoading(false);
           return;
         }
-        
-        // Get all trips for this company
         const { data: companyVehicles } = await supabase
           .from('vehicles')
           .select('id')
-          .eq('company_id', userProfile.company_id);
-          
+          .eq('company_id', companyId);
+
         if (companyVehicles && companyVehicles.length > 0) {
           query = query.in('vehicle_id', companyVehicles.map(v => v.id));
         } else {
@@ -76,16 +93,14 @@ export function Trips() {
           return;
         }
       }
-      
-      // For drivers, only show their own trips
-      if (userProfile.role === 'driver') {
-        // Find driver id for this profile
+
+      if (role === 'driver') {
         const { data: driverData } = await supabase
           .from('drivers')
           .select('id')
-          .eq('profile_id', userProfile.id)
-          .single();
-          
+          .eq('profile_id', userId)
+          .maybeSingle();
+
         if (driverData) {
           query = query.eq('driver_id', driverData.id);
         } else {
@@ -94,11 +109,10 @@ export function Trips() {
           return;
         }
       }
-      
+
       const { data, error } = await query;
-      
       if (error) throw error;
-      
+
       setTrips(data || []);
     } catch (error: any) {
       console.error('Error fetching trips:', error);
@@ -113,20 +127,18 @@ export function Trips() {
 
   const fetchVehicles = async () => {
     try {
-      const userProfile = profile.get();
-      
-      if (!userProfile?.company_id) {
+      if (!companyId) {
         setVehicles([]);
         return;
       }
-      
+
       const { data, error } = await supabase
         .from('vehicles')
         .select('id, plate_number, make, model')
-        .eq('company_id', userProfile.company_id);
-        
+        .eq('company_id', companyId);
+
       if (error) throw error;
-      
+
       setVehicles(data || []);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
