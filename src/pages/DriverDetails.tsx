@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,6 +46,10 @@ export default function DriverDetails() {
   const profileData = profile.get();
   const companyId = profileData?.company_id;
   const [uploadOpen, setUploadOpen] = useState(false);
+
+  useEffect(() => {
+    document.title = "Driver Details | Fleet Management";
+  }, []);
 
   const { data: driver, isLoading: isLoadingDriver } = useQuery({
     queryKey: ["driver", id],

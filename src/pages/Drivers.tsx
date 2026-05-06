@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDrivers } from "@/hooks/useDrivers";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,10 @@ export function Drivers() {
   const { drivers, availableProfiles, isLoading, addDriver, updateDriver } = useDrivers();
   const [selectedDriver, setSelectedDriver] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    document.title = "Drivers | Fleet Management";
+  }, []);
 
   const handleAddDriver = (data: any) => {
     addDriver(data);
