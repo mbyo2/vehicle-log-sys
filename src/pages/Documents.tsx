@@ -1,6 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
+import { isAdminRole } from '@/lib/permissions';
 import { DocumentUpload } from '@/components/documents/DocumentUpload';
 import { EnhancedDocumentList } from '@/components/documents/EnhancedDocumentList';
 import { DocumentCategories } from '@/components/documents/DocumentCategories';
@@ -24,14 +26,19 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function Documents() {
   const { profile } = useAuth();
+  const { role } = useEnhancedAuth();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { sendNotification } = useNotifications();
-  
+
+  useEffect(() => {
+    document.title = 'Documents | Fleet Management';
+  }, []);
+
   // Get the actual values using .get()
   const profileData = profile?.get();
   const companyId = profileData?.company_id;
   const userId = profileData?.id;
-  const isAdmin = profileData?.role === 'company_admin' || profileData?.role === 'super_admin';
+  const isAdmin = isAdminRole(role);
 
   if (!companyId) {
     return (
