@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from 'date-fns';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,10 @@ export function Analytics() {
   } = useAnalytics();
 
   const [selectedTab, setSelectedTab] = useState("dashboard");
+
+  useEffect(() => {
+    document.title = 'Analytics & Reporting | Fleet Management';
+  }, []);
 
   const handleDateRangeChange = (e: React.FormEvent) => {
     e.preventDefault();

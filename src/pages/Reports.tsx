@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, LineChart, PieChart, Activity, DollarSign } from "lucide-react";
 import { FleetUtilization } from "@/components/reports/FleetUtilization";
@@ -14,6 +14,10 @@ const iconMap: Record<string, React.ElementType> = {
 
 export function Reports() {
   const { reportTabs, industryInfo } = useIndustryConfig();
+
+  useEffect(() => {
+    document.title = `${industryInfo.name} Reports & Analytics | Fleet Management`;
+  }, [industryInfo.name]);
 
   const tabComponents: Record<string, React.ReactNode> = {
     company: <CompanyMetrics />,
