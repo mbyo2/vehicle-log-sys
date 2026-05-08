@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -46,6 +47,10 @@ interface ServiceBooking {
 
 export function ServiceBookings() {
   const { toast } = useToast();
+
+  useEffect(() => {
+    document.title = 'Service Bookings | Fleet Management';
+  }, []);
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ["serviceBookings"],

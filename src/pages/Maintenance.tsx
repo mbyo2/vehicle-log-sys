@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ export function Maintenance() {
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    document.title = 'Maintenance | Fleet Management';
+  }, []);
 
   return (
     <div className="space-y-6">
