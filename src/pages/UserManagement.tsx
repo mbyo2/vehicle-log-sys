@@ -1,15 +1,19 @@
+import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserInvitationForm } from "@/components/user/UserInvitationForm";
 import { UserRoleManager } from "@/components/user/UserRoleManager";
 import { AdminPasswordReset } from "@/components/admin/AdminPasswordReset";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { isAdminRole } from "@/lib/permissions";
 
 export function UserManagement() {
-  const { profile } = useAuth();
-  const currentProfile = profile.get();
+  const { role } = useEnhancedAuth();
+  const canInviteUsers = isAdminRole(role);
 
-  const canInviteUsers = currentProfile?.role === "super_admin" || currentProfile?.role === "company_admin";
+  useEffect(() => {
+    document.title = "User Management | Fleet Management";
+  }, []);
 
   if (!canInviteUsers) {
     return (

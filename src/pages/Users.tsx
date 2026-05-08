@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserInvitationForm } from "@/components/auth/UserInvitationForm";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { isAdminRole, isSuperAdmin as checkSuperAdmin } from "@/lib/permissions";
 import { supabase } from "@/integrations/supabase/client";
 import { UserRole } from "@/types/auth";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -35,14 +37,18 @@ export function Users() {
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const { profile } = useAuth();
+  const { role: currentRole } = useEnhancedAuth();
   const { updateUserRole, getAssignableRoles } = useRoleManagement();
-  
+
   // Extract profile once at top level to avoid Legend-state hook ordering issues
   const currentProfile = profile.get();
-  const currentRole = currentProfile?.role;
-  const isAdmin = currentRole === 'super_admin' || currentRole === 'company_admin';
-  const isSuperAdmin = currentRole === 'super_admin';
+  const isAdmin = isAdminRole(currentRole);
+  const isSuperAdmin = checkSuperAdmin(currentRole);
   const assignableRoles = getAssignableRoles();
+
+  useEffect(() => {
+    document.title = "User Management | Fleet Management";
+  }, []);
 
   const fetchUsers = async () => {
     if (!currentProfile) return;
