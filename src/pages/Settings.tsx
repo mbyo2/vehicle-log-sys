@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,10 @@ import { Building2, Users, Bell } from "lucide-react";
 export function Settings() {
   const { profile } = useAuth();
   const currentProfile = profile.get();
+
+  useEffect(() => {
+    document.title = "Settings | Fleet Management";
+  }, []);
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["company", currentProfile?.company_id],

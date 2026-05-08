@@ -1,14 +1,15 @@
+import { useEffect } from 'react';
 import { RoleBasedRoute } from '@/components/auth/RoleBasedRoute';
 import { SecurityDashboard } from '@/components/security/SecurityDashboard';
 import { SecuritySettings } from "@/components/security/SecuritySettings";
 import { EnhancedSecurityDashboard } from "@/components/security/EnhancedSecurityDashboard";
 import { SecurityMonitoringDashboard } from "@/components/security/SecurityMonitoringDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
 
 export default function Security() {
-  const { profile, hasPermission } = useEnhancedAuth();
-  const isAdminOrAbove = profile?.role === 'super_admin' || profile?.role === 'company_admin';
+  useEffect(() => {
+    document.title = "Security | Fleet Management";
+  }, []);
 
   return (
     <RoleBasedRoute 
