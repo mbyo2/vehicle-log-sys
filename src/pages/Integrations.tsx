@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { VehicleLocationMap } from '@/components/vehicle/VehicleLocationMap';
@@ -12,6 +12,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function Integrations() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>('');
+
+  useEffect(() => {
+    document.title = "External Integrations | Fleet Management";
+  }, []);
 
   return (
     <div className="space-y-6">
