@@ -1,4 +1,4 @@
-
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,10 @@ import { Vehicle } from "@/types/vehicle";
 import { VehicleInspection } from "@/types/inspection";
 
 export function VehicleStatus() {
+  useEffect(() => {
+    document.title = "Vehicle Status | Fleet Management";
+  }, []);
+
   const { data: vehicles, isLoading: loadingVehicles } = useQuery({
     queryKey: ['assigned-vehicles'],
     queryFn: async () => {
