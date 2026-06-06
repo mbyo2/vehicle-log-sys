@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdPlacement } from "@/components/advertisements/AdPlacement";
 import { AdPurchaseForm } from "@/components/advertisements/AdPurchaseForm";
 import { AdAnalytics } from "@/components/advertisements/AdAnalytics";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { isAdminRole } from "@/lib/permissions";
 
 export function Advertisements() {
-  const { profile } = useAuth();
+  const { role } = useEnhancedAuth();
   const [activeTab, setActiveTab] = useState("view");
 
-  const currentProfile = profile.get();
-  const isAdvertiser = currentProfile?.role === 'super_admin' || currentProfile?.role === 'company_admin';
+  useEffect(() => {
+    document.title = "Advertisements | Fleet Management";
+  }, []);
+
+  const isAdvertiser = isAdminRole(role);
 
   return (
     <div className="container mx-auto py-6">

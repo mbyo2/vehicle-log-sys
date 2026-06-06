@@ -22,6 +22,10 @@ export function FuelManagement() {
   const [showAddForm, setShowAddForm] = useState(false);
   const userProfile = profile.get();
 
+  useEffect(() => {
+    document.title = "Fuel Management | Fleet Management";
+  }, []);
+
   const [form, setForm] = useState({
     vehicle_id: "",
     liters_added: "",
