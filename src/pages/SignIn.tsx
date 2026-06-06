@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Navigate } from 'react-router-dom';
@@ -6,6 +7,10 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 export default function SignIn() {
   const { user, loading } = useEnhancedAuth();
+
+  useEffect(() => {
+    document.title = 'Sign In | Fleet Management';
+  }, []);
   
   // If still loading, show a spinner
   if (loading) {

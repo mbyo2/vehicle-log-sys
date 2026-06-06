@@ -51,6 +51,10 @@ export default function AcceptInvitation() {
   });
 
   useEffect(() => {
+    document.title = 'Accept Invitation | Fleet Management';
+  }, []);
+
+  useEffect(() => {
     if (!token) {
       setError('Invalid invitation link');
       setLoading(false);

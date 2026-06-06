@@ -15,6 +15,10 @@ export default function SignUp() {
   const locationIsFirstUser = location.state?.isFirstUser;
 
   useEffect(() => {
+    document.title = 'Sign Up | Fleet Management';
+  }, []);
+
+  useEffect(() => {
     const checkFirstUserStatus = async () => {
       try {
         setCheckingFirstUser(true);

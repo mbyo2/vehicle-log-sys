@@ -1,14 +1,19 @@
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductionReadiness } from "@/components/onboarding/ProductionReadiness";
 import { DeploymentGuide } from "@/components/onboarding/DeploymentGuide";
 import { UserManagement } from "@/pages/UserManagement";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEnhancedAuth } from "@/hooks/useEnhancedAuth";
+import { isSuperAdmin as checkSuperAdmin } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Setup() {
-  const { profile } = useAuth();
-  const currentProfile = profile.get();
-  const isSuperAdmin = currentProfile?.role === 'super_admin';
+  const { role } = useEnhancedAuth();
+  const isSuperAdmin = checkSuperAdmin(role);
+
+  useEffect(() => {
+    document.title = "System Setup | Fleet Management";
+  }, []);
 
   if (!isSuperAdmin) {
     return (
