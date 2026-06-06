@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,10 @@ export function TripApprovals() {
   const [selectedTab, setSelectedTab] = useState("pending");
   const [rejectTripId, setRejectTripId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+
+  useEffect(() => {
+    document.title = "Trip Approvals | Fleet Management";
+  }, []);
 
   const profileData = profile?.get();
   const userId = profileData?.id;

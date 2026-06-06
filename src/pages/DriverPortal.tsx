@@ -23,6 +23,10 @@ export default function DriverPortal() {
   
   const [activeTab, setActiveTab] = useState(getTabFromPath());
   
+  useEffect(() => {
+    document.title = "Driver Portal | Fleet Management";
+  }, []);
+
   // Update active tab when location changes
   useEffect(() => {
     setActiveTab(getTabFromPath());
