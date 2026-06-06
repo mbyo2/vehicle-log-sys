@@ -31,6 +31,10 @@ export default function NewTrip() {
   const pendingRecords = 0; // This would come from your offline sync system
 
   useEffect(() => {
+    document.title = 'New Trip Log | Fleet Management';
+  }, []);
+
+  useEffect(() => {
     if (vehicleId) {
       setSelectedVehicleId(vehicleId);
     }
