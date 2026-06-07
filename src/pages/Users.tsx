@@ -47,7 +47,7 @@ export function Users() {
   const assignableRoles = getAssignableRoles();
 
   useEffect(() => {
-    document.title = "User Management | Fleet Management";
+    document.title = "Users & Roles | Fleet Manager";
   }, []);
 
   const fetchUsers = async () => {

@@ -12,7 +12,7 @@ export function UserManagement() {
   const canInviteUsers = isAdminRole(role);
 
   useEffect(() => {
-    document.title = "User Management | Fleet Management";
+    document.title = "Team Management | Fleet Manager";
   }, []);
 
   if (!canInviteUsers) {
