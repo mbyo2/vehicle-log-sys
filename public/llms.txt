@@ -1,0 +1,11 @@
+# Fleet Manager
+
+> Fleet management platform for tracking vehicles, drivers, trips, fuel and maintenance in one secure, multi-tenant dashboard.
+
+Fleet Manager is a web application for fleet operators and their teams. Super admins onboard companies; company admins and supervisors manage vehicles, drivers, trips, documents, fuel logs, and maintenance schedules; drivers log trips and vehicle status from the field. Authentication, role-based access, and per-company branding are built in. Most of the product lives behind authentication — the pages below are the public entry points.
+
+## Pages
+
+- [Home](/): Application entry point that routes visitors to sign in or the dashboard.
+- [Sign In](/signin): Sign in to an existing Fleet Manager account.
+- [Sign Up](/signup): Create a new Fleet Manager account or set up the first super admin.

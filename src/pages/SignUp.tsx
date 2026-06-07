@@ -3,6 +3,7 @@ import { SignUpForm } from '@/components/auth/SignUpForm';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -11,11 +12,11 @@ export default function SignUp() {
   const location = useLocation();
   const [isFirstUser, setIsFirstUser] = useState<boolean | null>(null);
   const [checkingFirstUser, setCheckingFirstUser] = useState(true);
-  
+
   const locationIsFirstUser = location.state?.isFirstUser;
 
   useEffect(() => {
-    document.title = 'Sign Up | Fleet Management';
+    document.title = 'Create your Fleet Manager account';
   }, []);
 
   useEffect(() => {
@@ -91,18 +92,29 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      {isFirstUser && (
-        <div className="w-full max-w-md mb-6">
-          <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-4">
-            <h2 className="text-lg font-semibold mb-2">Welcome to Fleet Manager</h2>
-            <p className="text-sm text-muted-foreground">
-              You're setting up the application for the first time. Create a super admin account to get started.
-            </p>
+    <>
+      <Helmet>
+        <title>Create your Fleet Manager account</title>
+        <meta name="description" content="Create a Fleet Manager account to start tracking vehicles, drivers, trips and maintenance for your team." />
+        <link rel="canonical" href="https://vehicle-log-sys.lovable.app/signup" />
+        <meta property="og:title" content="Create your Fleet Manager account" />
+        <meta property="og:description" content="Sign up for Fleet Manager and start tracking your fleet in minutes." />
+        <meta property="og:url" content="https://vehicle-log-sys.lovable.app/signup" />
+      </Helmet>
+      <main className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <h1 className="sr-only">Create your Fleet Manager account</h1>
+        {isFirstUser && (
+          <div className="w-full max-w-md mb-6">
+            <div className="bg-primary/5 p-4 rounded-lg border border-primary/20 mb-4">
+              <h2 className="text-lg font-semibold mb-2">Welcome to Fleet Manager</h2>
+              <p className="text-sm text-muted-foreground">
+                You're setting up the application for the first time. Create a super admin account to get started.
+              </p>
+            </div>
           </div>
-        </div>
-      )}
-      <SignUpForm isFirstUser={isFirstUser || false} />
-    </div>
+        )}
+        <SignUpForm isFirstUser={isFirstUser || false} />
+      </main>
+    </>
   );
 }
