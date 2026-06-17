@@ -54,6 +54,28 @@ export function useTripLog(vehicleId?: string) {
     };
   }, [vehicleId]);
 
+  // Auto-resolve the current user's driver record so trips can be saved
+  // without requiring a manual driver picker for self-logged trips.
+  useEffect(() => {
+    const resolveDriver = async () => {
+      if (!user?.id) return;
+      try {
+        const { data, error } = await supabase
+          .from('drivers')
+          .select('id')
+          .eq('profile_id', user.id)
+          .maybeSingle();
+        if (error) throw error;
+        if (data?.id) {
+          setTripLog(prev => (prev.driver_id ? prev : { ...prev, driver_id: data.id }));
+        }
+      } catch (err) {
+        console.error('Error resolving driver for current user:', err);
+      }
+    };
+    resolveDriver();
+  }, [user?.id]);
+
   const loadVehicleData = async () => {
     try {
       const { data, error } = await supabase
@@ -203,6 +225,15 @@ export function useTripLog(vehicleId?: string) {
         variant: "destructive",
         title: "Missing Purpose",
         description: "Please enter the purpose of the trip"
+      });
+      return;
+    }
+
+    if (!tripLog.driver_id) {
+      toast({
+        variant: "destructive",
+        title: "No driver linked",
+        description: "Your account isn't linked to a driver record. Ask an admin to add you as a driver before logging trips."
       });
       return;
     }
