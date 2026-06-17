@@ -228,6 +228,15 @@ export function useTripLog(vehicleId?: string) {
       });
       return;
     }
+
+    if (!tripLog.driver_id) {
+      toast({
+        variant: "destructive",
+        title: "No driver linked",
+        description: "Your account isn't linked to a driver record. Ask an admin to add you as a driver before logging trips."
+      });
+      return;
+    }
     
     if (!tripLog.endKilometers || tripLog.endKilometers <= tripLog.startKilometers) {
       toast({
