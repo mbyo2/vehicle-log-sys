@@ -64,6 +64,26 @@ export function UserInvitationForm({ onSuccess }: UserInvitationFormProps) {
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
+      // Block duplicate pending invitations for the same email + company
+      const { data: existing } = await supabase
+        .from('user_invitations')
+        .select('id, status, expires_at')
+        .eq('email', values.email)
+        .eq('company_id', currentProfile.company_id)
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+
+      if (existing) {
+        toast({
+          variant: "destructive",
+          title: "Invitation already pending",
+          description: `${values.email} already has a pending invitation for this company.`,
+        });
+        setLoading(false);
+        return;
+      }
+
       // Create the invitation record
       const { error } = await supabase
         .from('user_invitations')
@@ -78,6 +98,9 @@ export function UserInvitationForm({ onSuccess }: UserInvitationFormProps) {
         });
 
       if (error) {
+        if ((error as any).code === '23505') {
+          throw new Error('An invitation for this email already exists.');
+        }
         throw error;
       }
 
