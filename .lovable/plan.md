@@ -1,58 +1,89 @@
+# Workflow Completeness & Error Handling Pass
 
-# Complete App Fix Plan
+Goal: every role (super_admin, company_admin, supervisor, driver) can complete their core workflows end-to-end, and every failure path surfaces a clear, actionable message instead of a silent crash or cryptic toast.
 
-## Critical Issues Found
+## Scope by role
 
-### Issue 1: Super Admin Gets "driver" Role (BLOCKING)
-The `app_role` enum has internal sort order: `super_admin=1, company_admin=2, supervisor=3, driver=4`. When the code queries `user_roles` with `.order('role', { ascending: false })`, PostgreSQL uses the enum sort order (not alphabetical), so `driver` (order 4) comes first. The super admin account also has a spurious `driver` role entry in the database.
+**Driver**
+- Log a trip (just fixed — driver_id auto-resolution).
+- View own trips, see approval status.
+- Upload personal documents, view expiry reminders.
+- Read & reply to messages.
 
-**Root cause locations:**
-- `src/contexts/AuthContext.tsx` line 111: `ascending: false` returns `driver` instead of `super_admin`
-- `src/hooks/useEnhancedAuth.ts` line 266: Same bug
-- Database: The super admin user has both `super_admin` and `driver` roles (the `driver` entry needs to be removed)
+**Supervisor**
+- Approve / reject pending trips with a comment.
+- Assign vehicles to drivers, view fleet status.
+- Log fuel entries, view maintenance schedule.
 
-### Issue 2: "Verifying authentication..." Hang (BLOCKING)
-After sign-in, `useAuthActions.signIn()` sets `authState.loading.set(true)` (line 88) but then `authState.loading.set(false)` only runs in `finally` (line 200). Meanwhile, `AuthContext`'s `onAuthStateChange` fetches profile in a `setTimeout` which races with the loading state. The `ProtectedRoute` sees `loading=true` and shows the spinner indefinitely.
+**Company Admin**
+- Everything supervisor can do, plus:
+- Invite users, manage roles within the company.
+- Manage vehicles, drivers, service centers, document categories.
+- Configure company branding, notification templates, currency.
 
-### Issue 3: Dual Auth Systems Conflict
-`SignInForm` uses `useEnhancedAuth().signIn()` while `useAuthActions` also exists. Both independently fetch profiles and manage state, causing race conditions and duplicate fetches (console shows "Profile loaded with role: driver" twice).
+**Super Admin**
+- Manage companies (create / suspend / activate).
+- Cross-company audit logs & security dashboard.
+- Promote first user; cannot assign super_admin elsewhere.
 
-## Fix Plan
+## Error-handling standard to apply everywhere
 
-### Step 1: Remove Spurious Driver Role from Database
-Delete the incorrect `driver` role for the super admin user using a data operation.
+1. Every `supabase` call wrapped in `try/catch` with a `toast.error` carrying a human-readable message (never the raw Postgres code).
+2. Every mutation form has a loading state on its submit button and disables it while pending.
+3. Required fields validated client-side before the network call.
+4. RLS-denied rows surface as "You don't have permission to do this" rather than empty UI.
+5. Network/offline failures degrade to the offline queue where one exists (trips, vehicle logs) and toast "Saved offline" otherwise.
+6. Empty states ("No vehicles yet", "No pending approvals") instead of blank panels.
+7. Every page-level data fetch routes through a single `ErrorBoundary` so a thrown render doesn't blank the whole app.
 
-### Step 2: Fix Role Sorting in All Auth Code
-Change `.order('role', { ascending: false })` to `.order('role', { ascending: true })` in:
-- `src/contexts/AuthContext.tsx` (line 111)
-- `src/hooks/useEnhancedAuth.ts` (line 266)
-- `src/contexts/auth/useAuthActions.ts` (line 152)
+## Work items
 
-With `ascending: true`, `super_admin` (sort order 1) comes first, which is the correct priority.
+```text
+1. Driver workflows
+   - NewTrip: confirm driver_id flow end-to-end, add empty-state on vehicle list.
+   - DriverPortal: error boundary + retry button on data fetch failure.
+   - Messages: toast on send failure, optimistic update rollback.
 
-### Step 3: Fix Loading State Race Condition
-In `src/contexts/AuthContext.tsx`:
-- Remove the `setTimeout` wrapping profile fetches (lines 161-167 and 197-204)
-- Ensure `authState.loading` is properly managed: set to `true` before profile fetch, `false` after
-- In `onAuthStateChange` handler, set `loading=true` before fetching profile, `loading=false` after
+2. Supervisor workflows
+   - TripApprovals: confirm dialog before reject, require comment on reject,
+     toast both success & failure, refresh list after action.
+   - VehicleAssignment: validate non-overlapping date ranges client-side,
+     show RLS error as friendly message.
+   - FuelManagement: numeric validation, currency formatting, error toast.
 
-### Step 4: Unify Sign-In Flow
-Update `SignInForm` to use the `useAuthActions` hook (which does proper navigation and profile loading) instead of `useEnhancedAuth`. Keep `useEnhancedAuth` for permission checks only, not for sign-in.
+3. Company admin workflows
+   - UserManagement / invitations: catch duplicate-email, expired-token,
+     surface as targeted errors.
+   - Companies (own): branding upload size/type validation, logo
+     replacement cleans up old file (already in trigger — verify).
+   - Notification templates: validate template variables before save.
 
-### Step 5: Remove Redundant Profile Fetch from useAuthActions
-Since `AuthContext`'s `onAuthStateChange` already handles profile loading on `SIGNED_IN`, `useAuthActions.signIn()` should NOT also fetch the profile. It should just call `supabase.auth.signInWithPassword()` and let the auth state change handler do the rest.
+4. Super admin workflows
+   - Companies list: confirm before suspend; block self-demotion.
+   - SecurityDashboard: handle missing metrics gracefully (skeleton, not crash).
+   - Setup page: enforce single-super-admin rule with clear message.
 
-## Technical Details
+5. Global hardening
+   - Wrap each top-level route in <ErrorBoundary> in routes.tsx.
+   - Replace any remaining `console.log` in mutation paths with `logger.error`
+     plus a user-facing toast.
+   - Audit all `supabase.from(...).insert/update/delete` for missing `.select()`
+     / unchecked `error` returns.
+   - Ensure every protected page has an `<allowedRoles>` guard matching
+     the workflow it serves.
+```
 
-### Files to modify:
-1. **Database** - Delete spurious `driver` role for super admin user
-2. **`src/contexts/AuthContext.tsx`** - Fix sort order, remove setTimeout, fix loading state management
-3. **`src/hooks/useEnhancedAuth.ts`** - Fix sort order to `ascending: true`
-4. **`src/contexts/auth/useAuthActions.ts`** - Fix sort order, simplify signIn to avoid double-fetching
-5. **`src/components/auth/SignInForm.tsx`** - Use `useAuthActions` for sign-in, keep `useEnhancedAuth` only for other features
+## Out of scope
 
-### Expected outcome:
-- Sign-in works immediately without hanging
-- Super admin role is correctly detected
-- Dashboard loads with proper super admin workflow
-- Navigation shows all admin-level menu items
+- New features or visual redesigns.
+- Backend schema changes (no new tables / columns / policies).
+- Edge function changes unless a bug is found mid-pass.
+
+## Deliverable
+
+A single sweep through the files above, committing edits in batches by role.
+End state: every role's primary workflow runs without unhandled errors, and
+every failure produces a clear toast + recoverable UI.
+
+Reply **"go"** to start, or tell me which role / area to prioritize first
+if you want a narrower scope.
