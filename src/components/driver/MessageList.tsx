@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { format } from "date-fns";
 import { MessageCompose } from "./MessageCompose";
 import { MessageView } from "./MessageView";
-import { Mail, Send, Archive, Search } from "lucide-react";
+import { Mail, Send, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export function MessageList() {
