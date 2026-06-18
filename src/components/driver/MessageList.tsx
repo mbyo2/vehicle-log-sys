@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { format } from "date-fns";
 import { MessageCompose } from "./MessageCompose";
 import { MessageView } from "./MessageView";
-import { Mail, Send, Archive, Search } from "lucide-react";
+import { Mail, Send, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export function MessageList() {
@@ -92,10 +92,6 @@ export function MessageList() {
             <Send className="mr-2 h-4 w-4" />
             Sent
           </TabsTrigger>
-          <TabsTrigger value="archive" className="flex items-center">
-            <Archive className="mr-2 h-4 w-4" />
-            Archive
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="inbox">
@@ -171,18 +167,6 @@ export function MessageList() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="archive">
-          <Card>
-            <CardHeader>
-              <CardTitle>Archived Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Archive feature coming soon.
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
