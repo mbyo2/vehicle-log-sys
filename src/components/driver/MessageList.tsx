@@ -167,18 +167,6 @@ export function MessageList() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="archive">
-          <Card>
-            <CardHeader>
-              <CardTitle>Archived Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Archive feature coming soon.
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
 
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
