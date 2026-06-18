@@ -33,7 +33,7 @@ export function ProductionReadiness() {
       description: 'Configure your custom domain for the application',
       status: 'pending',
       action: 'Add Domain',
-      link: '#'
+      link: 'https://docs.lovable.dev/features/custom-domain'
     },
     {
       id: 'security-review',
