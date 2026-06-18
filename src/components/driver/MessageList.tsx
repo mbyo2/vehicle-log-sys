@@ -92,10 +92,6 @@ export function MessageList() {
             <Send className="mr-2 h-4 w-4" />
             Sent
           </TabsTrigger>
-          <TabsTrigger value="archive" className="flex items-center">
-            <Archive className="mr-2 h-4 w-4" />
-            Archive
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="inbox">
