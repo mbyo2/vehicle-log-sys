@@ -1255,6 +1255,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          is_system: boolean
           notification_type: string
           styling_config: Json | null
           subject_template: string | null
@@ -1272,6 +1273,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          is_system?: boolean
           notification_type: string
           styling_config?: Json | null
           subject_template?: string | null
@@ -1289,6 +1291,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          is_system?: boolean
           notification_type?: string
           styling_config?: Json | null
           subject_template?: string | null
