@@ -183,9 +183,9 @@ function generateDigestEmail(userName: string, notifications: DigestEntry[]): st
         <ul style="margin: 0; padding: 0; list-style: none;">
           ${items.map(item => `
             <li style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-bottom: 8px;">
-              <strong style="color: #111827;">${item.subject}</strong>
-              <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">${item.message}</p>
-              <small style="color: #9ca3af;">${new Date(item.created_at).toLocaleString()}</small>
+              <strong style="color: #111827;">${escapeHtml(item.subject)}</strong>
+              <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">${escapeHtml(item.message)}</p>
+              <small style="color: #9ca3af;">${escapeHtml(new Date(item.created_at).toLocaleString())}</small>
             </li>
           `).join('')}
         </ul>
