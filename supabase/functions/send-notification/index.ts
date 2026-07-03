@@ -30,6 +30,11 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require admin caller — this function fans out email/SMS to arbitrary user ids.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden("Admin role required");
+
   try {
     const notification: NotificationRequest = await req.json();
     const { to, subject, type, details, delivery = "in_app", companyId } = notification;
