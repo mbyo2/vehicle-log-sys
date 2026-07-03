@@ -258,26 +258,41 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex justify-between items-center">
+        <CardTitle className="flex flex-wrap justify-between items-center gap-3">
           <span>Vehicle Location Tracking</span>
-          {vehicleId && (
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              {isTracking ? (
-                <Button variant="outline" size="sm" onClick={stopTracking}>
-                  Stop Tracking
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={startTracking}>
-                  Start Tracking
-                </Button>
-              )}
-              {location && (
-                <Button size="sm" onClick={sendLocationUpdate}>
-                  Send Location
-                </Button>
-              )}
+              <Radio
+                className={`h-4 w-4 ${liveMode ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`}
+                aria-hidden
+              />
+              <Label htmlFor="live-mode" className="text-sm font-normal cursor-pointer">
+                Live
+              </Label>
+              <Switch id="live-mode" checked={liveMode} onCheckedChange={setLiveMode} />
             </div>
-          )}
+            <span className="text-xs text-muted-foreground" aria-live="polite">
+              Updated {formatRelative(lastUpdated, nowTs)}
+            </span>
+            {vehicleId && (
+              <div className="flex items-center gap-2">
+                {isTracking ? (
+                  <Button variant="outline" size="sm" onClick={stopTracking}>
+                    Stop Tracking
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={startTracking}>
+                    Start Tracking
+                  </Button>
+                )}
+                {location && (
+                  <Button size="sm" onClick={sendLocationUpdate}>
+                    Send Location
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
