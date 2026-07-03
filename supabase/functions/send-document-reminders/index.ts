@@ -404,6 +404,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Cron/internal-only endpoint.
+  if (!isInternalCaller(req)) return unauthorized();
+
+
   try {
     const today = new Date();
     const thirtyDaysFromNow = new Date();
