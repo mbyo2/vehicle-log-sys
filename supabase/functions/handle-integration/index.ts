@@ -17,12 +17,26 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     const { type, action, payload } = await req.json()
 
     console.log(`Processing ${action} for integration type: ${type}`)
+
+    // Validate that any targeted vehicle belongs to the caller's company.
+    const vehicleId = payload?.vehicleId;
+    if (vehicleId) {
+      const { data: v } = await supabaseClient
+        .from('vehicles')
+        .select('company_id')
+        .eq('id', vehicleId)
+        .maybeSingle();
+      if (!v) return new Response(JSON.stringify({ error: 'Vehicle not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (caller.role !== 'super_admin' && v.company_id !== caller.companyId) {
+        return forbidden('Vehicle not in your company');
+      }
+    }
 
     // Handle different integration types
     switch (type) {
