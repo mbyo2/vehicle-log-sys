@@ -53,6 +53,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Booking not found');
     }
 
+    // Cross-tenant guard: super_admin bypasses; others must match company.
+    if (caller.role !== 'super_admin' && booking.company_id !== caller.companyId) {
+      return forbidden('Booking not in your company');
+    }
+
     // Get company details
     const { data: company } = await supabase
       .from('companies')
