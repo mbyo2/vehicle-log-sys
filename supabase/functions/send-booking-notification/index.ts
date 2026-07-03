@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders, escapeHtml, getAuthedCaller, unauthorized } from "../_shared/auth.ts";
+import { corsHeaders, escapeHtml, getAuthedCaller, isAdminRole, unauthorized, forbidden } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -21,9 +21,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require authenticated caller.
+  // Require admin caller.
   const caller = await getAuthedCaller(req);
   if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden('Admin role required');
 
   try {
     const notification: BookingNotification = await req.json();
@@ -50,6 +51,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!booking) {
       throw new Error('Booking not found');
+    }
+
+    // Cross-tenant guard: super_admin bypasses; others must match company.
+    if (caller.role !== 'super_admin' && booking.company_id !== caller.companyId) {
+      return forbidden('Booking not in your company');
     }
 
     // Get company details
