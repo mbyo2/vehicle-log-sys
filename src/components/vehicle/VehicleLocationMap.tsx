@@ -129,6 +129,8 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
             });
           }
           setLocations(formatted);
+          setLastUpdated(new Date());
+          setNowTs(Date.now());
         }
       } catch (error) {
         console.error('Error fetching locations:', error);
@@ -143,9 +145,16 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
     };
 
     fetchLocations();
-    const interval = setInterval(fetchLocations, 30000);
+    const interval = setInterval(fetchLocations, liveMode ? 5000 : 30000);
     return () => clearInterval(interval);
-  }, [toast, vehicleId]);
+  }, [toast, vehicleId, liveMode]);
+
+  // Tick the "updated Xs ago" label every second while live mode is on
+  useEffect(() => {
+    if (!liveMode) return;
+    const t = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [liveMode]);
 
   // Load the Google Maps script + init map
   useEffect(() => {
