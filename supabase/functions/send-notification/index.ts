@@ -378,18 +378,25 @@ function generateEmailTemplate({ type, subject, message, userName, details }: {
     }
   };
 
+  const safeSubject = escapeHtml(subject);
+  const safeUser = escapeHtml(userName);
+  const safeMessage = escapeHtml(message);
+  const safeVehicle = escapeHtml(details.vehicle);
+  const safeAction = escapeHtml(details.actionRequired);
+  const safeLink = safeUrl(details.link);
+
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
       <div style="background-color: ${getColor()}; padding: 16px; color: white;">
-        <h2 style="margin: 0;">${subject}</h2>
+        <h2 style="margin: 0;">${safeSubject}</h2>
       </div>
       <div style="padding: 20px;">
-        <p>Hello ${userName},</p>
-        <p>${message}</p>
-        ${details.expiry_date ? `<p>Expiry date: ${new Date(details.expiry_date).toLocaleDateString()}</p>` : ''}
-        ${details.vehicle ? `<p>Vehicle: ${details.vehicle}</p>` : ''}
-        ${details.actionRequired ? `<p><strong>Action required:</strong> ${details.actionRequired}</p>` : ''}
-        ${details.link ? `<p><a href="${details.link}" style="display: inline-block; background-color: ${getColor()}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">View Details</a></p>` : ''}
+        <p>Hello ${safeUser},</p>
+        <p>${safeMessage}</p>
+        ${details.expiry_date ? `<p>Expiry date: ${escapeHtml(new Date(details.expiry_date).toLocaleDateString())}</p>` : ''}
+        ${details.vehicle ? `<p>Vehicle: ${safeVehicle}</p>` : ''}
+        ${details.actionRequired ? `<p><strong>Action required:</strong> ${safeAction}</p>` : ''}
+        ${details.link ? `<p><a href="${safeLink}" style="display: inline-block; background-color: ${getColor()}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">View Details</a></p>` : ''}
         <p style="margin-top: 30px; font-size: 12px; color: #6b7280;">
           This is an automated message from your Fleet Management System.
         </p>
