@@ -21,9 +21,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require authenticated caller.
+  // Require admin caller.
   const caller = await getAuthedCaller(req);
   if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden('Admin role required');
 
   try {
     const notification: BookingNotification = await req.json();
