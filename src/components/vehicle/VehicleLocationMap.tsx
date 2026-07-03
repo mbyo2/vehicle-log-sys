@@ -82,11 +82,15 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
   const markersRef = useRef<any[]>([]);
   const infoWindowRef = useRef<any>(null);
 
+  const [liveMode, setLiveMode] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
   // Fetch recent vehicle locations
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        setIsLoading(true);
+        if (!lastUpdated) setIsLoading(true);
         let query = supabase
           .from('vehicle_logs')
           .select(`
