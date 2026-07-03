@@ -26,6 +26,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only super_admin / company_admin may run security audits or read results.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden('Admin role required');
+
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
