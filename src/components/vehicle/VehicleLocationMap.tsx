@@ -177,12 +177,12 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
   }, [toast, vehicleId, liveMode, pollIntervalMs, logTag]);
 
 
-  // Tick the "updated Xs ago" label every second while live mode is on
+  // Tick the relative timestamps every second
   useEffect(() => {
-    if (!liveMode) return;
     const t = setInterval(() => setNowTs(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [liveMode]);
+  }, []);
+
 
   // Load the Google Maps script + init map
   useEffect(() => {
