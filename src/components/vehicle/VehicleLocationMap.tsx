@@ -84,13 +84,28 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
 
   const [liveMode, setLiveMode] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [lastSuccessAt, setLastSuccessAt] = useState<Date | null>(null);
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [requestState, setRequestState] = useState<'idle' | 'fetching' | 'success' | 'error'>('idle');
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const pollIntervalMs = liveMode ? 5000 : 30000;
+  const logTag = `[LiveTracking${vehicleId ? `:${vehicleId.slice(0, 8)}` : ':all'}]`;
+
+  // Debug: mode / interval changes
+  useEffect(() => {
+    console.debug(`${logTag} mode=${liveMode ? 'live' : 'standard'} interval=${pollIntervalMs}ms`);
+  }, [liveMode, pollIntervalMs, logTag]);
 
   // Fetch recent vehicle locations
   useEffect(() => {
     const fetchLocations = async () => {
+      const startedAt = performance.now();
+      const reqId = Math.random().toString(36).slice(2, 8);
       try {
         if (!lastUpdated) setIsLoading(true);
+        setRequestState('fetching');
+        console.debug(`${logTag} fetch:start id=${reqId}`);
         let query = supabase
           .from('vehicle_logs')
           .select(`
@@ -129,11 +144,23 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
             });
           }
           setLocations(formatted);
-          setLastUpdated(new Date());
-          setNowTs(Date.now());
+          const now = new Date();
+          setLastUpdated(now);
+          setLastSuccessAt(now);
+          setNowTs(now.getTime());
+          setRequestState('success');
+          setLastError(null);
+          const ms = Math.round(performance.now() - startedAt);
+          console.debug(
+            `${logTag} fetch:success id=${reqId} rows=${data.length} vehicles=${formatted.length} took=${ms}ms`,
+          );
         }
-      } catch (error) {
-        console.error('Error fetching locations:', error);
+      } catch (error: any) {
+        const ms = Math.round(performance.now() - startedAt);
+        const msg = error?.message || 'Unknown error';
+        setRequestState('error');
+        setLastError(msg);
+        console.error(`${logTag} fetch:error id=${reqId} took=${ms}ms`, error);
         toast({
           variant: 'destructive',
           title: 'Error',
@@ -145,9 +172,10 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
     };
 
     fetchLocations();
-    const interval = setInterval(fetchLocations, liveMode ? 5000 : 30000);
+    const interval = setInterval(fetchLocations, pollIntervalMs);
     return () => clearInterval(interval);
-  }, [toast, vehicleId, liveMode]);
+  }, [toast, vehicleId, liveMode, pollIntervalMs, logTag]);
+
 
   // Tick the "updated Xs ago" label every second while live mode is on
   useEffect(() => {
