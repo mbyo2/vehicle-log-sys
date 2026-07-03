@@ -1,14 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders, escapeHtml, safeUrl, getAuthedCaller, isAdminRole, unauthorized, forbidden } from '../_shared/auth.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
 
 interface InvitationRequest {
   email: string;
@@ -24,14 +20,25 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Only admins can send invitations.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden('Admin role required');
+
   try {
     const { email, role, companyName, inviterName, invitationToken, appUrl }: InvitationRequest = await req.json();
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Prefer the caller-provided URL (origin of the app), fall back to env or default.
-    const baseUrl = appUrl || Deno.env.get('APP_URL') || 'https://vehicle-log-journal-73.lovable.app';
-    const invitationUrl = `${baseUrl.replace(/\/$/, '')}/accept-invitation?token=${invitationToken}`;
+    const rawBase = appUrl || Deno.env.get('APP_URL') || 'https://vehicle-log-journal-73.lovable.app';
+    const baseUrl = safeUrl(rawBase);
+    const invitationUrl = `${baseUrl.replace(/\/$/, '')}/accept-invitation?token=${encodeURIComponent(invitationToken)}`;
+    const safeInvitation = safeUrl(invitationUrl);
+
+    const safeInviter = escapeHtml(inviterName);
+    const safeCompany = escapeHtml(companyName);
+    const safeRole = escapeHtml(role);
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -49,13 +56,13 @@ serve(async (req) => {
             <p style="font-size: 16px;">Hello,</p>
             
             <p style="font-size: 16px;">
-              <strong>${inviterName}</strong> has invited you to join <strong>${companyName}</strong> 
-              as a <strong>${role}</strong> on our Fleet Management System.
+              <strong>${safeInviter}</strong> has invited you to join <strong>${safeCompany}</strong> 
+              as a <strong>${safeRole}</strong> on our Fleet Management System.
             </p>
             
             <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0;">
               <p style="margin: 0 0 15px 0;">Click the button below to accept your invitation and create your account:</p>
-              <a href="${invitationUrl}" 
+              <a href="${safeInvitation}" 
                  style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                 Accept Invitation
               </a>
@@ -65,7 +72,7 @@ serve(async (req) => {
               This invitation will expire in 7 days. If the button doesn't work, copy and paste this link into your browser:
             </p>
             <p style="font-size: 12px; word-break: break-all; background: #e9e9e9; padding: 10px; border-radius: 3px;">
-              ${invitationUrl}
+              ${escapeHtml(safeInvitation)}
             </p>
             
             <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">

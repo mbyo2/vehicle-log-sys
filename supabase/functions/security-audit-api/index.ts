@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders, getAuthedCaller, isAdminRole, unauthorized, forbidden } from "../_shared/auth.ts";
 
 interface SecurityAuditRequest {
   action: 'run_audit' | 'get_results' | 'configure_schedule';
@@ -29,6 +25,12 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Only super_admin / company_admin may run security audits or read results.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden('Admin role required');
+
 
   try {
     const supabaseClient = createClient(

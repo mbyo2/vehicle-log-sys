@@ -1,14 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { corsHeaders, escapeHtml, isInternalCaller, unauthorized } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
@@ -27,6 +23,9 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Cron/internal-only endpoint.
+  if (!isInternalCaller(req)) return unauthorized();
 
   try {
     console.log("Processing notification digests...");
@@ -184,9 +183,9 @@ function generateDigestEmail(userName: string, notifications: DigestEntry[]): st
         <ul style="margin: 0; padding: 0; list-style: none;">
           ${items.map(item => `
             <li style="padding: 12px; background: #f9fafb; border-radius: 6px; margin-bottom: 8px;">
-              <strong style="color: #111827;">${item.subject}</strong>
-              <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">${item.message}</p>
-              <small style="color: #9ca3af;">${new Date(item.created_at).toLocaleString()}</small>
+              <strong style="color: #111827;">${escapeHtml(item.subject)}</strong>
+              <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">${escapeHtml(item.message)}</p>
+              <small style="color: #9ca3af;">${escapeHtml(new Date(item.created_at).toLocaleString())}</small>
             </li>
           `).join('')}
         </ul>
@@ -201,7 +200,7 @@ function generateDigestEmail(userName: string, notifications: DigestEntry[]): st
         <p style="margin: 8px 0 0 0; opacity: 0.9;">${notifications.length} notification${notifications.length !== 1 ? 's' : ''} since your last digest</p>
       </div>
       <div style="padding: 24px;">
-        <p style="margin: 0 0 24px 0; color: #374151;">Hello ${userName},</p>
+        <p style="margin: 0 0 24px 0; color: #374151;">Hello ${escapeHtml(userName)},</p>
         <p style="margin: 0 0 24px 0; color: #374151;">Here's a summary of your recent notifications:</p>
         ${notificationSections}
         <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb;">

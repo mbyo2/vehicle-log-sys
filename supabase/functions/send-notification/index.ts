@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { corsHeaders, escapeHtml, safeUrl, getAuthedCaller, isAdminRole, unauthorized, forbidden } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -8,12 +9,6 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
 const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
 const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface NotificationRequest {
   to: string[]; // user IDs
@@ -34,6 +29,11 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Require admin caller — this function fans out email/SMS to arbitrary user ids.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+  if (!isAdminRole(caller.role)) return forbidden("Admin role required");
 
   try {
     const notification: NotificationRequest = await req.json();
@@ -378,18 +378,25 @@ function generateEmailTemplate({ type, subject, message, userName, details }: {
     }
   };
 
+  const safeSubject = escapeHtml(subject);
+  const safeUser = escapeHtml(userName);
+  const safeMessage = escapeHtml(message);
+  const safeVehicle = escapeHtml(details.vehicle);
+  const safeAction = escapeHtml(details.actionRequired);
+  const safeLink = safeUrl(details.link);
+
   return `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
       <div style="background-color: ${getColor()}; padding: 16px; color: white;">
-        <h2 style="margin: 0;">${subject}</h2>
+        <h2 style="margin: 0;">${safeSubject}</h2>
       </div>
       <div style="padding: 20px;">
-        <p>Hello ${userName},</p>
-        <p>${message}</p>
-        ${details.expiry_date ? `<p>Expiry date: ${new Date(details.expiry_date).toLocaleDateString()}</p>` : ''}
-        ${details.vehicle ? `<p>Vehicle: ${details.vehicle}</p>` : ''}
-        ${details.actionRequired ? `<p><strong>Action required:</strong> ${details.actionRequired}</p>` : ''}
-        ${details.link ? `<p><a href="${details.link}" style="display: inline-block; background-color: ${getColor()}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">View Details</a></p>` : ''}
+        <p>Hello ${safeUser},</p>
+        <p>${safeMessage}</p>
+        ${details.expiry_date ? `<p>Expiry date: ${escapeHtml(new Date(details.expiry_date).toLocaleDateString())}</p>` : ''}
+        ${details.vehicle ? `<p>Vehicle: ${safeVehicle}</p>` : ''}
+        ${details.actionRequired ? `<p><strong>Action required:</strong> ${safeAction}</p>` : ''}
+        ${details.link ? `<p><a href="${safeLink}" style="display: inline-block; background-color: ${getColor()}; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">View Details</a></p>` : ''}
         <p style="margin-top: 30px; font-size: 12px; color: #6b7280;">
           This is an automated message from your Fleet Management System.
         </p>

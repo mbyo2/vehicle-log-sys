@@ -1,15 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { corsHeaders, escapeHtml, getAuthedCaller, unauthorized } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface BookingNotification {
   bookingId: string;
@@ -25,6 +20,10 @@ const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // Require authenticated caller.
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
 
   try {
     const notification: BookingNotification = await req.json();
@@ -60,29 +59,29 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('id', booking.company_id)
       .single();
 
-    // Create email content
+    // Create email content (escape all user-controlled fields)
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>${notification.type === 'confirmation' ? 'Service Booking Confirmation' : 'Service Reminder'}</h2>
         <p>Vehicle Details:</p>
         <ul>
-          <li>Plate Number: ${booking.vehicles.plate_number}</li>
-          <li>Make: ${booking.vehicles.make}</li>
-          <li>Model: ${booking.vehicles.model}</li>
+          <li>Plate Number: ${escapeHtml(booking.vehicles.plate_number)}</li>
+          <li>Make: ${escapeHtml(booking.vehicles.make)}</li>
+          <li>Model: ${escapeHtml(booking.vehicles.model)}</li>
         </ul>
         <p>Service Details:</p>
         <ul>
-          <li>Service Type: ${booking.service_type}</li>
-          <li>Date: ${new Date(booking.booking_date).toLocaleDateString()}</li>
-          <li>Time: ${new Date(booking.booking_date).toLocaleTimeString()}</li>
+          <li>Service Type: ${escapeHtml(booking.service_type)}</li>
+          <li>Date: ${escapeHtml(new Date(booking.booking_date).toLocaleDateString())}</li>
+          <li>Time: ${escapeHtml(new Date(booking.booking_date).toLocaleTimeString())}</li>
         </ul>
         <p>Service Center:</p>
         <ul>
-          <li>Name: ${booking.service_centers.name}</li>
-          <li>Address: ${booking.service_centers.address}</li>
-          <li>Contact: ${booking.service_centers.contact_number || 'N/A'}</li>
+          <li>Name: ${escapeHtml(booking.service_centers.name)}</li>
+          <li>Address: ${escapeHtml(booking.service_centers.address)}</li>
+          <li>Contact: ${escapeHtml(booking.service_centers.contact_number || 'N/A')}</li>
         </ul>
-        ${booking.notes ? `<p>Additional Notes: ${booking.notes}</p>` : ''}
+        ${booking.notes ? `<p>Additional Notes: ${escapeHtml(booking.notes)}</p>` : ''}
       </div>
     `;
 
