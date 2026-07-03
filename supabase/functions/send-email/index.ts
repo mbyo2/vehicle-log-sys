@@ -34,6 +34,10 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Require an authenticated caller (any signed-in user).
+  const caller = await getAuthedCaller(req);
+  if (!caller) return unauthorized();
+
   try {
     const { type, email, data = {} }: EmailRequest = await req.json();
 
