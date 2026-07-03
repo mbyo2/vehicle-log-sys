@@ -324,6 +324,44 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div
+          className="rounded-md border bg-muted/40 p-3 font-mono text-xs grid grid-cols-2 md:grid-cols-4 gap-2"
+          aria-label="Live tracking debug panel"
+        >
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wide text-[10px]">Mode</div>
+            <div className="font-semibold">{liveMode ? 'live' : 'standard'}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wide text-[10px]">Poll interval</div>
+            <div className="font-semibold">{(pollIntervalMs / 1000).toFixed(0)}s</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wide text-[10px]">Request</div>
+            <div
+              className={
+                requestState === 'error'
+                  ? 'font-semibold text-destructive'
+                  : requestState === 'fetching'
+                  ? 'font-semibold text-primary'
+                  : requestState === 'success'
+                  ? 'font-semibold text-green-600'
+                  : 'font-semibold'
+              }
+            >
+              {requestState}
+              {lastError && requestState === 'error' ? ` · ${lastError}` : ''}
+            </div>
+          </div>
+          <div>
+            <div className="text-muted-foreground uppercase tracking-wide text-[10px]">Last success</div>
+            <div className="font-semibold">
+              {lastSuccessAt ? `${lastSuccessAt.toLocaleTimeString()} (${formatRelative(lastSuccessAt, nowTs)})` : '—'}
+            </div>
+          </div>
+        </div>
+
+
         {location && vehicleId && (
           <div className="bg-primary/10 p-3 rounded-md">
             <p className="font-medium">Current Location</p>
