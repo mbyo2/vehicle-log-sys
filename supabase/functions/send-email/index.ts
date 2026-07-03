@@ -79,20 +79,25 @@ const handler = async (req: Request): Promise<Response> => {
         subject = 'Welcome to Fleet Manager';
         break;
 
-      case 'invitation':
+      case 'invitation': {
+        const safeCompany = escapeHtml(data.companyName || 'Fleet Manager');
+        const safeInviter = escapeHtml(data.inviterName || 'A team member');
+        const safeRole = escapeHtml(data.role || 'team member');
+        const safeInvite = safeUrl(data.inviteUrl);
         html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1>You're invited to join ${data.companyName || 'Fleet Manager'}</h1>
+            <h1>You're invited to join ${safeCompany}</h1>
             <p>Hello,</p>
-            <p>${data.inviterName || 'A team member'} has invited you to join their company as a ${data.role || 'team member'}.</p>
+            <p>${safeInviter} has invited you to join their company as a ${safeRole}.</p>
             <p>Click the link below to accept the invitation and create your account:</p>
-            <a href="${data.inviteUrl}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 16px 0;">Accept Invitation</a>
+            <a href="${safeInvite}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 16px 0;">Accept Invitation</a>
             <p>If you didn't expect this invitation, you can safely ignore this email.</p>
             <p>Best regards,<br>The Fleet Manager Team</p>
           </div>
         `;
         subject = `Invitation to join ${data.companyName || 'Fleet Manager'}`;
         break;
+      }
 
       default:
         throw new Error(`Unknown email type: ${type}`);
