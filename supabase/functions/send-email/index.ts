@@ -6,18 +6,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.8';
 import { VerificationEmail } from './_templates/verification-email.tsx';
 import { PasswordResetEmail } from './_templates/password-reset-email.tsx';
 import { WelcomeEmail } from './_templates/welcome-email.tsx';
+import { corsHeaders, escapeHtml, safeUrl, getAuthedCaller, unauthorized } from '../_shared/auth.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
 
 interface EmailRequest {
   type: 'verification' | 'password_reset' | 'welcome' | 'invitation';
