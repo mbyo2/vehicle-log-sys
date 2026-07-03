@@ -200,7 +200,7 @@ function generateDigestEmail(userName: string, notifications: DigestEntry[]): st
         <p style="margin: 8px 0 0 0; opacity: 0.9;">${notifications.length} notification${notifications.length !== 1 ? 's' : ''} since your last digest</p>
       </div>
       <div style="padding: 24px;">
-        <p style="margin: 0 0 24px 0; color: #374151;">Hello ${userName},</p>
+        <p style="margin: 0 0 24px 0; color: #374151;">Hello ${escapeHtml(userName)},</p>
         <p style="margin: 0 0 24px 0; color: #374151;">Here's a summary of your recent notifications:</p>
         ${notificationSections}
         <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
