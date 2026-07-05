@@ -324,8 +324,8 @@ async function processDocumentExpirations(
       const emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Document Expiry Reminder</h2>
-          <p>The document "${document.name}" (${document.type})${additionalInfo} will expire in ${daysToExpiry} days.</p>
-          <p>Please ensure to renew it before the expiry date: ${new Date(document.expiry_date).toLocaleDateString()}</p>
+          <p>The document "${escapeHtml(document.name)}" (${escapeHtml(document.type)})${additionalInfo} will expire in ${daysToExpiry} days.</p>
+          <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(document.expiry_date).toLocaleDateString())}</p>
         </div>
       `;
 
