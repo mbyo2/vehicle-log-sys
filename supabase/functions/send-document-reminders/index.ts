@@ -213,8 +213,8 @@ async function processRoadTaxExpiry(vehicle: any, adminEmails: string[], today: 
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Road Tax Expiry Reminder</h2>
-        <p>The road tax for vehicle ${vehicle.plate_number} will expire in ${daysToRoadTaxExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(vehicle.road_tax_expiry).toLocaleDateString()}</p>
+        <p>The road tax for vehicle ${escapeHtml(vehicle.plate_number)} will expire in ${daysToRoadTaxExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(vehicle.road_tax_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
