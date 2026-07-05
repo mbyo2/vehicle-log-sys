@@ -244,8 +244,8 @@ async function processInsuranceExpiry(vehicle: any, adminEmails: string[], today
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Insurance Expiry Reminder</h2>
-        <p>The insurance for vehicle ${vehicle.plate_number} will expire in ${daysToInsuranceExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(vehicle.insurance_expiry).toLocaleDateString()}</p>
+        <p>The insurance for vehicle ${escapeHtml(vehicle.plate_number)} will expire in ${daysToInsuranceExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(vehicle.insurance_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
