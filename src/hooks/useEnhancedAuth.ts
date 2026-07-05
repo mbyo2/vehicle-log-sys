@@ -298,30 +298,36 @@ export function useEnhancedAuth() {
   useEffect(() => {
     let mounted = true;
 
+    // Safety net: never let loading stay true forever, even if a query hangs
+    // or an unexpected auth event slips past the branches below.
+    const safetyTimer = setTimeout(() => {
+      if (!mounted) return;
+      setAuthState(prev => (prev.loading ? { ...prev, loading: false } : prev));
+    }, 8000);
+
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           console.error('Session error:', error);
         } else if (session?.user && mounted) {
           const profileData = await fetchUserProfile(session.user.id);
-          
+
           if (mounted) {
-            setAuthState({
+            setAuthState(prev => ({
+              ...prev,
               user: session.user,
               session,
               profile: profileData,
-              loading: false,
-              permissions: authState.permissions,
-              role: profileData?.role || null
-            });
+              role: profileData?.role || null,
+            }));
           }
-        } else if (mounted) {
-          setAuthState(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+      } finally {
+        // Always clear loading — regardless of session/profile/error outcome.
         if (mounted) {
           setAuthState(prev => ({ ...prev, loading: false }));
         }
@@ -335,29 +341,43 @@ export function useEnhancedAuth() {
 
         console.log('Auth state changed:', event);
 
-        if (event === 'SIGNED_OUT' || !session) {
-          setAuthState({
-            user: null,
-            session: null,
-            profile: null,
-            loading: false,
-            permissions: [],
-            role: null
-          });
-          return;
-        }
+        try {
+          if (event === 'SIGNED_OUT' || !session) {
+            setAuthState({
+              user: null,
+              session: null,
+              profile: null,
+              loading: false,
+              permissions: [],
+              role: null,
+            });
+            return;
+          }
 
-        if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          const profileData = await fetchUserProfile(session.user.id);
-          
+          if (session.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
+            const profileData = await fetchUserProfile(session.user.id);
+
+            if (mounted) {
+              setAuthState(prev => ({
+                ...prev,
+                user: session.user,
+                session,
+                profile: profileData,
+                role: profileData?.role || prev.role,
+              }));
+            }
+          } else if (session.user) {
+            // Any other event with a session (e.g. INITIAL_SESSION) — at
+            // minimum make sure user/session are attached.
+            if (mounted) {
+              setAuthState(prev => ({ ...prev, user: session.user, session }));
+            }
+          }
+        } catch (err) {
+          console.error('Auth state change handler error:', err);
+        } finally {
           if (mounted) {
-            setAuthState(prev => ({
-              ...prev,
-              user: session.user,
-              session,
-              profile: profileData,
-              loading: false
-            }));
+            setAuthState(prev => (prev.loading ? { ...prev, loading: false } : prev));
           }
         }
       }
@@ -367,6 +387,7 @@ export function useEnhancedAuth() {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
