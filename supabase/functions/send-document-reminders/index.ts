@@ -278,7 +278,7 @@ async function getDocumentAdditionalInfo(document: any) {
       .single();
       
     if (vehicle) {
-      additionalInfo = ` for vehicle ${vehicle.plate_number}`;
+      additionalInfo = ` for vehicle ${escapeHtml(vehicle.plate_number)}`;
       notificationEntityId = document.vehicle_id;
     }
   } else if (document.driver_id) {
@@ -289,7 +289,7 @@ async function getDocumentAdditionalInfo(document: any) {
       .single();
       
     if (driver && driver.profiles) {
-      additionalInfo = ` for driver ${driver.profiles.full_name}`;
+      additionalInfo = ` for driver ${escapeHtml((driver.profiles as any).full_name)}`;
       notificationEntityId = document.driver_id;
     }
   }
