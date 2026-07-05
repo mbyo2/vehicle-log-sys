@@ -6,7 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.8';
 import { VerificationEmail } from './_templates/verification-email.tsx';
 import { PasswordResetEmail } from './_templates/password-reset-email.tsx';
 import { WelcomeEmail } from './_templates/welcome-email.tsx';
-import { corsHeaders, escapeHtml, safeUrl, getAuthedCaller, unauthorized } from '../_shared/auth.ts';
+import { corsHeaders, escapeHtml, safeUrl, getAuthedCaller, isAdminRole, unauthorized, forbidden } from '../_shared/auth.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -40,6 +40,21 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { type, email, data = {} }: EmailRequest = await req.json();
+
+    // Restrict abuse-prone types:
+    // - invitation: admin-only (prevents phishing from arbitrary users)
+    // - verification / password_reset: only allow sending to the caller's own email
+    if (type === 'invitation' && !isAdminRole(caller.role)) {
+      return forbidden('Admin role required to send invitation emails');
+    }
+    if ((type === 'verification' || type === 'password_reset')) {
+      // Look up caller's email via admin client
+      const { data: userRow } = await supabase.auth.admin.getUserById(caller.userId);
+      const callerEmail = userRow?.user?.email?.toLowerCase();
+      if (!callerEmail || callerEmail !== email.toLowerCase()) {
+        return forbidden('Can only send verification/password_reset to your own email');
+      }
+    }
 
     console.log(`Sending ${type} email to ${email}`);
 

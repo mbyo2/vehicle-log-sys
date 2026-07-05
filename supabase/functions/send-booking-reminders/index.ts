@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders, isInternalCaller, unauthorized } from "../_shared/auth.ts";
+import { corsHeaders, escapeHtml, isInternalCaller, unauthorized } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -60,16 +60,18 @@ serve(async (req) => {
 
     // Send reminders for each booking
     const reminderPromises = bookings.map(async (booking) => {
+      const vehicle = booking.vehicles[0];
+      const center = booking.service_centers[0];
       const emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Service Booking Reminder</h2>
           <p>This is a reminder about your upcoming service booking:</p>
           <ul>
-            <li>Vehicle: ${booking.vehicles[0].plate_number} (${booking.vehicles[0].make} ${booking.vehicles[0].model})</li>
-            <li>Service Type: ${booking.service_type}</li>
-            <li>Date: ${new Date(booking.booking_date).toLocaleDateString()}</li>
-            <li>Time: ${new Date(booking.booking_date).toLocaleTimeString()}</li>
-            <li>Service Center: ${booking.service_centers[0].name}</li>
+            <li>Vehicle: ${escapeHtml(vehicle.plate_number)} (${escapeHtml(vehicle.make)} ${escapeHtml(vehicle.model)})</li>
+            <li>Service Type: ${escapeHtml(booking.service_type)}</li>
+            <li>Date: ${escapeHtml(new Date(booking.booking_date).toLocaleDateString())}</li>
+            <li>Time: ${escapeHtml(new Date(booking.booking_date).toLocaleTimeString())}</li>
+            <li>Service Center: ${escapeHtml(center.name)}</li>
           </ul>
         </div>
       `;

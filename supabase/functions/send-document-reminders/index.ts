@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders, isInternalCaller, unauthorized } from "../_shared/auth.ts";
+import { corsHeaders, escapeHtml, isInternalCaller, unauthorized } from "../_shared/auth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -213,8 +213,8 @@ async function processRoadTaxExpiry(vehicle: any, adminEmails: string[], today: 
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Road Tax Expiry Reminder</h2>
-        <p>The road tax for vehicle ${vehicle.plate_number} will expire in ${daysToRoadTaxExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(vehicle.road_tax_expiry).toLocaleDateString()}</p>
+        <p>The road tax for vehicle ${escapeHtml(vehicle.plate_number)} will expire in ${daysToRoadTaxExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(vehicle.road_tax_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
@@ -244,8 +244,8 @@ async function processInsuranceExpiry(vehicle: any, adminEmails: string[], today
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Insurance Expiry Reminder</h2>
-        <p>The insurance for vehicle ${vehicle.plate_number} will expire in ${daysToInsuranceExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(vehicle.insurance_expiry).toLocaleDateString()}</p>
+        <p>The insurance for vehicle ${escapeHtml(vehicle.plate_number)} will expire in ${daysToInsuranceExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(vehicle.insurance_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
@@ -278,7 +278,7 @@ async function getDocumentAdditionalInfo(document: any) {
       .single();
       
     if (vehicle) {
-      additionalInfo = ` for vehicle ${vehicle.plate_number}`;
+      additionalInfo = ` for vehicle ${escapeHtml(vehicle.plate_number)}`;
       notificationEntityId = document.vehicle_id;
     }
   } else if (document.driver_id) {
@@ -289,7 +289,7 @@ async function getDocumentAdditionalInfo(document: any) {
       .single();
       
     if (driver && driver.profiles) {
-      additionalInfo = ` for driver ${driver.profiles.full_name}`;
+      additionalInfo = ` for driver ${escapeHtml((driver.profiles as any).full_name)}`;
       notificationEntityId = document.driver_id;
     }
   }
@@ -324,8 +324,8 @@ async function processDocumentExpirations(
       const emailHtml = `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Document Expiry Reminder</h2>
-          <p>The document "${document.name}" (${document.type})${additionalInfo} will expire in ${daysToExpiry} days.</p>
-          <p>Please ensure to renew it before the expiry date: ${new Date(document.expiry_date).toLocaleDateString()}</p>
+          <p>The document "${escapeHtml(document.name)}" (${escapeHtml(document.type)})${additionalInfo} will expire in ${daysToExpiry} days.</p>
+          <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(document.expiry_date).toLocaleDateString())}</p>
         </div>
       `;
 
@@ -370,12 +370,13 @@ async function processDriverLicenseExpirations(
     );
     
     const driverName = driver.profiles?.full_name || driver.man_number;
+    const safeDriverName = escapeHtml(driverName);
     
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Driver License Expiry Reminder</h2>
-        <p>The driving license for ${driverName} will expire in ${daysToExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(driver.license_expiry).toLocaleDateString()}</p>
+        <p>The driving license for ${safeDriverName} will expire in ${daysToExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(driver.license_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
