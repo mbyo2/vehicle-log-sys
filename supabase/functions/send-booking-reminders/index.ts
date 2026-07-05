@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
-import { corsHeaders, isInternalCaller, unauthorized } from "../_shared/auth.ts";
+import { corsHeaders, escapeHtml, isInternalCaller, unauthorized } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
