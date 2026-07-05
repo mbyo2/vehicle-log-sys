@@ -41,35 +41,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Safety net so authState.loading can never stick as true if a query
+    // hangs or an auth event races the getSession bootstrap.
+    const safetyTimer = setTimeout(() => {
+      if (mounted && authState.loading.get()) {
+        console.warn('[Auth] Loading safety timeout hit — forcing loading=false');
+        authState.loading.set(false);
+      }
+    }, 8000);
+
     // Step 1: Restore session from storage
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (!mounted) return;
-      
-      if (error) {
-        console.error('[Auth] getSession error:', error);
-        authState.loading.set(false);
-        return;
-      }
 
-      if (session?.user) {
-        console.log('[Auth] Restored session for:', session.user.id);
-        authState.user.set(session.user);
-        
-        try {
+      try {
+        if (error) {
+          console.error('[Auth] getSession error:', error);
+          return;
+        }
+
+        if (session?.user) {
+          console.log('[Auth] Restored session for:', session.user.id);
+          authState.user.set(session.user);
+
           const profileData = await fetchUserProfile(session.user.id);
-          if (mounted) {
+          if (mounted && profileData) {
             authState.profile.set(profileData);
           }
-        } catch (err) {
-          console.error('[Auth] Profile fetch error:', err);
+        } else {
+          console.log('[Auth] No existing session');
         }
-      } else {
-        console.log('[Auth] No existing session');
+      } catch (err) {
+        console.error('[Auth] Bootstrap error:', err);
+      } finally {
+        if (mounted) authState.loading.set(false);
       }
-
-      if (mounted) {
-        authState.loading.set(false);
-      }
+    }).catch((err) => {
+      console.error('[Auth] getSession threw:', err);
+      if (mounted) authState.loading.set(false);
     });
 
     // Step 2: Listen for subsequent auth changes
@@ -88,28 +97,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         authState.user.set(session.user);
 
-        // Re-fetch profile on any auth state change that yields a session
-        // (SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED, INITIAL_SESSION).
-        // We only skip the very first INITIAL_SESSION since the getSession()
-        // bootstrap above already handles it.
+        // Re-fetch profile on auth events that yield a new session.
+        // Skip INITIAL_SESSION (handled by getSession bootstrap above).
         if (event !== 'INITIAL_SESSION') {
-          fetchUserProfile(session.user.id).then(profileData => {
-            if (mounted && profileData) {
-              authState.profile.set(profileData);
-            }
-            if (mounted) {
-              authState.loading.set(false);
-            }
-          }).catch(err => {
-            console.error('[Auth] Profile re-fetch error:', err);
-            if (mounted) authState.loading.set(false);
-          });
+          fetchUserProfile(session.user.id)
+            .then(profileData => {
+              if (mounted && profileData) authState.profile.set(profileData);
+            })
+            .catch(err => console.error('[Auth] Profile re-fetch error:', err))
+            .finally(() => {
+              if (mounted) authState.loading.set(false);
+            });
+        } else if (authState.loading.get()) {
+          // Defensive: if bootstrap somehow hasn't cleared loading yet, do it here.
+          authState.loading.set(false);
         }
       }
     );
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
