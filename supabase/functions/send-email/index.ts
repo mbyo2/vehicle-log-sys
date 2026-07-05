@@ -41,6 +41,21 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { type, email, data = {} }: EmailRequest = await req.json();
 
+    // Restrict abuse-prone types:
+    // - invitation: admin-only (prevents phishing from arbitrary users)
+    // - verification / password_reset: only allow sending to the caller's own email
+    if (type === 'invitation' && !isAdminRole(caller.role)) {
+      return forbidden('Admin role required to send invitation emails');
+    }
+    if ((type === 'verification' || type === 'password_reset')) {
+      // Look up caller's email via admin client
+      const { data: userRow } = await supabase.auth.admin.getUserById(caller.userId);
+      const callerEmail = userRow?.user?.email?.toLowerCase();
+      if (!callerEmail || callerEmail !== email.toLowerCase()) {
+        return forbidden('Can only send verification/password_reset to your own email');
+      }
+    }
+
     console.log(`Sending ${type} email to ${email}`);
 
     let html = '';
