@@ -42,7 +42,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log(`Processing notification: ${type} via ${delivery}`);
     
     // Get user details for all recipients
-    const { data: users, error: usersError } = await supabase
+    const { data: allUsers, error: usersError } = await supabase
       .from('profiles')
       .select('id, email, full_name, company_id')
       .in('id', to);
@@ -50,6 +50,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (usersError) {
       throw new Error(`Failed to fetch user details: ${usersError.message}`);
     }
+
+    // Cross-tenant guard: super_admin can target any user; others limited to their company.
+    const users = (allUsers || []).filter(
+      (u) => caller.role === 'super_admin' || u.company_id === caller.companyId
+    );
 
     if (!users || users.length === 0) {
       throw new Error('No valid recipients found');
