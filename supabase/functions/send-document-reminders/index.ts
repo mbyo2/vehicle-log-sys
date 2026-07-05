@@ -370,12 +370,13 @@ async function processDriverLicenseExpirations(
     );
     
     const driverName = driver.profiles?.full_name || driver.man_number;
+    const safeDriverName = escapeHtml(driverName);
     
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Driver License Expiry Reminder</h2>
-        <p>The driving license for ${driverName} will expire in ${daysToExpiry} days.</p>
-        <p>Please ensure to renew it before the expiry date: ${new Date(driver.license_expiry).toLocaleDateString()}</p>
+        <p>The driving license for ${safeDriverName} will expire in ${daysToExpiry} days.</p>
+        <p>Please ensure to renew it before the expiry date: ${escapeHtml(new Date(driver.license_expiry).toLocaleDateString())}</p>
       </div>
     `;
 
