@@ -199,7 +199,13 @@ async function handleMaintenanceIntegration(action, payload, supabaseClient) {
   
   switch (action) {
     case 'connect_provider':
-      // Store the provider connection in the database
+      // Encrypt sensitive account number before storage
+      const { data: encMaint, error: encMaintErr } = await supabaseClient.rpc(
+        'encrypt_integration_credentials',
+        { credentials_data: { account_number: payload.accountNumber } }
+      );
+      if (encMaintErr) throw encMaintErr;
+
       await supabaseClient
         .from('external_integrations')
         .upsert({
@@ -208,9 +214,9 @@ async function handleMaintenanceIntegration(action, payload, supabaseClient) {
           config: {
             vehicle_id: payload.vehicleId,
             provider_id: payload.providerId,
-            account_number: payload.accountNumber,
             connected_at: new Date().toISOString(),
           },
+          encrypted_config: encMaint,
           is_active: true
         });
       
