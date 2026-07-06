@@ -73,7 +73,13 @@ async function handleFuelCardIntegration(action, payload, supabaseClient) {
       // In a real implementation, this would validate and store the fuel card connection
       // For demo purposes, we're just simulating a successful connection
       
-      // Store the connection in our database
+      // Encrypt sensitive credentials before storage
+      const { data: encFuel, error: encFuelErr } = await supabaseClient.rpc(
+        'encrypt_integration_credentials',
+        { credentials_data: { card_number: payload.cardNumber } }
+      );
+      if (encFuelErr) throw encFuelErr;
+
       await supabaseClient
         .from('external_integrations')
         .upsert({
@@ -81,9 +87,9 @@ async function handleFuelCardIntegration(action, payload, supabaseClient) {
           name: 'Fuel Card Integration',
           config: {
             vehicle_id: payload.vehicleId,
-            card_number: payload.cardNumber,
             connected_at: new Date().toISOString(),
           },
+          encrypted_config: encFuel,
           is_active: true
         });
       
@@ -193,7 +199,13 @@ async function handleMaintenanceIntegration(action, payload, supabaseClient) {
   
   switch (action) {
     case 'connect_provider':
-      // Store the provider connection in the database
+      // Encrypt sensitive account number before storage
+      const { data: encMaint, error: encMaintErr } = await supabaseClient.rpc(
+        'encrypt_integration_credentials',
+        { credentials_data: { account_number: payload.accountNumber } }
+      );
+      if (encMaintErr) throw encMaintErr;
+
       await supabaseClient
         .from('external_integrations')
         .upsert({
@@ -202,9 +214,9 @@ async function handleMaintenanceIntegration(action, payload, supabaseClient) {
           config: {
             vehicle_id: payload.vehicleId,
             provider_id: payload.providerId,
-            account_number: payload.accountNumber,
             connected_at: new Date().toISOString(),
           },
+          encrypted_config: encMaint,
           is_active: true
         });
       

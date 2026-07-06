@@ -72,10 +72,14 @@ const handler = async (req: Request): Promise<Response> => {
       type: "totp",
     });
 
-    // Generate backup codes
-    const backupCodes = Array.from({ length: 8 }, () => 
-      Math.random().toString(36).substring(2, 10).toUpperCase()
-    );
+    // Generate cryptographically secure backup codes
+    const backupCodes = Array.from({ length: 8 }, () => {
+      const buf = new Uint8Array(5);
+      crypto.getRandomValues(buf);
+      return Array.from(buf, (b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .toUpperCase();
+    });
 
     // Store the secret in the database using service role
     const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
