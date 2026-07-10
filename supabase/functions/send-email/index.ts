@@ -47,6 +47,9 @@ const handler = async (req: Request): Promise<Response> => {
     if (type === 'invitation' && !isAdminRole(caller.role)) {
       return forbidden('Admin role required to send invitation emails');
     }
+    if (type === 'welcome' && !isAdminRole(caller.role)) {
+      return forbidden('Admin role required to send welcome emails');
+    }
     if ((type === 'verification' || type === 'password_reset')) {
       // Look up caller's email via admin client
       const { data: userRow } = await supabase.auth.admin.getUserById(caller.userId);
