@@ -73,6 +73,7 @@ export const fetchUserProfile = async (userId: string) => {
     }
 
     // Fallback: super_admin or user without company
+    const tFb = performance.now();
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role, company_id')
@@ -80,6 +81,7 @@ export const fetchUserProfile = async (userId: string) => {
       .order('role', { ascending: true })
       .limit(1)
       .maybeSingle();
+    mark('fallback:user_roles', tFb);
 
     if (roleData) {
       console.log('[Auth] User role found (no company):', roleData.role);
