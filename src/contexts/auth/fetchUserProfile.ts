@@ -48,6 +48,7 @@ export const fetchUserProfile = async (userId: string) => {
       }
 
       // Round-trip 2: role + industry in parallel
+      const tRt2 = performance.now();
       const [roleRes, companyRes] = await Promise.all([
         supabase
           .from('user_roles')
@@ -61,6 +62,7 @@ export const fetchUserProfile = async (userId: string) => {
           .eq('id', targetCompanyId)
           .maybeSingle(),
       ]);
+      mark('rt2:user_roles+companies', tRt2);
 
       const userRole = roleRes.data?.role || 'driver';
       const industryType = (companyRes.data as any)?.industry_type || 'general';
