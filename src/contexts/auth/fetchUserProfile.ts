@@ -10,16 +10,22 @@ import { authState } from '@/contexts/auth/AuthState';
  *  2. user_role + company industry_type  (parallel, after target company resolved)
  */
 export const fetchUserProfile = async (userId: string) => {
+  const t0 = performance.now();
+  const mark = (label: string, start: number) =>
+    console.log(`[Auth][timing] ${label}: ${(performance.now() - start).toFixed(0)}ms (fp total ${(performance.now() - t0).toFixed(0)}ms)`);
+
   try {
     console.log(`[Auth] Fetching profile for user ${userId}`);
 
     const savedCompanyId = localStorage.getItem('current_company_id');
 
     // Round-trip 1: profile + user's companies in parallel
+    const tRt1 = performance.now();
     const [profileRes, companiesRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.rpc('get_user_companies', { p_user_id: userId }),
     ]);
+    mark('rt1:profile+get_user_companies', tRt1);
 
     if (profileRes.error) {
       console.error('[Auth] Profile fetch error:', profileRes.error);
@@ -30,6 +36,7 @@ export const fetchUserProfile = async (userId: string) => {
       console.warn('[Auth] No profile found for user:', userId);
       return null;
     }
+
 
     const companiesData = companiesRes.data as any[] | null;
 
