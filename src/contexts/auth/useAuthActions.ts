@@ -40,17 +40,23 @@ export const useAuthActions = () => {
   const { toast } = useToast();
 
   const signIn = async (email: string, password: string) => {
+    const t0 = performance.now();
+    const mark = (label: string, start: number) =>
+      console.log(`[Auth][timing] ${label}: ${(performance.now() - start).toFixed(0)}ms (total ${(performance.now() - t0).toFixed(0)}ms)`);
+
     try {
       setLoadingState(true);
       console.log('[Auth] Signing in:', email);
 
       // Rate limiting check
+      const tRate = performance.now();
       const canProceed = await supabase.rpc('check_rate_limit', {
         p_identifier: email,
         p_action_type: 'login',
         p_max_attempts: 5,
         p_window_minutes: 15
       });
+      mark('rpc:check_rate_limit', tRate);
 
       if (!canProceed.data) {
         await logSecurityEvent('rate_limit_exceeded', 'high', { email, action: 'login' });
@@ -62,11 +68,13 @@ export const useAuthActions = () => {
       if (!emailValidation.isValid) {
         throw new Error("Invalid email format");
       }
-      
+
+      const tAuth = performance.now();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: emailValidation.sanitized,
         password,
       });
+      mark('auth:signInWithPassword', tAuth);
 
       if (error) {
         await logSecurityEvent('user_login_failure', 'high', { email, error: error.message });
@@ -80,32 +88,36 @@ export const useAuthActions = () => {
       console.log('[Auth] Sign in successful:', data.user.id);
       authState.user.set(data.user);
 
-      // Log successful login (fire and forget)
+      // Log successful login (fire and forget — do not block navigation)
       logSecurityEvent('user_login_success', 'low', {
         user_id: data.user.id,
         email: data.user.email,
       });
 
       // Fetch profile and navigate
+      const tProfile = performance.now();
       const profileData = await fetchUserProfile(data.user.id);
-      
+      mark('fetchUserProfile', tProfile);
+
       if (!profileData) {
         throw new Error('Unable to load user profile. Please contact support.');
       }
 
       authState.profile.set(profileData);
-      
+
       const defaultRoute = DEFAULT_ROUTES[profileData.role as keyof typeof DEFAULT_ROUTES] || '/dashboard';
       console.log('[Auth] Navigating to:', defaultRoute, 'with role:', profileData.role);
-      
+
       toast({
         title: 'Success',
         description: 'Signed in successfully.',
       });
 
       navigate(defaultRoute);
+      mark('signIn:TOTAL', t0);
     } catch (error: any) {
       console.error('[Auth] Sign in error:', error.message);
+      mark('signIn:FAILED', t0);
       toast({
         variant: "destructive",
         title: 'Sign In Error',
@@ -116,6 +128,7 @@ export const useAuthActions = () => {
       setLoadingState(false);
     }
   };
+
 
   const signUp = async (email: string, password: string, fullName: string, isFirstUser: boolean, companyName?: string, subscriptionType?: string): Promise<AuthResult> => {
     try {

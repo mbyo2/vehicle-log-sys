@@ -10,16 +10,22 @@ import { authState } from '@/contexts/auth/AuthState';
  *  2. user_role + company industry_type  (parallel, after target company resolved)
  */
 export const fetchUserProfile = async (userId: string) => {
+  const t0 = performance.now();
+  const mark = (label: string, start: number) =>
+    console.log(`[Auth][timing] ${label}: ${(performance.now() - start).toFixed(0)}ms (fp total ${(performance.now() - t0).toFixed(0)}ms)`);
+
   try {
     console.log(`[Auth] Fetching profile for user ${userId}`);
 
     const savedCompanyId = localStorage.getItem('current_company_id');
 
     // Round-trip 1: profile + user's companies in parallel
+    const tRt1 = performance.now();
     const [profileRes, companiesRes] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.rpc('get_user_companies', { p_user_id: userId }),
     ]);
+    mark('rt1:profile+get_user_companies', tRt1);
 
     if (profileRes.error) {
       console.error('[Auth] Profile fetch error:', profileRes.error);
@@ -31,6 +37,7 @@ export const fetchUserProfile = async (userId: string) => {
       return null;
     }
 
+
     const companiesData = companiesRes.data as any[] | null;
 
     if (companiesData && companiesData.length > 0) {
@@ -41,6 +48,7 @@ export const fetchUserProfile = async (userId: string) => {
       }
 
       // Round-trip 2: role + industry in parallel
+      const tRt2 = performance.now();
       const [roleRes, companyRes] = await Promise.all([
         supabase
           .from('user_roles')
@@ -54,6 +62,7 @@ export const fetchUserProfile = async (userId: string) => {
           .eq('id', targetCompanyId)
           .maybeSingle(),
       ]);
+      mark('rt2:user_roles+companies', tRt2);
 
       const userRole = roleRes.data?.role || 'driver';
       const industryType = (companyRes.data as any)?.industry_type || 'general';
@@ -64,6 +73,7 @@ export const fetchUserProfile = async (userId: string) => {
     }
 
     // Fallback: super_admin or user without company
+    const tFb = performance.now();
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role, company_id')
@@ -71,6 +81,7 @@ export const fetchUserProfile = async (userId: string) => {
       .order('role', { ascending: true })
       .limit(1)
       .maybeSingle();
+    mark('fallback:user_roles', tFb);
 
     if (roleData) {
       console.log('[Auth] User role found (no company):', roleData.role);
