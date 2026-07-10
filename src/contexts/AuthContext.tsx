@@ -99,7 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Re-fetch profile on auth events that yield a new session.
         // Skip INITIAL_SESSION (handled by getSession bootstrap above).
-        if (event !== 'INITIAL_SESSION') {
+        // Skip SIGNED_IN if useAuthActions.signIn already loaded the profile for this user.
+        const currentProfile = authState.profile.get() as any;
+        const alreadyLoaded = currentProfile && currentProfile.id === session.user.id;
+
+        if (event !== 'INITIAL_SESSION' && !alreadyLoaded) {
           fetchUserProfile(session.user.id)
             .then(profileData => {
               if (mounted && profileData) authState.profile.set(profileData);
