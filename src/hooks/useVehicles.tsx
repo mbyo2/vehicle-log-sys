@@ -20,11 +20,6 @@ export function useVehicles() {
             id,
             kilometers,
             service_date
-          ),
-          vehicle_comments (
-            id,
-            text,
-            timestamp
           )
         `)
         .order('created_at', { ascending: false });
