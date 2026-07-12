@@ -74,12 +74,22 @@ export function EnhancedVehicleForm({ vehicle, onSuccess, onCancel }: EnhancedVe
   const onSubmit = async (data: EnhancedVehicleFormValues) => {
     try {
       setLoading(true);
-      const currentProfile = profile.get();
-      
-      if (!currentProfile?.company_id) {
-        throw new Error('Company ID not found');
+      const currentProfile: any = profile.get();
+      const isSuperAdmin = currentProfile?.role === 'super_admin';
+
+      // Super admin can fall back to the last-selected company from the switcher
+      const effectiveCompanyId =
+        currentProfile?.company_id ||
+        (isSuperAdmin ? localStorage.getItem('current_company_id') : null);
+
+      if (!effectiveCompanyId) {
+        throw new Error(
+          isSuperAdmin
+            ? 'Select a company from the company switcher before adding a vehicle.'
+            : 'Company ID not found'
+        );
       }
-      
+
       const vehicleData = {
         plate_number: data.plate_number,
         make: data.make,
@@ -91,7 +101,7 @@ export function EnhancedVehicleForm({ vehicle, onSuccess, onCancel }: EnhancedVe
         fitness_cert_expiry: data.fitness_cert_expiry || null,
         road_tax_expiry: data.road_tax_expiry || null,
         insurance_expiry: data.insurance_expiry || null,
-        company_id: currentProfile.company_id,
+        company_id: effectiveCompanyId,
       };
 
       if (vehicle) {
