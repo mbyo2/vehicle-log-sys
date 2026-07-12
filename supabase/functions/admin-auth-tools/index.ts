@@ -197,10 +197,39 @@ serve(async (req) => {
       const actionLink = linkData?.properties?.action_link;
       if (!actionLink) return json(500, { error: "Failed to generate reset link" });
 
+      // SECURITY: Never return the raw action_link to the admin caller —
+      // that would enable silent account takeover. Send the recovery link
+      // directly to the target user's verified email address via Resend.
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendKey) {
+        return json(500, { error: "Email service not configured (RESEND_API_KEY missing)" });
+      }
+
+      const emailResp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Fleet Manager <noreply@yourdomain.com>",
+          to: [targetEmail],
+          subject: "Reset your password",
+          html: `<p>An administrator has initiated a password reset for your account.</p>
+                 <p><a href="${actionLink}">Click here to set a new password</a>.</p>
+                 <p>If you did not expect this, you can ignore this email.</p>`,
+        }),
+      });
+
+      if (!emailResp.ok) {
+        const errText = await emailResp.text();
+        return json(500, { error: `Failed to send reset email: ${errText}` });
+      }
+
       return json(200, {
         email: targetEmail,
-        actionLink,
-        redirectTo: linkData?.properties?.redirect_to,
+        sent: true,
+        message: "Password reset link emailed to the user.",
       });
     }
 
