@@ -61,20 +61,18 @@ export function AdminPasswordReset() {
       });
 
       if (error) throw error;
-      if (!data?.actionLink) throw new Error("No reset link returned");
+      if (!data?.sent) throw new Error(data?.error || "Failed to send reset email");
 
-      setResetLink({ userId, link: data.actionLink as string });
-      
       toast({
-        title: "Reset link generated",
-        description: `Share this link with ${userEmail} to set a new password.`,
+        title: "Reset email sent",
+        description: `A password reset link has been emailed to ${userEmail}.`,
       });
     } catch (error: any) {
-      console.error("Error generating reset link:", error);
+      console.error("Error sending reset email:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to generate password reset link",
+        description: error.message || "Failed to send password reset email",
       });
     } finally {
       setGeneratingFor(null);
