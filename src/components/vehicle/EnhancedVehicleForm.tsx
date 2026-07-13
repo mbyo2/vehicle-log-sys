@@ -75,7 +75,17 @@ export function EnhancedVehicleForm({ vehicle, onSuccess, onCancel }: EnhancedVe
     try {
       setLoading(true);
       const currentProfile: any = profile.get();
-      const isSuperAdmin = currentProfile?.role === 'super_admin';
+
+      // Check super_admin via user_roles (roles are NOT stored on profile)
+      const { data: { user } } = await supabase.auth.getUser();
+      let isSuperAdmin = false;
+      if (user) {
+        const { data: hasRole } = await supabase.rpc('has_role', {
+          _user_id: user.id,
+          _role: 'super_admin',
+        });
+        isSuperAdmin = !!hasRole;
+      }
 
       // Super admin can fall back to the last-selected company from the switcher
       const effectiveCompanyId =
@@ -89,6 +99,7 @@ export function EnhancedVehicleForm({ vehicle, onSuccess, onCancel }: EnhancedVe
             : 'Company ID not found'
         );
       }
+
 
       const vehicleData = {
         plate_number: data.plate_number,
