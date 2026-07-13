@@ -61,9 +61,10 @@ export class SecurityUtils {
 
     return {
       isValid: score >= 5,
-      score,
+      score: score * 20,
       feedback
     };
+
   }
 
   /**
