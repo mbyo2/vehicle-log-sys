@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.8";
+import { isInternalCaller } from "../_shared/auth.ts";
+
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -70,10 +72,17 @@ serve(async (req) => {
     if (!action) return json(400, { error: "Missing 'action' in request body" });
 
     if (action === "bootstrap_super_admin") {
+      // SECURITY: bootstrap grants full platform control — only trusted
+      // server-side callers (service role key or INTERNAL_FUNCTION_SECRET) may run it.
+      if (!isInternalCaller(req)) {
+        return json(401, { error: "Unauthorized" });
+      }
+
       const email = (body?.email || "admin@yourcompany.com").trim().toLowerCase();
       const fullName = (body?.full_name || "Super Admin").trim();
       const origin = req.headers.get("origin") || "";
       const redirectTo = body?.redirectTo || (origin ? `${origin}/reset-password` : undefined);
+
 
       // Only allow this once (when no super_admin exists yet)
       const { data: isFirstUser, error: firstUserError } = await admin.rpc("check_if_first_user");
@@ -125,7 +134,8 @@ serve(async (req) => {
         if (roleError) return json(500, { error: roleError.message });
       }
 
-      // Return a set-password link (recovery flow) so we don't handle passwords here
+      // Generate a set-password link (recovery flow) and email it directly to the
+      // target address — never return the live link in the HTTP response.
       const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
         type: "recovery",
         email,
@@ -136,12 +146,39 @@ serve(async (req) => {
       const setPasswordLink = linkData?.properties?.action_link;
       if (!setPasswordLink) return json(500, { error: "Failed to generate set-password link" });
 
+      const resendKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendKey) {
+        return json(500, { error: "Email service not configured (RESEND_API_KEY missing)" });
+      }
+
+      const bootstrapEmailResp = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Fleet Manager <noreply@yourdomain.com>",
+          to: [email],
+          subject: "Set your administrator password",
+          html: `<p>Your platform administrator account has been created.</p>
+                 <p><a href="${setPasswordLink}">Click here to set your password</a>.</p>
+                 <p>If you did not expect this, you can ignore this email.</p>`,
+        }),
+      });
+
+      if (!bootstrapEmailResp.ok) {
+        return json(500, { error: "Failed to send set-password email" });
+      }
+
       return json(200, {
         userId,
         email,
         full_name: fullName,
-        setPasswordLink,
+        sent: true,
+        message: "Set-password link emailed to the administrator address.",
       });
+
     }
 
     if (action === "generate_reset_link") {
