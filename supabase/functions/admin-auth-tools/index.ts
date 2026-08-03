@@ -72,10 +72,17 @@ serve(async (req) => {
     if (!action) return json(400, { error: "Missing 'action' in request body" });
 
     if (action === "bootstrap_super_admin") {
+      // SECURITY: bootstrap grants full platform control — only trusted
+      // server-side callers (service role key or INTERNAL_FUNCTION_SECRET) may run it.
+      if (!isInternalCaller(req)) {
+        return json(401, { error: "Unauthorized" });
+      }
+
       const email = (body?.email || "admin@yourcompany.com").trim().toLowerCase();
       const fullName = (body?.full_name || "Super Admin").trim();
       const origin = req.headers.get("origin") || "";
       const redirectTo = body?.redirectTo || (origin ? `${origin}/reset-password` : undefined);
+
 
       // Only allow this once (when no super_admin exists yet)
       const { data: isFirstUser, error: firstUserError } = await admin.rpc("check_if_first_user");
