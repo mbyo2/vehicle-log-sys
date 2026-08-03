@@ -73,10 +73,11 @@ export function CompanyLogoUpload({ companyId, currentLogoUrl }: CompanyLogoUplo
       const fileName = logoUrl.split('/').pop();
       if (!fileName) return;
 
-      // Remove file from storage
+      // Remove file from storage (folder-per-company path)
       const { error: deleteError } = await supabase.storage
         .from('company-logos')
-        .remove([fileName]);
+        .remove([`${companyId}/${fileName}`]);
+
 
       if (deleteError) throw deleteError;
 
