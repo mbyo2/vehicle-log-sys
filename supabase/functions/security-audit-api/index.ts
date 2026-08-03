@@ -31,6 +31,11 @@ serve(async (req) => {
   if (!caller) return unauthorized();
   if (!isAdminRole(caller.role)) return forbidden('Admin role required');
 
+  // super_admin sees the whole platform; company_admin is scoped to its own company.
+  const isSuper = caller.role === 'super_admin';
+  const companyScope: string | null = isSuper ? null : (caller.companyId ?? null);
+  if (!isSuper && !companyScope) return forbidden('No company associated with this account');
+
 
   try {
     const supabaseClient = createClient(
@@ -44,10 +49,10 @@ serve(async (req) => {
 
     switch (action) {
       case 'run_audit':
-        return await runSecurityAudit(supabaseClient, audit_types);
+        return await runSecurityAudit(supabaseClient, audit_types, companyScope);
       
       case 'get_results':
-        return await getAuditResults(supabaseClient);
+        return await getAuditResults(supabaseClient, companyScope);
       
       case 'configure_schedule':
         return await configureAuditSchedule(supabaseClient, schedule);
@@ -67,9 +72,15 @@ serve(async (req) => {
   }
 });
 
+// Applies the caller's tenant scope to a query when the caller is not a super_admin.
+function scoped(query: any, companyScope: string | null) {
+  return companyScope ? query.eq('company_id', companyScope) : query;
+}
+
 async function runSecurityAudit(
   supabaseClient: any,
-  auditTypes?: string[]
+  auditTypes: string[] | undefined,
+  companyScope: string | null
 ): Promise<Response> {
   const auditResults: AuditResult[] = [];
   const auditId = crypto.randomUUID();
@@ -80,27 +91,27 @@ async function runSecurityAudit(
   try {
     // Database Security Checks
     if (!auditTypes || auditTypes.includes('database')) {
-      auditResults.push(...await runDatabaseSecurityChecks(supabaseClient));
+      auditResults.push(...await runDatabaseSecurityChecks(supabaseClient, companyScope));
     }
 
     // Authentication Security Checks
     if (!auditTypes || auditTypes.includes('authentication')) {
-      auditResults.push(...await runAuthenticationChecks(supabaseClient));
+      auditResults.push(...await runAuthenticationChecks(supabaseClient, companyScope));
     }
 
     // API Security Checks
     if (!auditTypes || auditTypes.includes('api')) {
-      auditResults.push(...await runApiSecurityChecks(supabaseClient));
+      auditResults.push(...await runApiSecurityChecks(supabaseClient, companyScope));
     }
 
     // Access Control Checks
     if (!auditTypes || auditTypes.includes('access_control')) {
-      auditResults.push(...await runAccessControlChecks(supabaseClient));
+      auditResults.push(...await runAccessControlChecks(supabaseClient, companyScope));
     }
 
     // Data Protection Checks
     if (!auditTypes || auditTypes.includes('data_protection')) {
-      auditResults.push(...await runDataProtectionChecks(supabaseClient));
+      auditResults.push(...await runDataProtectionChecks(supabaseClient, companyScope));
     }
 
     // Calculate overall score
@@ -118,7 +129,8 @@ async function runSecurityAudit(
         completed_at: new Date().toISOString(),
         results: auditResults,
         score: score,
-        status: 'completed'
+        status: 'completed',
+        company_id: companyScope
       });
 
     if (storeError) {
@@ -163,14 +175,15 @@ async function runSecurityAudit(
         results: [],
         score: 0,
         status: 'failed',
-        error_message: error.message
+        error_message: error.message,
+        company_id: companyScope
       });
 
     throw error;
   }
 }
 
-async function runDatabaseSecurityChecks(supabaseClient: any): Promise<AuditResult[]> {
+async function runDatabaseSecurityChecks(supabaseClient: any, companyScope: string | null): Promise<AuditResult[]> {
   const results: AuditResult[] = [];
 
   try {
@@ -229,16 +242,19 @@ async function runDatabaseSecurityChecks(supabaseClient: any): Promise<AuditResu
   return results;
 }
 
-async function runAuthenticationChecks(supabaseClient: any): Promise<AuditResult[]> {
+async function runAuthenticationChecks(supabaseClient: any, companyScope: string | null): Promise<AuditResult[]> {
   const results: AuditResult[] = [];
 
   try {
     // Check failed login attempts
-    const { data: loginAttempts, error: loginError } = await supabaseClient
-      .from('security_audit_logs')
-      .select('*')
-      .eq('event_type', 'user_login_failure')
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+    const { data: loginAttempts, error: loginError } = await scoped(
+      supabaseClient
+        .from('security_audit_logs')
+        .select('*')
+        .eq('event_type', 'user_login_failure')
+        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
+      companyScope
+    );
 
     if (!loginError) {
       const failedAttempts = loginAttempts?.length || 0;
@@ -255,10 +271,13 @@ async function runAuthenticationChecks(supabaseClient: any): Promise<AuditResult
     }
 
     // Check for users without 2FA
-    const { data: users2FA, error: twoFAError } = await supabaseClient
-      .from('profiles')
-      .select('id, two_factor_enabled')
-      .eq('two_factor_enabled', false);
+    const { data: users2FA, error: twoFAError } = await scoped(
+      supabaseClient
+        .from('profiles')
+        .select('id, two_factor_enabled')
+        .eq('two_factor_enabled', false),
+      companyScope
+    );
 
     if (!twoFAError) {
       const usersWithout2FA = users2FA?.length || 0;
@@ -290,7 +309,7 @@ async function runAuthenticationChecks(supabaseClient: any): Promise<AuditResult
   return results;
 }
 
-async function runApiSecurityChecks(supabaseClient: any): Promise<AuditResult[]> {
+async function runApiSecurityChecks(supabaseClient: any, companyScope: string | null): Promise<AuditResult[]> {
   const results: AuditResult[] = [];
 
   // Check API rate limiting
@@ -315,15 +334,16 @@ async function runApiSecurityChecks(supabaseClient: any): Promise<AuditResult[]>
   return results;
 }
 
-async function runAccessControlChecks(supabaseClient: any): Promise<AuditResult[]> {
+async function runAccessControlChecks(supabaseClient: any, companyScope: string | null): Promise<AuditResult[]> {
   const results: AuditResult[] = [];
 
   try {
     // Check user roles distribution
-    const { data: roleData, error: roleError } = await supabaseClient
-      .from('profiles')
-      .select('role')
-      .not('role', 'is', null);
+    // Roles live in user_roles (never on profiles) and are company-scoped.
+    const { data: roleData, error: roleError } = await scoped(
+      supabaseClient.from('user_roles').select('role, company_id'),
+      companyScope
+    );
 
     if (!roleError && roleData) {
       const superAdminCount = roleData.filter((u: any) => u.role === 'super_admin').length;
@@ -342,11 +362,14 @@ async function runAccessControlChecks(supabaseClient: any): Promise<AuditResult[
 
     // Check for inactive users
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: inactiveUsers, error: inactiveError } = await supabaseClient
-      .from('security_audit_logs')
-      .select('user_id')
-      .eq('event_type', 'user_login_success')
-      .lt('created_at', thirtyDaysAgo);
+    const { data: inactiveUsers, error: inactiveError } = await scoped(
+      supabaseClient
+        .from('security_audit_logs')
+        .select('user_id')
+        .eq('event_type', 'user_login_success')
+        .lt('created_at', thirtyDaysAgo),
+      companyScope
+    );
 
     if (!inactiveError) {
       const inactiveCount = new Set(inactiveUsers?.map((u: any) => u.user_id) || []).size;
@@ -376,16 +399,18 @@ async function runAccessControlChecks(supabaseClient: any): Promise<AuditResult[
   return results;
 }
 
-async function runDataProtectionChecks(supabaseClient: any): Promise<AuditResult[]> {
+async function runDataProtectionChecks(supabaseClient: any, companyScope: string | null): Promise<AuditResult[]> {
   const results: AuditResult[] = [];
 
   // Check backup status
   try {
-    const { data: backupData, error: backupError } = await supabaseClient
-      .from('backup_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1);
+    const { data: backupData, error: backupError } = await scoped(
+      supabaseClient
+        .from('backup_logs')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      companyScope
+    ).limit(1);
 
     if (!backupError && backupData && backupData.length > 0) {
       const lastBackup = new Date(backupData[0].created_at);
@@ -435,13 +460,15 @@ async function runDataProtectionChecks(supabaseClient: any): Promise<AuditResult
   return results;
 }
 
-async function getAuditResults(supabaseClient: any): Promise<Response> {
+async function getAuditResults(supabaseClient: any, companyScope: string | null): Promise<Response> {
   try {
-    const { data, error } = await supabaseClient
-      .from('security_audit_results')
-      .select('*')
-      .order('started_at', { ascending: false })
-      .limit(10);
+    const { data, error } = await scoped(
+      supabaseClient
+        .from('security_audit_results')
+        .select('*')
+        .order('started_at', { ascending: false }),
+      companyScope
+    ).limit(10);
 
     if (error) throw error;
 

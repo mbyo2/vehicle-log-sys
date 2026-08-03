@@ -25,7 +25,8 @@ export function CompanyLogoUpload({ companyId, currentLogoUrl }: CompanyLogoUplo
 
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const filePath = `${companyId}-logo.${fileExt}`;
+      // Folder-per-company path so storage policies can verify ownership strictly
+      const filePath = `${companyId}/logo.${fileExt}`;
 
       // Upload image to storage
       const { error: uploadError } = await supabase.storage
@@ -72,10 +73,11 @@ export function CompanyLogoUpload({ companyId, currentLogoUrl }: CompanyLogoUplo
       const fileName = logoUrl.split('/').pop();
       if (!fileName) return;
 
-      // Remove file from storage
+      // Remove file from storage (folder-per-company path)
       const { error: deleteError } = await supabase.storage
         .from('company-logos')
-        .remove([fileName]);
+        .remove([`${companyId}/${fileName}`]);
+
 
       if (deleteError) throw deleteError;
 
