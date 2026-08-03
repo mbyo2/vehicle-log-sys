@@ -2552,6 +2552,7 @@ export type Database = {
           fuel_type: string | null
           id: string
           insurance_expiry: string | null
+          last_service_kilometers: number | null
           make: string
           model: string
           plate_number: string
@@ -2573,6 +2574,7 @@ export type Database = {
           fuel_type?: string | null
           id?: string
           insurance_expiry?: string | null
+          last_service_kilometers?: number | null
           make: string
           model: string
           plate_number: string
@@ -2594,6 +2596,7 @@ export type Database = {
           fuel_type?: string | null
           id?: string
           insurance_expiry?: string | null
+          last_service_kilometers?: number | null
           make?: string
           model?: string
           plate_number?: string
