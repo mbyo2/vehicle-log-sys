@@ -2802,6 +2802,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_ad_clicks: { Args: { ad_id: string }; Returns: undefined }
       insert_super_admin_role: {
         Args: { _user_id: string }
         Returns: undefined
