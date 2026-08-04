@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User, Session } from '@supabase/supabase-js';
@@ -28,16 +28,46 @@ interface AuthError {
   code?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Shared module-level auth store.
+// Previously every component calling useEnhancedAuth() created its own state
+// and its own bootstrap/auth listener, so each mount replayed
+// loading -> loaded, which showed up as flickering on /signin and /dashboard.
+// ---------------------------------------------------------------------------
+let sharedState: EnhancedAuthState = {
+  user: null,
+  session: null,
+  profile: null,
+  loading: true,
+  permissions: [],
+  role: null
+};
+
+const listeners = new Set<() => void>();
+let bootstrapped = false;
+
+function setSharedState(
+  updater: EnhancedAuthState | ((prev: EnhancedAuthState) => EnhancedAuthState)
+) {
+  const next = typeof updater === 'function'
+    ? (updater as (prev: EnhancedAuthState) => EnhancedAuthState)(sharedState)
+    : updater;
+  if (next === sharedState) return;
+  sharedState = next;
+  listeners.forEach(l => l());
+}
+
 export function useEnhancedAuth() {
-  const [authState, setAuthState] = useState<EnhancedAuthState>({
-    user: null,
-    session: null,
-    profile: null,
-    loading: true,
-    permissions: [],
-    role: null
-  });
-  
+  const authState = useSyncExternalStore(
+    (onStoreChange) => {
+      listeners.add(onStoreChange);
+      return () => listeners.delete(onStoreChange);
+    },
+    () => sharedState,
+    () => sharedState
+  );
+  const setAuthState = setSharedState;
+
   const { toast } = useToast();
 
   // Get permissions for role - admins get full access
@@ -294,8 +324,11 @@ export function useEnhancedAuth() {
     return null;
   };
 
-  // Initialize auth state
+  // Initialize auth state (once per app, shared across all hook consumers)
   useEffect(() => {
+    if (bootstrapped) return;
+    bootstrapped = true;
+
     let mounted = true;
 
     // Safety net: never let loading stay true forever, even if a query hangs
@@ -385,11 +418,11 @@ export function useEnhancedAuth() {
 
     initializeAuth();
 
-    return () => {
-      mounted = false;
-      clearTimeout(safetyTimer);
-      subscription.unsubscribe();
-    };
+    // Intentionally not unsubscribed: the store is app-wide and must survive
+    // individual component unmounts, otherwise re-mounts re-trigger loading.
+    void mounted;
+    void safetyTimer;
+    void subscription;
   }, []);
 
   return {
