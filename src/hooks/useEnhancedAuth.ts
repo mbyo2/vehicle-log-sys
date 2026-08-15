@@ -330,6 +330,8 @@ export function useEnhancedAuth() {
     bootstrapped = true;
 
     let mounted = true;
+    // initializeAuth owns the first loading=false transition.
+    let bootstrapDone = false;
 
     // Safety net: never let loading stay true forever, even if a query hangs
     // or an unexpected auth event slips past the branches below.
@@ -361,6 +363,7 @@ export function useEnhancedAuth() {
         console.error('Auth initialization error:', error);
       } finally {
         // Always clear loading — regardless of session/profile/error outcome.
+        bootstrapDone = true;
         if (mounted) {
           setAuthState(prev => ({ ...prev, loading: false }));
         }
@@ -409,7 +412,7 @@ export function useEnhancedAuth() {
         } catch (err) {
           console.error('Auth state change handler error:', err);
         } finally {
-          if (mounted) {
+          if (mounted && bootstrapDone) {
             setAuthState(prev => (prev.loading ? { ...prev, loading: false } : prev));
           }
         }
