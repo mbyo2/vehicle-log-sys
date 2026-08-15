@@ -33,15 +33,12 @@ export function RoleBasedRoute({
     return <Navigate to={fallbackPath} replace />;
   }
 
+  // Profile still resolving right after the session appears: keep the same
+  // spinner as the loading state so the screen doesn't flash a different UI.
   if (!profile) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <Alert className="max-w-md">
-          <Shield className="h-4 w-4" />
-          <AlertDescription>
-            Loading user profile. If this persists, please contact support.
-          </AlertDescription>
-        </Alert>
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner />
       </div>
     );
   }

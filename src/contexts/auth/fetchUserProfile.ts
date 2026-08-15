@@ -9,7 +9,22 @@ import { authState } from '@/contexts/auth/AuthState';
  *  1. profile + companies list  (parallel)
  *  2. user_role + company industry_type  (parallel, after target company resolved)
  */
-export const fetchUserProfile = async (userId: string) => {
+// Dedupe concurrent fetches for the same user: the AuthContext bootstrap and
+// the onAuthStateChange listener frequently race, which doubled every query
+// and made the loading state flip twice (visible as flickering).
+const inFlight = new Map<string, Promise<any>>();
+
+export const fetchUserProfile = (userId: string) => {
+  const existing = inFlight.get(userId);
+  if (existing) return existing;
+  const p = fetchUserProfileImpl(userId).finally(() => {
+    inFlight.delete(userId);
+  });
+  inFlight.set(userId, p);
+  return p;
+};
+
+const fetchUserProfileImpl = async (userId: string) => {
   const t0 = performance.now();
   const mark = (label: string, start: number) =>
     console.log(`[Auth][timing] ${label}: ${(performance.now() - start).toFixed(0)}ms (fp total ${(performance.now() - t0).toFixed(0)}ms)`);

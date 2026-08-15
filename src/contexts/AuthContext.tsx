@@ -40,6 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    // Bootstrap owns the initial loading=false transition. Auth events that
+    // fire while it is still resolving must not clear loading early, otherwise
+    // guards briefly see user-without-profile and redirect/flash.
+    let bootstrapDone = false;
 
     // Safety net so authState.loading can never stick as true if a query
     // hangs or an auth event races the getSession bootstrap.
@@ -74,10 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('[Auth] Bootstrap error:', err);
       } finally {
+        bootstrapDone = true;
         if (mounted) authState.loading.set(false);
       }
     }).catch((err) => {
       console.error('[Auth] getSession threw:', err);
+      bootstrapDone = true;
       if (mounted) authState.loading.set(false);
     });
 
@@ -104,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const alreadyLoaded = currentProfile && currentProfile.id === session.user.id;
 
         if (event !== 'INITIAL_SESSION' && !alreadyLoaded) {
+          authState.loading.set(true);
           fetchUserProfile(session.user.id)
             .then(profileData => {
               if (mounted && profileData) authState.profile.set(profileData);
@@ -112,8 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .finally(() => {
               if (mounted) authState.loading.set(false);
             });
-        } else if (authState.loading.get()) {
-          // Defensive: if bootstrap somehow hasn't cleared loading yet, do it here.
+        } else if (bootstrapDone && authState.loading.get()) {
+          // Defensive: only after bootstrap has finished resolving the profile.
           authState.loading.set(false);
         }
       }
