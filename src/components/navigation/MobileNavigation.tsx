@@ -238,10 +238,11 @@ export function MobileNavigation() {
                   key={index}
                   to={item.href}
                   onClick={handleNavClick}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground ${
-                    location.pathname === item.href 
-                      ? 'bg-accent text-accent-foreground' 
-                      : 'text-muted-foreground'
+                  aria-current={location.pathname === item.href ? 'page' : undefined}
+                  className={`relative flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                    location.pathname === item.href
+                      ? 'bg-primary text-primary-foreground font-semibold shadow-sm before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary-foreground/80'
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   }`}
                 >
                   {item.icon}
