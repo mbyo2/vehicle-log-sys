@@ -250,19 +250,26 @@ export function Sidebar() {
 
       <ScrollArea className="flex-1 py-2">
         <nav className="grid gap-1 px-2">
-          {filteredNavItems.map((item, index) => (
-            <Button
-              key={index}
-              variant={location.pathname === item.href ? 'secondary' : 'ghost'}
-              className={cn('justify-start', location.pathname === item.href && 'bg-primary/10')}
-              asChild
-            >
-              <Link to={item.href}>
-                {item.icon}
-                {item.title}
-              </Link>
-            </Button>
-          ))}
+          {filteredNavItems.map((item, index) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Button
+                key={index}
+                variant="ghost"
+                className={cn(
+                  'relative justify-start text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  isActive &&
+                    'bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary hover:text-primary-foreground before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-1 before:rounded-full before:bg-primary-foreground/80'
+                )}
+                asChild
+              >
+                <Link to={item.href} aria-current={isActive ? 'page' : undefined}>
+                  {item.icon}
+                  {item.title}
+                </Link>
+              </Button>
+            );
+          })}
           <Button
             variant="ghost"
             className="justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
