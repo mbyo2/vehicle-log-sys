@@ -20,58 +20,118 @@ export function useAnalytics() {
   const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
     queryKey: ['analytics-dashboard', dateRange],
     queryFn: async () => {
-      // Get fleet utilization overview
-      const { data: vehicles } = await supabase
-        .from('vehicles')
-        .select('id, plate_number');
-      
-      const { data: trips } = await supabase
-        .from('vehicle_logs')
-        .select('vehicle_id, start_time')
-        .gte('start_time', `${dateRange.startDate}T00:00:00`)
-        .lte('start_time', `${dateRange.endDate}T23:59:59`);
-      
-      // Get cost data
-      const { data: maintenanceServices } = await supabase
-        .from('vehicle_services')
-        .select('vehicle_id, cost')
-        .gte('service_date', dateRange.startDate)
-        .lte('service_date', dateRange.endDate);
-      
-      const { data: fuelLogs } = await supabase
-        .from('fuel_logs')
-        .select('vehicle_id, total_cost')
-        .gte('created_at', `${dateRange.startDate}T00:00:00`)
-        .lte('created_at', `${dateRange.endDate}T23:59:59`);
-      
+      const todayIso = new Date().toISOString().split('T')[0];
+
+      const [
+        { data: vehicles },
+        { data: trips },
+        { data: maintenanceServices },
+        { data: fuelLogs },
+        { data: drivers },
+        { data: schedules },
+      ] = await Promise.all([
+        supabase.from('vehicles').select('id, plate_number'),
+        supabase
+          .from('vehicle_logs')
+          .select('vehicle_id, driver_id, start_time, start_kilometers, end_kilometers, approval_status')
+          .gte('start_time', `${dateRange.startDate}T00:00:00`)
+          .lte('start_time', `${dateRange.endDate}T23:59:59`),
+        supabase
+          .from('vehicle_services')
+          .select('vehicle_id, cost, service_date')
+          .gte('service_date', dateRange.startDate)
+          .lte('service_date', dateRange.endDate),
+        supabase
+          .from('fuel_logs')
+          .select('vehicle_id, total_cost, created_at')
+          .gte('created_at', `${dateRange.startDate}T00:00:00`)
+          .lte('created_at', `${dateRange.endDate}T23:59:59`),
+        supabase.from('drivers').select('id, profile_id, profiles:profile_id(full_name)'),
+        supabase
+          .from('maintenance_schedules')
+          .select('id, scheduled_date, estimated_cost, status'),
+      ]);
+
       // Calculate metrics for dashboard
       const totalVehicles = vehicles?.length || 0;
       const activeVehicles = new Set(trips?.map(trip => trip.vehicle_id)).size;
-      
+
       const fuelCosts = fuelLogs?.reduce((sum, log) => sum + (log.total_cost || 0), 0) || 0;
       const maintenanceCosts = maintenanceServices?.reduce((sum, service) => sum + (service.cost || 0), 0) || 0;
-      
-      // Monthly cost trend (simplified)
-      const monthlyCostTrend = [
-        { month: 'Jan', value: Math.round(Math.random() * 5000) },
-        { month: 'Feb', value: Math.round(Math.random() * 5000) }, 
-        { month: 'Mar', value: Math.round(Math.random() * 5000) },
-        { month: 'Apr', value: Math.round(Math.random() * 5000) },
-        { month: 'May', value: Math.round(Math.random() * 5000) },
-        { month: 'Jun', value: Math.round(Math.random() * 5000) }
-      ];
-      
-      // Utilization trend (simplified)
-      const utilizationTrend = [
-        { date: '2023-01', value: Math.round(Math.random() * 100) },
-        { date: '2023-02', value: Math.round(Math.random() * 100) },
-        { date: '2023-03', value: Math.round(Math.random() * 100) },
-        { date: '2023-04', value: Math.round(Math.random() * 100) },
-        { date: '2023-05', value: Math.round(Math.random() * 100) },
-        { date: '2023-06', value: Math.round(Math.random() * 100) }
-      ];
-      
-      // For demo purposes, creating sample data
+
+      // Build the list of months covered by the selected range
+      const rangeStart = startOfMonth(new Date(dateRange.startDate));
+      const rangeEnd = startOfMonth(new Date(dateRange.endDate));
+      const months: Date[] = [];
+      let cursor = rangeStart;
+      while (cursor <= rangeEnd && months.length < 36) {
+        months.push(cursor);
+        cursor = startOfMonth(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
+      }
+
+      const monthKey = (value: string) => format(new Date(value), 'yyyy-MM');
+
+      // Real monthly cost trend (fuel + maintenance per month)
+      const monthlyCostTrend = months.map(month => {
+        const key = format(month, 'yyyy-MM');
+        const monthFuel = (fuelLogs || [])
+          .filter(log => log.created_at && monthKey(log.created_at) === key)
+          .reduce((sum, log) => sum + (log.total_cost || 0), 0);
+        const monthMaintenance = (maintenanceServices || [])
+          .filter(service => service.service_date && monthKey(service.service_date) === key)
+          .reduce((sum, service) => sum + (service.cost || 0), 0);
+        return { month: format(month, 'MMM yyyy'), value: Math.round(monthFuel + monthMaintenance) };
+      });
+
+      // Real utilisation trend (share of the fleet used each month)
+      const utilizationTrend = months.map(month => {
+        const key = format(month, 'yyyy-MM');
+        const usedVehicles = new Set(
+          (trips || [])
+            .filter(trip => trip.start_time && monthKey(trip.start_time) === key)
+            .map(trip => trip.vehicle_id)
+        ).size;
+        return {
+          date: key,
+          value: totalVehicles > 0 ? Math.round((usedVehicles / totalVehicles) * 100) : 0,
+        };
+      });
+
+      // Real driver stats
+      const totalDrivers = drivers?.length || 0;
+      const activeDriverIds = new Set((trips || []).map(trip => trip.driver_id).filter(Boolean));
+      const activeDrivers = activeDriverIds.size;
+
+      const topPerformers = (drivers || [])
+        .map(driver => {
+          const driverTrips = (trips || []).filter(trip => trip.driver_id === driver.id);
+          const approved = driverTrips.filter(trip => trip.approval_status === 'approved').length;
+          const compliance = driverTrips.length > 0 ? (approved / driverTrips.length) * 100 : 0;
+          const profileData = driver.profiles as unknown as { full_name: string } | null;
+          return {
+            driverId: driver.id,
+            driverName: profileData?.full_name || 'Unnamed driver',
+            trips: driverTrips.length,
+            score: Math.round(compliance),
+          };
+        })
+        .filter(driver => driver.trips > 0)
+        .sort((a, b) => b.score - a.score || b.trips - a.trips)
+        .slice(0, 3)
+        .map(({ driverId, driverName, score }) => ({ driverId, driverName, score }));
+
+      // Real maintenance overview
+      const openSchedules = (schedules || []).filter(
+        schedule => schedule.status !== 'completed' && schedule.status !== 'cancelled'
+      );
+      const upcomingMaintenanceCount = openSchedules.filter(
+        schedule => schedule.scheduled_date >= todayIso
+      ).length;
+      const overdueMaintenanceCount = openSchedules.filter(
+        schedule => schedule.scheduled_date < todayIso
+      ).length;
+      const monthsInRange = Math.max(1, months.length);
+
       const dashboardData: AnalyticsDashboardData = {
         fleetUtilization: {
           totalVehicles,
@@ -87,23 +147,20 @@ export function useAnalytics() {
           monthlyCostTrend
         },
         driverStats: {
-          totalDrivers: 12, // Example value
-          activeDrivers: 8, // Example value
-          topPerformers: [
-            { driverId: '1', driverName: 'Alex Johnson', score: 95 },
-            { driverId: '2', driverName: 'Maria Garcia', score: 92 },
-            { driverId: '3', driverName: 'John Smith', score: 88 }
-          ]
+          totalDrivers,
+          activeDrivers,
+          topPerformers
         },
         maintenanceOverview: {
-          upcomingMaintenanceCount: 5,
-          estimatedMonthlyCosts: Math.round(maintenanceCosts / 3), // Dividing by number of months
-          overdueMaintenanceCount: 2
+          upcomingMaintenanceCount,
+          estimatedMonthlyCosts: Math.round(maintenanceCosts / monthsInRange),
+          overdueMaintenanceCount
         }
       };
       
       return dashboardData;
     }
+
   });
 
   // Fleet Utilization Metrics
