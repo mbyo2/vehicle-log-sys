@@ -169,7 +169,7 @@ export function DriverPerformance({ data }: DriverPerformanceProps) {
                 <TableHead>Distance (km)</TableHead>
                 <TableHead>Avg Trip Dist</TableHead>
                 <TableHead>Fuel Efficiency</TableHead>
-                <TableHead>Safety Score</TableHead>
+                <TableHead>Trip Completion</TableHead>
                 <TableHead>Compliance</TableHead>
               </TableRow>
             </TableHeader>
@@ -181,11 +181,16 @@ export function DriverPerformance({ data }: DriverPerformanceProps) {
                   <TableCell>{driver.totalDistance.toLocaleString()}</TableCell>
                   <TableCell>{driver.averageTripDistance.toFixed(1)} km</TableCell>
                   <TableCell>
-                    <PerformanceBadge score={driver.fuelEfficiencyRating} />
+                    {driver.fuelEfficiencyKmPerLitre !== null ? (
+                      <Badge variant="outline">{driver.fuelEfficiencyKmPerLitre.toFixed(1)} km/L</Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No data</span>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <PerformanceBadge score={driver.safetyScore} />
+                    <PerformanceBadge score={driver.tripCompletionRate} />
                   </TableCell>
+
                   <TableCell>
                     <PerformanceBadge score={driver.complianceScore} />
                   </TableCell>
