@@ -162,24 +162,31 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Top Performing Drivers</CardTitle>
-            <CardDescription>Based on performance score</CardDescription>
+            <CardDescription>Based on approved trips in this period</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {data.driverStats.topPerformers.map((driver, index) => (
-                <div key={driver.driverId} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center mr-3">
-                      {index + 1}
+            {data.driverStats.topPerformers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No driver trips recorded for this period yet.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {data.driverStats.topPerformers.map((driver, index) => (
+                  <div key={driver.driverId} className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center mr-3">
+                        {index + 1}
+                      </div>
+                      <span>{driver.driverName}</span>
                     </div>
-                    <span>{driver.driverName}</span>
+                    <div className="font-semibold">{driver.score}%</div>
                   </div>
-                  <div className="font-semibold">{driver.score}%</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
+
         
         <Card className="col-span-1">
           <CardHeader>

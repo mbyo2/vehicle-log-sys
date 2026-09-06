@@ -112,17 +112,14 @@ export function ProductionReadiness() {
                     <ExternalLink className="h-4 w-4 ml-2" />
                   </a>
                 </Button>
-              ) : step.link !== '#' ? (
+              ) : (
                 <Button asChild variant="outline" size="sm">
                   <Link to={step.link}>
                     {step.action}
                   </Link>
                 </Button>
-              ) : (
-                <Button variant="outline" size="sm" disabled>
-                  Coming Soon
-                </Button>
               )}
+
             </CardHeader>
             <CardContent>
               <CardDescription>{step.description}</CardDescription>

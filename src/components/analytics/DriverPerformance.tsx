@@ -35,29 +35,53 @@ export function DriverPerformance({ data }: DriverPerformanceProps) {
       distance: Math.round(driver.totalDistance)
     }));
   
-  // Prepare data for radar chart comparison of top 3 drivers
+  // Prepare data for radar chart comparison of top 3 drivers (real recorded figures only)
+  const fleetBestEfficiency = Math.max(
+    ...data.map(driver => driver.fuelEfficiencyKmPerLitre ?? 0),
+    0
+  );
+  const efficiencyIndex = (driver: DriverPerformanceMetric) =>
+    driver.fuelEfficiencyKmPerLitre && fleetBestEfficiency > 0
+      ? (driver.fuelEfficiencyKmPerLitre / fleetBestEfficiency) * 100
+      : 0;
+
   const topDriversComparison = [...data]
-    .sort((a, b) => 
-      (b.fuelEfficiencyRating + b.safetyScore + b.complianceScore) / 3 - 
-      (a.fuelEfficiencyRating + a.safetyScore + a.complianceScore) / 3
+    .filter(driver => driver.tripsCompleted > 0)
+    .sort((a, b) =>
+      (efficiencyIndex(b) + b.tripCompletionRate + b.complianceScore) / 3 -
+      (efficiencyIndex(a) + a.tripCompletionRate + a.complianceScore) / 3
     )
     .slice(0, 3)
     .map(driver => ({
       subject: driver.driverName.split(' ')[0],
-      efficiency: Math.round(driver.fuelEfficiencyRating),
-      safety: Math.round(driver.safetyScore),
+      efficiency: Math.round(efficiencyIndex(driver)),
+      completion: Math.round(driver.tripCompletionRate),
       compliance: Math.round(driver.complianceScore)
     }));
   
   // Restructure data for radar chart
   const radarData = [
     { category: 'Fuel Efficiency', ...topDriversComparison.reduce((acc, driver) => ({ ...acc, [driver.subject]: driver.efficiency }), {}) },
-    { category: 'Safety Score', ...topDriversComparison.reduce((acc, driver) => ({ ...acc, [driver.subject]: driver.safety }), {}) },
+    { category: 'Trip Completion', ...topDriversComparison.reduce((acc, driver) => ({ ...acc, [driver.subject]: driver.completion }), {}) },
     { category: 'Compliance', ...topDriversComparison.reduce((acc, driver) => ({ ...acc, [driver.subject]: driver.compliance }), {}) }
   ];
 
   // Get the driver names for the radar chart
   const driverNames = topDriversComparison.map(driver => driver.subject);
+
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Driver Performance</CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-muted-foreground">
+          No driver activity recorded for this period yet.
+        </CardContent>
+      </Card>
+    );
+  }
+
 
   return (
     <div className="space-y-6">
@@ -145,7 +169,7 @@ export function DriverPerformance({ data }: DriverPerformanceProps) {
                 <TableHead>Distance (km)</TableHead>
                 <TableHead>Avg Trip Dist</TableHead>
                 <TableHead>Fuel Efficiency</TableHead>
-                <TableHead>Safety Score</TableHead>
+                <TableHead>Trip Completion</TableHead>
                 <TableHead>Compliance</TableHead>
               </TableRow>
             </TableHeader>
@@ -157,11 +181,16 @@ export function DriverPerformance({ data }: DriverPerformanceProps) {
                   <TableCell>{driver.totalDistance.toLocaleString()}</TableCell>
                   <TableCell>{driver.averageTripDistance.toFixed(1)} km</TableCell>
                   <TableCell>
-                    <PerformanceBadge score={driver.fuelEfficiencyRating} />
+                    {driver.fuelEfficiencyKmPerLitre !== null ? (
+                      <Badge variant="outline">{driver.fuelEfficiencyKmPerLitre.toFixed(1)} km/L</Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No data</span>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <PerformanceBadge score={driver.safetyScore} />
+                    <PerformanceBadge score={driver.tripCompletionRate} />
                   </TableCell>
+
                   <TableCell>
                     <PerformanceBadge score={driver.complianceScore} />
                   </TableCell>

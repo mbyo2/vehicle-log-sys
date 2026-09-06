@@ -27,8 +27,10 @@ export interface DriverPerformanceMetric {
   tripsCompleted: number;
   totalDistance: number;
   averageTripDistance: number;
-  fuelEfficiencyRating: number;
-  safetyScore: number;
+  /** Real km per litre from recorded fuel logs; null when the driver has no fuel data yet */
+  fuelEfficiencyKmPerLitre: number | null;
+  /** Share of the driver's trips that were closed out with an end reading and end time */
+  tripCompletionRate: number;
   complianceScore: number;
 }
 

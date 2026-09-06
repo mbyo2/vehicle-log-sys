@@ -326,6 +326,14 @@ export function useAnalytics() {
         .lte('start_time', `${dateRange.endDate}T23:59:59`);
       
       if (tripsError) throw tripsError;
+
+      const { data: driverFuelLogs, error: fuelError } = await supabase
+        .from('fuel_logs')
+        .select('driver_id, liters_added, created_at')
+        .gte('created_at', `${dateRange.startDate}T00:00:00`)
+        .lte('created_at', `${dateRange.endDate}T23:59:59`);
+
+      if (fuelError) throw fuelError;
       
       // Calculate driver metrics
       const performanceMetrics: DriverPerformanceMetric[] = drivers?.map(driver => {
@@ -345,15 +353,24 @@ export function useAnalytics() {
         
         // Calculate compliance (% of approved trips)
         const approvedTrips = driverTrips.filter(trip => trip.approval_status === 'approved').length;
-        const complianceScore = tripsCompleted > 0 ? (approvedTrips / tripsCompleted) * 100 : 100;
-        
-        // For demo purposes, using random values for some metrics
-        const fuelEfficiencyRating = 70 + Math.random() * 30; // Random value between 70-100
-        const safetyScore = 80 + Math.random() * 20; // Random value between 80-100
+        const complianceScore = tripsCompleted > 0 ? (approvedTrips / tripsCompleted) * 100 : 0;
+
+        // Real fuel efficiency: km driven per litre actually recorded for this driver
+        const litres = (driverFuelLogs || [])
+          .filter(log => log.driver_id === driver.id)
+          .reduce((sum, log) => sum + (log.liters_added || 0), 0);
+        const fuelEfficiencyKmPerLitre =
+          litres > 0 && totalDistance > 0 ? totalDistance / litres : null;
+
+        // Real trip completion: trips closed out with an end reading and end time
+        const closedTrips = driverTrips.filter(
+          trip => trip.end_time && trip.end_kilometers !== null && trip.end_kilometers !== undefined
+        ).length;
+        const tripCompletionRate = tripsCompleted > 0 ? (closedTrips / tripsCompleted) * 100 : 0;
         
         // Fix: Access profile data safely using type assertion
         const profileData = driver.profiles as unknown as { full_name: string };
-        const driverName = profileData?.full_name || 'Unknown Driver';
+        const driverName = profileData?.full_name || 'Unnamed driver';
         
         return {
           driverId: driver.id,
@@ -361,8 +378,8 @@ export function useAnalytics() {
           tripsCompleted,
           totalDistance,
           averageTripDistance,
-          fuelEfficiencyRating,
-          safetyScore,
+          fuelEfficiencyKmPerLitre,
+          tripCompletionRate,
           complianceScore
         };
       }) || [];
@@ -370,6 +387,7 @@ export function useAnalytics() {
       return performanceMetrics;
     }
   });
+
 
   // Maintenance Cost Forecasting
   const { data: maintenanceForecasts, isLoading: isMaintenanceForecastLoading } = useQuery({
