@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Clock, FileCheck, MessageSquare, AlertTriangle, Car, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { useCurrentDriver } from "@/hooks/useCurrentDriver";
 
 export function DriverDashboard() {
   const { profile } = useAuth();
   const { unreadCount } = useMessages();
   const { driverTrainings, expiringSoonCount } = useTrainings();
   const profileData = profile.get();
-  const userId = profileData?.id;
+  const { driverId: userId } = useCurrentDriver();
 
   // Fetch assigned vehicle
   const { data: assignedVehicle } = useQuery({
@@ -26,7 +27,7 @@ export function DriverDashboard() {
         .from('vehicles')
         .select('*')
         .eq('assigned_to', userId)
-        .single();
+        .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error; // PGRST116 is the "no rows returned" error
       return data;

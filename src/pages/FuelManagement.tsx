@@ -35,6 +35,25 @@ export function FuelManagement() {
     fuel_type: "diesel",
     station_name: "",
     notes: "",
+    driver_id: "",
+  });
+
+  const { data: drivers } = useQuery({
+    queryKey: ["drivers-for-fuel"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("drivers")
+        .select("id, man_number, profile_id");
+      if (error) throw error;
+      const ids = (data || []).map((d) => d.profile_id);
+      const { data: profs } = ids.length
+        ? await supabase.from("profiles").select("id, full_name, email").in("id", ids)
+        : { data: [] as any[] };
+      return (data || []).map((d) => {
+        const p = profs?.find((x: any) => x.id === d.profile_id);
+        return { id: d.id, profile_id: d.profile_id, label: p?.full_name || p?.email || d.man_number };
+      });
+    },
   });
 
   const { data: vehicles } = useQuery({
@@ -86,6 +105,7 @@ export function FuelManagement() {
         fuel_type: form.fuel_type,
         station_name: form.station_name || null,
         notes: form.notes || null,
+        driver_id: form.driver_id || drivers?.find((d) => d.profile_id === userProfile?.id)?.id || null,
         company_id: userProfile?.company_id || null,
       });
       if (error) throw error;
@@ -94,7 +114,7 @@ export function FuelManagement() {
       queryClient.invalidateQueries({ queryKey: ["fuel-logs"] });
       toast.success("Fuel log added");
       setShowAddForm(false);
-      setForm({ vehicle_id: "", liters_added: "", cost_per_liter: "", total_cost: "", odometer_reading: "", fuel_type: "diesel", station_name: "", notes: "" });
+      setForm({ vehicle_id: "", liters_added: "", cost_per_liter: "", total_cost: "", odometer_reading: "", fuel_type: "diesel", station_name: "", notes: "", driver_id: "" });
     },
     onError: (error: any) => {
       toast.error("Failed to save fuel log", { description: error?.message });
@@ -246,6 +266,17 @@ export function FuelManagement() {
                 <SelectContent>
                   {vehicles?.map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.plate_number} - {v.make} {v.model}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Driver</Label>
+              <Select value={form.driver_id} onValueChange={(v) => setForm({ ...form, driver_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Select driver (optional)" /></SelectTrigger>
+                <SelectContent>
+                  {drivers?.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
