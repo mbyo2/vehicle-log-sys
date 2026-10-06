@@ -34,7 +34,7 @@ export function MaintenanceScheduler({ vehicleId, onScheduleComplete }: Maintena
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicles')
-        .select('id, plate_number, make, model');
+        .select('id, plate_number, make, model, company_id');
       if (error) throw error;
       return data as Vehicle[];
     },
@@ -46,9 +46,11 @@ export function MaintenanceScheduler({ vehicleId, onScheduleComplete }: Maintena
         throw new Error("Please fill in all required fields");
       }
 
+      const vehicle = (vehicles as any[])?.find((v) => v.id === selectedVehicle);
       const { error } = await supabase
         .from('maintenance_schedules')
         .insert({
+          company_id: vehicle?.company_id ?? null,
           vehicle_id: selectedVehicle,
           service_type: serviceType,
           scheduled_date: scheduledDate.toISOString().split('T')[0],
