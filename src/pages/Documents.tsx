@@ -22,6 +22,10 @@ import {
 } from '@/components/ui/tabs';
 import { Upload, FileText, BellRing, FolderPlus } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
+import { ExpiringDocuments, useExpiryCounts } from '@/components/documents/ExpiringDocuments';
+import { Badge } from '@/components/ui/badge';
+import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function Documents() {
@@ -39,6 +43,9 @@ export default function Documents() {
   const companyId = profileData?.company_id;
   const userId = profileData?.id;
   const isAdmin = isAdminRole(role);
+  const { data: expiry } = useExpiryCounts(companyId || '');
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   if (!companyId) {
     return (
@@ -93,7 +100,7 @@ export default function Documents() {
               </DialogHeader>
               <DocumentUpload 
                 companyId={companyId} 
-                onSuccess={() => setIsUploadOpen(false)} 
+                onSuccess={() => { setIsUploadOpen(false); queryClient.invalidateQueries({ queryKey: ['document-expiry'] }); }} 
               />
             </DialogContent>
           </Dialog>
@@ -109,11 +116,19 @@ export default function Documents() {
         </AlertDescription>
       </Alert>
 
-      <Tabs defaultValue="documents" className="w-full">
+      <Tabs defaultValue={searchParams.get("tab") || "documents"} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="documents">
             <FileText className="mr-2 h-4 w-4" />
             All Documents
+          </TabsTrigger>
+          <TabsTrigger value="expiring">
+            Expiring soon
+            {!!expiry?.expiring.length && <Badge variant="secondary" className="ml-2">{expiry.expiring.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="expired">
+            Expired
+            {!!expiry?.expired.length && <Badge variant="destructive" className="ml-2">{expiry.expired.length}</Badge>}
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="categories">
@@ -132,6 +147,9 @@ export default function Documents() {
           </div>
         </TabsContent>
         
+        <TabsContent value="expiring"><ExpiringDocuments companyId={companyId} mode="expiring" /></TabsContent>
+        <TabsContent value="expired"><ExpiringDocuments companyId={companyId} mode="expired" /></TabsContent>
+
         {isAdmin && (
           <TabsContent value="categories">
             <DocumentCategories />

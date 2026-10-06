@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/select';
 import { documentSchema, fileValidation } from '@/lib/validation';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const documentTypes: Array<{ value: DocumentType; label: string }> = [
   { value: 'driver_license', label: 'Driver License' },
@@ -50,9 +52,20 @@ interface DocumentUploadProps {
   vehicleId?: string;
   driverId?: string;
   onSuccess?: () => void;
+  renewOf?: { id: string; name: string; type: DocumentType; version?: number | null; vehicle_id?: string | null; driver_id?: string | null };
 }
 
-export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: DocumentUploadProps) {
+export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess, renewOf }: DocumentUploadProps) {
+  const [linkedVehicle, setLinkedVehicle] = useState<string>(vehicleId || renewOf?.vehicle_id || '');
+  const { data: vehicles } = useQuery({
+    queryKey: ['doc-upload-vehicles', companyId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('vehicles').select('id, plate_number').eq('company_id', companyId).order('plate_number');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !vehicleId && !renewOf,
+  });
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string>('');
   const { uploadDocument, isUploading } = useDocuments();
@@ -60,8 +73,8 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
   const form = useForm<DocumentFormValues>({
     resolver: zodResolver(uploadSchema),
     defaultValues: {
-      name: '',
-      type: 'other' as DocumentType,
+      name: renewOf?.name ?? '',
+      type: (renewOf?.type ?? 'other') as DocumentType,
       vehicle_id: vehicleId,
       driver_id: driverId,
     },
@@ -101,9 +114,10 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
           type: values.type,
           expiry_date: values.expiry_date ? format(values.expiry_date, 'yyyy-MM-dd') : undefined,
           company_id: companyId,
-          vehicle_id: vehicleId,
-          driver_id: driverId,
-        },
+          vehicle_id: linkedVehicle || undefined,
+          driver_id: driverId || renewOf?.driver_id || undefined,
+          ...(renewOf ? { parent_document_id: renewOf.id, version: (renewOf.version ?? 1) + 1 } : {}),
+        } as any,
       });
 
       if (onSuccess) {
@@ -137,6 +151,19 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess }: Do
             Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF. Max size: 10MB
           </p>
         </div>
+
+        {!vehicleId && !renewOf && (
+          <div className="space-y-2">
+            <Label>Vehicle (optional)</Label>
+            <Select value={linkedVehicle || 'none'} onValueChange={(v) => setLinkedVehicle(v === 'none' ? '' : v)}>
+              <SelectTrigger><SelectValue placeholder="Not linked to a vehicle" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Not linked to a vehicle</SelectItem>
+                {vehicles?.map((v) => <SelectItem key={v.id} value={v.id}>{v.plate_number}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <FormField
           control={form.control}
