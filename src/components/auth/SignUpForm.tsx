@@ -93,7 +93,7 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
   return (
     <ErrorBoundary>
       <div className="container relative flex flex-col items-center justify-center w-full max-w-md">
-        <div className="absolute right-4 top-4 flex items-center gap-2">
+        <div className="flex w-full items-center justify-end gap-2 mb-3">
           <ConnectionStatus showDetails={false} />
           <ThemeToggle />
         </div>
