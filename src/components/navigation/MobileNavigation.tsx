@@ -30,7 +30,7 @@ import {
   MessageSquare,
   GraduationCap,
   Calendar,
-  MapPin
+  MapPin,
   Fuel,
 } from 'lucide-react';
 
