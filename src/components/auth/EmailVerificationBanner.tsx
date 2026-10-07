@@ -47,10 +47,10 @@ export function EmailVerificationBanner({ userEmail, onDismiss }: EmailVerificat
 
   if (isResent) {
     return (
-      <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-        <CheckCircle className="h-4 w-4 text-green-600" />
+      <Alert className="border-success/30 bg-success/10">
+        <CheckCircle className="h-4 w-4 text-success" />
         <AlertDescription className="flex items-center justify-between">
-          <span className="text-green-800 dark:text-green-200">
+          <span className="text-success">
             Verification email sent to {userEmail}. Please check your inbox.
           </span>
           {onDismiss && (
@@ -64,11 +64,11 @@ export function EmailVerificationBanner({ userEmail, onDismiss }: EmailVerificat
   }
 
   return (
-    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
-      <Mail className="h-4 w-4 text-amber-600" />
+    <Alert className="border-warning/30 bg-warning/10">
+      <Mail className="h-4 w-4 text-warning" />
       <AlertDescription className="flex items-center justify-between">
         <div>
-          <span className="text-amber-800 dark:text-amber-200">
+          <span className="text-warning">
             Please verify your email address ({userEmail}) to access all features.
           </span>
         </div>
@@ -78,7 +78,7 @@ export function EmailVerificationBanner({ userEmail, onDismiss }: EmailVerificat
             size="sm"
             onClick={handleResendVerification}
             disabled={isResending}
-            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            className="border-warning/30 text-warning hover:bg-warning/10"
           >
             {isResending ? 'Sending...' : 'Resend'}
           </Button>

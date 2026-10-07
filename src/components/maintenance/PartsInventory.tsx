@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,6 +18,7 @@ import { PartForm } from './PartForm';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export function PartsInventory() {
+  const { format: fmt } = useCompanyCurrency();
   const { openModal } = useModal();
 
   const { data: parts, isLoading, error, refetch } = useQuery({
@@ -98,7 +100,7 @@ export function PartsInventory() {
                 <TableCell>{part.part_number}</TableCell>
                 <TableCell>{part.quantity}</TableCell>
                 <TableCell>{part.min_quantity}</TableCell>
-                <TableCell>${part.unit_cost}</TableCell>
+                <TableCell>{fmt(part.unit_cost)}</TableCell>
                 <TableCell>{part.supplier}</TableCell>
               </TableRow>
             ))}

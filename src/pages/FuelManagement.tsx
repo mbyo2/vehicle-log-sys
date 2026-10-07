@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { format } from "date-fns";
 
 export function FuelManagement() {
+  const { format: fmt } = useCompanyCurrency();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -170,7 +172,7 @@ export function FuelManagement() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalCost.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{fmt(totalCost)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -188,7 +190,7 @@ export function FuelManagement() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${avgCostPerLiter}</div>
+            <div className="text-2xl font-bold">{fmt(avgCostPerLiter)}</div>
           </CardContent>
         </Card>
       </div>
@@ -222,11 +224,11 @@ export function FuelManagement() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Cost/Liter</p>
-                    <p className="font-medium">${log.cost_per_liter}</p>
+                    <p className="font-medium">{fmt(log.cost_per_liter)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total</p>
-                    <p className="font-bold text-primary">${log.total_cost}</p>
+                    <p className="font-bold text-primary">{fmt(log.total_cost)}</p>
                   </div>
                 </div>
                 {((log as any).station_name || (log as any).notes) && (

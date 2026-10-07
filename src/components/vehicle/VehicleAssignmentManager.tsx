@@ -193,23 +193,23 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
       <CardContent className="space-y-4">
         {/* Current Assignment Status */}
         {currentDriver ? (
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="p-4 bg-success/10 border border-success/30 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <UserCheck className="h-5 w-5 text-green-600" />
+                <UserCheck className="h-5 w-5 text-success" />
                 <div>
-                  <p className="font-medium text-green-900">Currently Assigned</p>
-                  <p className="text-sm text-green-700">{currentDriver.full_name}</p>
-                  <p className="text-xs text-green-600">{currentDriver.email}</p>
+                  <p className="font-medium text-success">Currently Assigned</p>
+                  <p className="text-sm text-success">{currentDriver.full_name}</p>
+                  <p className="text-xs text-success">{currentDriver.email}</p>
                   {vehicle.assignment_start_date && (
-                    <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                    <p className="text-xs text-success flex items-center gap-1 mt-1">
                       <Calendar className="h-3 w-3" />
                       Since: {format(parseISO(vehicle.assignment_start_date), 'PPP')}
                     </p>
                   )}
                 </div>
               </div>
-              <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/30">
                 Active
               </Badge>
             </div>
@@ -218,7 +218,7 @@ export function VehicleAssignmentManager({ vehicle, onAssignmentUpdated }: Vehic
               size="sm"
               onClick={handleUnassign}
               disabled={loading}
-              className="mt-3 text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="mt-3 text-destructive hover:text-destructive hover:bg-destructive/10"
             >
               <UserX className="h-4 w-4 mr-2" />
               Unassign Vehicle

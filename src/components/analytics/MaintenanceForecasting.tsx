@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 import { MaintenanceAnalysis } from '@/types/analytics';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ interface MaintenanceForecastingProps {
 
 export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
   // Calculate total past and projected costs
+  const { format: fmt } = useCompanyCurrency();
   const totalPastCosts = data.reduce((sum, vehicle) => sum + vehicle.pastCosts, 0);
   const totalProjectedCosts = data.reduce((sum, vehicle) => sum + vehicle.projectedCosts, 0);
   
@@ -68,7 +70,7 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
             <CardTitle className="text-sm font-medium">Historical Maintenance Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalPastCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalPastCosts)}</div>
           </CardContent>
         </Card>
         
@@ -77,7 +79,7 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
             <CardTitle className="text-sm font-medium">Projected Maintenance Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalProjectedCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalProjectedCosts)}</div>
           </CardContent>
         </Card>
         
@@ -174,15 +176,15 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
                       <MaintenanceDateBadge date={vehicle.nextMaintenanceDate} />
                     )}
                   </TableCell>
-                  <TableCell>${vehicle.pastCosts.toLocaleString()}</TableCell>
-                  <TableCell>${vehicle.projectedCosts.toLocaleString()}</TableCell>
+                  <TableCell>{fmt(vehicle.pastCosts)}</TableCell>
+                  <TableCell>{fmt(vehicle.projectedCosts)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {vehicle.maintenanceItems
                         .filter(item => item.priority === 'high')
                         .slice(0, 2)
                         .map((item, index) => (
-                          <Badge key={index} variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                          <Badge key={index} variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
                             {item.item}
                           </Badge>
                         ))}
@@ -216,13 +218,13 @@ function MaintenanceDateBadge({ date }: { date: string }) {
   };
   
   if (isOverdue) {
-    badgeProps.className = "bg-red-50 text-red-600 border-red-200";
+    badgeProps.className = "bg-destructive/10 text-destructive border-destructive/30";
   } else if (diffDays <= 7) {
-    badgeProps.className = "bg-yellow-50 text-yellow-600 border-yellow-200";
+    badgeProps.className = "bg-warning/10 text-warning border-warning/30";
   } else if (diffDays <= 30) {
-    badgeProps.className = "bg-blue-50 text-blue-600 border-blue-200";
+    badgeProps.className = "bg-info/10 text-info border-info/30";
   } else {
-    badgeProps.className = "bg-green-50 text-green-600 border-green-200";
+    badgeProps.className = "bg-success/10 text-success border-success/30";
   }
   
   return (

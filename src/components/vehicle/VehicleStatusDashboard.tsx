@@ -143,7 +143,7 @@ export const VehicleStatusDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span>Fitness Certificate</span>
                       <span className={
-                        fitnessStatus.status === 'expired' ? 'text-red-500' : 'text-yellow-500'
+                        fitnessStatus.status === 'expired' ? 'text-destructive' : 'text-warning'
                       }>
                         {fitnessStatus.status === 'expired' ? 'Expired' : `${fitnessStatus.days} days left`}
                       </span>
@@ -153,7 +153,7 @@ export const VehicleStatusDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span>Insurance</span>
                       <span className={
-                        insuranceStatus.status === 'expired' ? 'text-red-500' : 'text-yellow-500'
+                        insuranceStatus.status === 'expired' ? 'text-destructive' : 'text-warning'
                       }>
                         {insuranceStatus.status === 'expired' ? 'Expired' : `${insuranceStatus.days} days left`}
                       </span>
@@ -163,7 +163,7 @@ export const VehicleStatusDashboard = () => {
                     <div className="flex items-center justify-between">
                       <span>Road Tax</span>
                       <span className={
-                        taxStatus.status === 'expired' ? 'text-red-500' : 'text-yellow-500'
+                        taxStatus.status === 'expired' ? 'text-destructive' : 'text-warning'
                       }>
                         {taxStatus.status === 'expired' ? 'Expired' : `${taxStatus.days} days left`}
                       </span>

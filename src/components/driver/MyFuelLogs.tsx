@@ -12,12 +12,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Fuel, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 const emptyForm = { vehicle_id: "", liters_added: "", cost_per_liter: "", odometer_reading: "", fuel_type: "diesel", station_name: "" };
 
 export function MyFuelLogs() {
   const { driverId, companyId, isLoading: driverLoading } = useCurrentDriver();
   const queryClient = useQueryClient();
+  const { format: fmt } = useCompanyCurrency();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
@@ -97,7 +99,7 @@ export function MyFuelLogs() {
                 <div><p className="text-muted-foreground">Vehicle</p><p className="font-medium">{log.vehicles?.plate_number}</p></div>
                 <div><p className="text-muted-foreground">Litres</p><p className="font-medium">{log.liters_added} L</p></div>
                 <div><p className="text-muted-foreground">Odometer</p><p className="font-medium">{log.odometer_reading} km</p></div>
-                <div><p className="text-muted-foreground">Total</p><p className="font-bold text-primary">{Number(log.total_cost).toFixed(2)}</p></div>
+                <div><p className="text-muted-foreground">Total</p><p className="font-bold text-primary">{fmt(log.total_cost)}</p></div>
               </CardContent>
             </Card>
           ))}
@@ -140,7 +142,7 @@ export function MyFuelLogs() {
               <div><Label>Odometer (km) *</Label><Input type="number" value={form.odometer_reading} onChange={(e) => setForm({ ...form, odometer_reading: e.target.value })} /></div>
               <div><Label>Station</Label><Input value={form.station_name} onChange={(e) => setForm({ ...form, station_name: e.target.value })} /></div>
             </div>
-            <p className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{total.toFixed(2)}</span></p>
+            <p className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{fmt(total)}</span></p>
             <Button className="w-full" onClick={() => save.mutate()} disabled={save.isPending || !form.vehicle_id}>
               {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save fill-up
             </Button>

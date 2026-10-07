@@ -87,7 +87,7 @@ export function BackupManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="outline" className="text-green-600">Completed</Badge>;
+        return <Badge variant="outline" className="text-success">Completed</Badge>;
       case 'in_progress':
         return <Badge variant="secondary">In Progress</Badge>;
       case 'failed':

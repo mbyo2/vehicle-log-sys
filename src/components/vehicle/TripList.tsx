@@ -258,7 +258,7 @@ export function TripList({ filterType, trips: initialTrips, onRefresh }: TripLis
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500">Approved</Badge>;
+        return <Badge className="bg-success text-success-foreground">Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -326,7 +326,7 @@ export function TripList({ filterType, trips: initialTrips, onRefresh }: TripLis
                       <Button
                         variant="outline"
                         size="sm"
-                        className="bg-green-500/10 hover:bg-green-500/20 text-green-600"
+                        className="bg-success/10 hover:bg-success/10 text-success"
                         onClick={() => {
                           setSelectedTripId(trip.id);
                           setApprovalComment("");
@@ -339,7 +339,7 @@ export function TripList({ filterType, trips: initialTrips, onRefresh }: TripLis
                       <Button
                         variant="outline"
                         size="sm"
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-600"
+                        className="bg-destructive/10 hover:bg-destructive/10 text-destructive"
                         onClick={() => {
                           setSelectedTripId(trip.id);
                           setRejectionReason("");

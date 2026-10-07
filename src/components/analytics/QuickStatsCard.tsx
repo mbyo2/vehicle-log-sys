@@ -19,28 +19,28 @@ export function QuickStatsCard({ title, value, change, trend, icon = 'vehicles',
   const getIcon = () => {
     switch (icon) {
       case 'vehicles':
-        return <Truck className="h-5 w-5 text-blue-500" />;
+        return <Truck className="h-5 w-5 text-info" />;
       case 'trips':
-        return <TrendingUp className="h-5 w-5 text-green-500" />;
+        return <TrendingUp className="h-5 w-5 text-success" />;
       case 'alerts':
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+        return <AlertTriangle className="h-5 w-5 text-warning" />;
       case 'maintenance':
-        return <BadgeAlert className="h-5 w-5 text-red-500" />;
+        return <BadgeAlert className="h-5 w-5 text-destructive" />;
       case 'efficiency':
         return <BarChart4 className="h-5 w-5 text-indigo-500" />;
       case 'idle':
         return <CircleOff className="h-5 w-5 text-slate-500" />;
       default:
-        return <Truck className="h-5 w-5 text-blue-500" />;
+        return <Truck className="h-5 w-5 text-info" />;
     }
   };
   
   const getTrendColor = () => {
     if (!trend) return 'text-gray-500';
     return trend === 'up' 
-      ? 'text-green-600 dark:text-green-400'
+      ? 'text-success'
       : trend === 'down' 
-        ? 'text-red-600 dark:text-red-400'
+        ? 'text-destructive'
         : 'text-gray-500';
   };
   

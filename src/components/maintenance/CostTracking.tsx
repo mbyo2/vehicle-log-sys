@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +16,7 @@ import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export function CostTracking() {
+  const { format: fmt } = useCompanyCurrency();
   const { data: costs, isLoading, error, refetch } = useQuery({
     queryKey: ['maintenance-costs'],
     queryFn: async () => {
@@ -62,7 +64,7 @@ export function CostTracking() {
             <CardTitle>Total Maintenance Cost</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${totalCost.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{fmt(totalCost)}</p>
           </CardContent>
         </Card>
 
@@ -71,7 +73,7 @@ export function CostTracking() {
             <CardTitle>Average Cost per Service</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">${averageCost.toFixed(2)}</p>
+            <p className="text-2xl font-bold">{fmt(averageCost)}</p>
           </CardContent>
         </Card>
 
@@ -109,7 +111,7 @@ export function CostTracking() {
                   <TableCell>{service.vehicles?.plate_number}</TableCell>
                   <TableCell>{service.service_type}</TableCell>
                   <TableCell>{new Date(service.service_date).toLocaleDateString()}</TableCell>
-                  <TableCell>${service.cost}</TableCell>
+                  <TableCell>{fmt(service.cost)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -120,9 +120,9 @@ export function SystemHealthMonitor() {
   const getStatusIcon = (status: HealthMetric['status']) => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-warning" />;
       case 'critical':
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
@@ -131,9 +131,9 @@ export function SystemHealthMonitor() {
   const getStatusBadge = (status: HealthMetric['status']) => {
     switch (status) {
       case 'healthy':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">Healthy</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success">Healthy</Badge>;
       case 'warning':
-        return <Badge variant="outline" className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">Warning</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning">Warning</Badge>;
       case 'critical':
         return <Badge variant="destructive">Critical</Badge>;
     }

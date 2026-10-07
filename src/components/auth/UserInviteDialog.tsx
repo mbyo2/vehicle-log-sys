@@ -175,9 +175,9 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
 
         {isSuccess ? (
           <div className="space-y-4">
-            <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-200">
+            <Alert className="border-success/30 bg-success/10">
+              <CheckCircle className="h-4 w-4 text-success" />
+              <AlertDescription className="text-success">
                 Invitation sent successfully! The user will receive an email with instructions to join your team.
               </AlertDescription>
             </Alert>

@@ -91,13 +91,13 @@ export const TripFormLocation: React.FC<TripFormLocationProps> = ({
       </div>
       
       {location && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-info/10 border-info/30">
           <CardContent className="p-4">
             <div className="flex items-center mb-2">
-              <MapPin className="h-4 w-4 text-blue-600 mr-2" />
-              <span className="text-sm font-medium text-blue-700">Current location detected</span>
+              <MapPin className="h-4 w-4 text-info mr-2" />
+              <span className="text-sm font-medium text-info">Current location detected</span>
             </div>
-            <div className="text-xs text-blue-600">
+            <div className="text-xs text-info">
               Latitude: {location.latitude.toFixed(6)}, 
               Longitude: {location.longitude.toFixed(6)}
             </div>
@@ -110,7 +110,7 @@ export const TripFormLocation: React.FC<TripFormLocationProps> = ({
           type="button" 
           variant="outline" 
           onClick={onStartTracking}
-          className="flex gap-2 items-center w-full border-blue-200 text-blue-700 hover:bg-blue-50"
+          className="flex gap-2 items-center w-full border-info/30 text-info hover:bg-info/10"
         >
           <MapPin className="h-4 w-4" />
           <span>Use my current location</span>

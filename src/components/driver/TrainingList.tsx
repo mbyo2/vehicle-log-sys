@@ -244,9 +244,9 @@ function TrainingTable({ trainings, onView }: TrainingTableProps) {
                   'outline'
                 }
                 className={
-                  status.variant === 'success' ? 'bg-green-50 text-green-600 border-green-200' :
-                  status.variant === 'warning' ? 'bg-yellow-50 text-yellow-600 border-yellow-200' :
-                  status.variant === 'destructive' ? 'bg-red-50 text-red-600 border-red-200' :
+                  status.variant === 'success' ? 'bg-success/10 text-success border-success/30' :
+                  status.variant === 'warning' ? 'bg-warning/10 text-warning border-warning/30' :
+                  status.variant === 'destructive' ? 'bg-destructive/10 text-destructive border-destructive/30' :
                   ''
                 }>
                   {status.label}

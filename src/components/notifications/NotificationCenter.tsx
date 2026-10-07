@@ -38,11 +38,11 @@ export function NotificationCenter() {
       case 'urgent':
         return <AlertCircle className="h-5 w-5 text-destructive" />;
       case 'vehicle_issue':
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+        return <AlertTriangle className="h-5 w-5 text-warning" />;
       case 'document_expiry':
-        return <MailOpen className="h-5 w-5 text-amber-500" />;
+        return <MailOpen className="h-5 w-5 text-warning" />;
       case 'approval_required':
-        return <BellRing className="h-5 w-5 text-blue-500" />;
+        return <BellRing className="h-5 w-5 text-info" />;
       default:
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
@@ -54,7 +54,7 @@ export function NotificationCenter() {
         <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}>
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-white text-xs">
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-white text-xs">
               {unreadCount > 9 ? '9+' : unreadCount}
             </Badge>
           )}

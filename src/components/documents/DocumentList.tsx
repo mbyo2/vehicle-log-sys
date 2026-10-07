@@ -84,11 +84,11 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-600">Verified</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success">Verified</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-600">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600">Pending</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning">Pending</Badge>;
     }
   };
 
@@ -135,8 +135,8 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
               <TableCell>
                 {document.expiry_date ? (
                   <span className={cn(
-                    isExpired(document.expiry_date) && "text-red-600",
-                    isExpiringSoon(document.expiry_date) && "text-amber-600"
+                    isExpired(document.expiry_date) && "text-destructive",
+                    isExpiringSoon(document.expiry_date) && "text-warning"
                   )}>
                     {format(new Date(document.expiry_date), 'dd MMM yyyy')}
                     {isExpired(document.expiry_date) && " (Expired)"}
@@ -180,7 +180,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
                         </DialogContent>
                       </Dialog>
                     )}
-                    <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-red-600">
+                    <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-destructive">
                       <Trash className="mr-2 h-4 w-4" />
                       Delete
                     </DropdownMenuItem>
@@ -228,7 +228,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
                   setDocToDelete(null);
                 }
               }}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive"
             >
               Delete
             </AlertDialogAction>

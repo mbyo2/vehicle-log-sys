@@ -291,7 +291,7 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <Radio
-                className={`h-4 w-4 ${liveMode ? 'text-green-500 animate-pulse' : 'text-muted-foreground'}`}
+                className={`h-4 w-4 ${liveMode ? 'text-success animate-pulse' : 'text-muted-foreground'}`}
                 aria-hidden
               />
               <Label htmlFor="live-mode" className="text-sm font-normal cursor-pointer">
@@ -345,7 +345,7 @@ export const VehicleLocationMap = ({ vehicleId }: { vehicleId?: string }) => {
                   : requestState === 'fetching'
                   ? 'font-semibold text-primary'
                   : requestState === 'success'
-                  ? 'font-semibold text-green-600'
+                  ? 'font-semibold text-success'
                   : 'font-semibold'
               }
             >

@@ -94,7 +94,7 @@ export function DriverDashboard() {
             <div className="text-2xl font-bold">{expiringSoonCount}</div>
             <p className="text-xs text-muted-foreground">
               {expiringSoonCount > 0 ? 
-                <Link to="/driver/trainings" className="text-amber-600 hover:underline">Requires attention</Link> :
+                <Link to="/driver/trainings" className="text-warning hover:underline">Requires attention</Link> :
                 "All certifications valid"
               }
             </p>
@@ -134,16 +134,16 @@ export function DriverDashboard() {
                       </p>
                     </div>
                     <div className={`px-2 py-1 rounded text-xs ${
-                      trip.approval_status === 'approved' ? 'bg-green-100 text-green-800' : 
-                      trip.approval_status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                      'bg-yellow-100 text-yellow-800'
+                      trip.approval_status === 'approved' ? 'bg-success/10 text-success' : 
+                      trip.approval_status === 'rejected' ? 'bg-destructive/10 text-destructive' : 
+                      'bg-warning/10 text-warning'
                     }`}>
                       {trip.approval_status}
                     </div>
                   </div>
                 ))}
                 <div className="text-center mt-2">
-                  <Link to="/trips" className="text-sm text-blue-600 hover:underline">
+                  <Link to="/trips" className="text-sm text-info hover:underline">
                     View all trips
                   </Link>
                 </div>
@@ -176,14 +176,14 @@ export function DriverDashboard() {
                         </p>
                       </div>
                       <div className={`px-2 py-1 rounded text-xs ${
-                        isExpiringWithin(training.expiry_date!, 30) ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'
+                        isExpiringWithin(training.expiry_date!, 30) ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'
                       }`}>
                         {isExpiringWithin(training.expiry_date!, 30) ? 'Expiring soon' : 'Valid'}
                       </div>
                     </div>
                   ))}
                 <div className="text-center mt-2">
-                  <Link to="/driver/trainings" className="text-sm text-blue-600 hover:underline">
+                  <Link to="/driver/trainings" className="text-sm text-info hover:underline">
                     View all certifications
                   </Link>
                 </div>

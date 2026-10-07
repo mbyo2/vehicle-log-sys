@@ -37,8 +37,8 @@ export function TrainingDetails({ training }: TrainingDetailsProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Expiry Date</p>
                 <p className={`font-medium ${
-                  expiryStatus.variant === 'destructive' ? 'text-red-600' :
-                  expiryStatus.variant === 'warning' ? 'text-amber-600' : ''
+                  expiryStatus.variant === 'destructive' ? 'text-destructive' :
+                  expiryStatus.variant === 'warning' ? 'text-warning' : ''
                 }`}>
                   {format(new Date(training.expiry_date), 'MMMM dd, yyyy')} 
                   {expiryStatus.variant !== 'success' && ` (${expiryStatus.label})`}
@@ -52,9 +52,9 @@ export function TrainingDetails({ training }: TrainingDetailsProps) {
             <div>
               <p className="text-sm text-muted-foreground">Status</p>
               <p className={`font-medium ${
-                expiryStatus.variant === 'destructive' ? 'text-red-600' :
-                expiryStatus.variant === 'warning' ? 'text-amber-600' :
-                'text-green-600'
+                expiryStatus.variant === 'destructive' ? 'text-destructive' :
+                expiryStatus.variant === 'warning' ? 'text-warning' :
+                'text-success'
               }`}>
                 {expiryStatus.label}
               </p>
