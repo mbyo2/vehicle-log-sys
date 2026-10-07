@@ -212,9 +212,9 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
                         </span>
                         <span className="mx-2">•</span>
                         <span className={`px-2 py-0.5 rounded-full text-xs ${
-                          service.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          service.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
+                          service.status === 'completed' ? 'bg-success/10 text-success' :
+                          service.status === 'in_progress' ? 'bg-info/10 text-info' :
+                          'bg-warning/10 text-warning'
                         }`}>
                           {service.status}
                         </span>

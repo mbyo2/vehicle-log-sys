@@ -116,8 +116,8 @@ export function SignUpForm({ isFirstUser }: SignUpFormProps) {
               </Alert>
             )}
             {successMessage && (
-              <Alert className="mb-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <Alert className="mb-4 bg-success/10 border-success/30 text-success">
+                <CheckCircle className="h-4 w-4 text-success" />
                 <AlertDescription>{successMessage}</AlertDescription>
               </Alert>
             )}

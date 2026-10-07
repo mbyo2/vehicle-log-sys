@@ -32,11 +32,11 @@ export const DocumentListItem = memo(function DocumentListItem({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-600">Verified</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success">Verified</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-600">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600">Pending</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning">Pending</Badge>;
     }
   };
 
@@ -106,7 +106,7 @@ export const DocumentListItem = memo(function DocumentListItem({
           )}
           <DropdownMenuItem 
             onClick={() => onDelete(document.id)}
-            className="text-red-600"
+            className="text-destructive"
           >
             <Trash className="mr-2 h-4 w-4" />
             Delete

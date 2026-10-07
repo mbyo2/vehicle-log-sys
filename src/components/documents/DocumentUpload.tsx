@@ -142,10 +142,10 @@ export function DocumentUpload({ companyId, vehicleId, driverId, onSuccess, rene
             onChange={handleFileChange}
             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
             required
-            className={fileError ? 'border-red-500' : ''}
+            className={fileError ? 'border-destructive' : ''}
           />
           {fileError && (
-            <p className="text-sm text-red-600">{fileError}</p>
+            <p className="text-sm text-destructive">{fileError}</p>
           )}
           <p className="text-xs text-muted-foreground">
             Supported formats: PDF, DOC, DOCX, JPG, PNG, GIF. Max size: 10MB

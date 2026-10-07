@@ -117,11 +117,11 @@ export function VehicleList({ onAddVehicle }: VehicleListProps = {}) {
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'maintenance':
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">Maintenance Due</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Maintenance Due</Badge>;
       case 'attention':
-        return <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300">Attention Required</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Attention Required</Badge>;
       default:
-        return <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Available</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">Available</Badge>;
     }
   };
 
@@ -280,21 +280,21 @@ export function VehicleList({ onAddVehicle }: VehicleListProps = {}) {
                   </div>
                   
                   {vehicle.needsService && (
-                    <div className="flex items-center text-yellow-700 bg-yellow-50 p-2 rounded text-xs">
+                    <div className="flex items-center text-warning bg-warning/10 p-2 rounded text-xs">
                       <Settings className="h-3 w-3 mr-1" />
                       Service due soon ({vehicle.service_interval - (vehicle.current_kilometers % vehicle.service_interval)} km remaining)
                     </div>
                   )}
                   
                   {vehicle.upcomingService && (
-                    <div className="flex items-center text-blue-700 bg-blue-50 p-2 rounded text-xs">
+                    <div className="flex items-center text-info bg-info/10 p-2 rounded text-xs">
                       <Clock className="h-3 w-3 mr-1" />
                       {vehicle.upcomingService.service_type} scheduled on {new Date(vehicle.upcomingService.booking_date).toLocaleDateString()}
                     </div>
                   )}
                   
                   {vehicle.hasExpiringDocs && (
-                    <div className="flex items-center text-red-700 bg-red-50 p-2 rounded text-xs">
+                    <div className="flex items-center text-destructive bg-destructive/10 p-2 rounded text-xs">
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       Documents expiring soon
                     </div>

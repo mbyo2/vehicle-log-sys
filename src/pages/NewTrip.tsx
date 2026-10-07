@@ -82,7 +82,7 @@ export default function NewTrip() {
         />
 
         {!isOnline && (
-          <Alert variant="default" className="bg-yellow-50 text-yellow-900 border-yellow-200">
+          <Alert variant="default" className="bg-warning/10 text-warning border-warning/30">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>You're working offline</AlertTitle>
             <AlertDescription>

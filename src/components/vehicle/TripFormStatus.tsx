@@ -21,23 +21,23 @@ export const TripFormStatus: React.FC<TripFormStatusProps> = ({
   const statusConfig = {
     approved: {
       icon: Check,
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
-      borderColor: 'border-green-200 dark:border-green-800',
-      textColor: 'text-green-700 dark:text-green-300',
+      bgColor: 'bg-success/10',
+      borderColor: 'border-success/30',
+      textColor: 'text-success',
       label: 'Approved'
     },
     pending: {
       icon: Clock,
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-      borderColor: 'border-yellow-200 dark:border-yellow-800',
-      textColor: 'text-yellow-700 dark:text-yellow-300',
+      bgColor: 'bg-warning/10',
+      borderColor: 'border-warning/30',
+      textColor: 'text-warning',
       label: 'Pending Approval'
     },
     rejected: {
       icon: AlertTriangle,
-      bgColor: 'bg-red-50 dark:bg-red-900/20',
-      borderColor: 'border-red-200 dark:border-red-800',
-      textColor: 'text-red-700 dark:text-red-300',
+      bgColor: 'bg-destructive/10',
+      borderColor: 'border-destructive/30',
+      textColor: 'text-destructive',
       label: 'Rejected'
     }
   };

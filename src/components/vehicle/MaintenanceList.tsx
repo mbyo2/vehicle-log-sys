@@ -70,14 +70,14 @@ export function MaintenanceList({ vehicle, showAllVehicles = false }: Maintenanc
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Completed</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success border-success/30">Completed</Badge>;
       case 'in_progress':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">In Progress</Badge>;
+        return <Badge variant="outline" className="bg-info/10 text-info border-info/30">In Progress</Badge>;
       case 'cancelled':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Cancelled</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">Cancelled</Badge>;
       case 'pending':
       default:
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">Pending</Badge>;
     }
   };
 

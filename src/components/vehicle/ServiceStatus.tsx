@@ -19,11 +19,11 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
       ((vehicle.current_kilometers || 0) - (vehicle.last_service_kilometers || 0));
     
     if (kilometersToNextService <= 0) {
-      return { text: 'Overdue for Service', color: 'bg-red-50 text-red-600' };
+      return { text: 'Overdue for Service', color: 'bg-destructive/10 text-destructive' };
     } else if (kilometersToNextService <= 500) {
-      return { text: 'Service Soon', color: 'bg-yellow-50 text-yellow-600' };
+      return { text: 'Service Soon', color: 'bg-warning/10 text-warning' };
     }
-    return { text: 'On Track', color: 'bg-green-50 text-green-600' };
+    return { text: 'On Track', color: 'bg-success/10 text-success' };
   };
 
   const getValidityStatus = (expiryDate: string | undefined) => {
@@ -32,17 +32,17 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
     const daysRemaining = differenceInDays(new Date(expiryDate), new Date());
     
     if (daysRemaining < 0) {
-      return { text: 'Expired', color: 'text-red-600', urgent: true };
+      return { text: 'Expired', color: 'text-destructive', urgent: true };
     } else if (daysRemaining <= 30) {
       return { 
         text: `${daysRemaining} days left`, 
-        color: 'text-yellow-600',
+        color: 'text-warning',
         urgent: daysRemaining <= 7 
       };
     }
     return { 
       text: `${daysRemaining} days left`, 
-      color: 'text-green-600',
+      color: 'text-success',
       urgent: false 
     };
   };
@@ -139,7 +139,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
           </CardContent>
         </Card>
 
-        <Card className={roadTaxStatus.urgent ? 'border-red-500 shadow-red-100' : ''}>
+        <Card className={roadTaxStatus.urgent ? 'border-destructive shadow-red-100' : ''}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -152,7 +152,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
                 </p>
               </div>
               {roadTaxStatus.urgent && (
-                <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />
+                <AlertCircle className="h-5 w-5 text-destructive animate-pulse" />
               )}
             </div>
             {vehicle.road_tax_expiry && (
@@ -163,7 +163,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
           </CardContent>
         </Card>
 
-        <Card className={insuranceStatus.urgent ? 'border-red-500 shadow-red-100' : ''}>
+        <Card className={insuranceStatus.urgent ? 'border-destructive shadow-red-100' : ''}>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -176,7 +176,7 @@ export const ServiceStatus = ({ vehicle }: ServiceStatusProps) => {
                 </p>
               </div>
               {insuranceStatus.urgent && (
-                <AlertCircle className="h-5 w-5 text-red-500 animate-pulse" />
+                <AlertCircle className="h-5 w-5 text-destructive animate-pulse" />
               )}
             </div>
             {vehicle.insurance_expiry && (

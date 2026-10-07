@@ -210,7 +210,7 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
                   <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
                   <span>Overdue Maintenance</span>
                 </div>
-                <div className="font-semibold text-red-500">
+                <div className="font-semibold text-destructive">
                   {data.maintenanceOverview.overdueMaintenanceCount}
                 </div>
               </div>

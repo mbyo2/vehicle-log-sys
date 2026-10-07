@@ -184,7 +184,7 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
                         .filter(item => item.priority === 'high')
                         .slice(0, 2)
                         .map((item, index) => (
-                          <Badge key={index} variant="outline" className="bg-red-50 text-red-600 border-red-200">
+                          <Badge key={index} variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
                             {item.item}
                           </Badge>
                         ))}
@@ -218,13 +218,13 @@ function MaintenanceDateBadge({ date }: { date: string }) {
   };
   
   if (isOverdue) {
-    badgeProps.className = "bg-red-50 text-red-600 border-red-200";
+    badgeProps.className = "bg-destructive/10 text-destructive border-destructive/30";
   } else if (diffDays <= 7) {
-    badgeProps.className = "bg-yellow-50 text-yellow-600 border-yellow-200";
+    badgeProps.className = "bg-warning/10 text-warning border-warning/30";
   } else if (diffDays <= 30) {
-    badgeProps.className = "bg-blue-50 text-blue-600 border-blue-200";
+    badgeProps.className = "bg-info/10 text-info border-info/30";
   } else {
-    badgeProps.className = "bg-green-50 text-green-600 border-green-200";
+    badgeProps.className = "bg-success/10 text-success border-success/30";
   }
   
   return (

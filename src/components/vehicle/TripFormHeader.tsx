@@ -27,8 +27,8 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
   return (
     <div className="space-y-3 mb-4">
       {!isOnline && (
-        <Alert className="bg-yellow-50 border-yellow-200">
-          <CloudOff className="h-4 w-4 text-yellow-600" />
+        <Alert className="bg-warning/10 border-warning/30">
+          <CloudOff className="h-4 w-4 text-warning" />
           <AlertTitle>Offline Mode</AlertTitle>
           <AlertDescription className={isMobile ? "text-sm" : ""}>
             You're currently offline. Trip logs will be saved locally and synchronized when you're back online.
@@ -37,8 +37,8 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
       )}
       
       {pendingRecords > 0 && (
-        <Alert className="bg-blue-50 border-blue-200">
-          <AlertTriangle className="h-4 w-4 text-blue-600" />
+        <Alert className="bg-info/10 border-info/30">
+          <AlertTriangle className="h-4 w-4 text-info" />
           <AlertTitle>Offline data pending sync</AlertTitle>
           <AlertDescription className={`${isMobile ? "text-sm flex flex-col space-y-2" : "flex justify-between items-center"}`}>
             <div>
@@ -47,7 +47,7 @@ export const TripFormHeader: React.FC<TripFormHeaderProps> = ({
             {isOnline && (
               <Button 
                 variant="outline" 
-                className={`${isMobile ? "w-full mt-2" : "ml-2 h-8"} bg-blue-100 hover:bg-blue-200 text-blue-700 border-blue-300`}
+                className={`${isMobile ? "w-full mt-2" : "ml-2 h-8"} bg-info/10 hover:bg-info/10 text-info border-info/30`}
                 onClick={syncOfflineData}
                 disabled={isSyncing}
                 size={isMobile ? "sm" : "default"}

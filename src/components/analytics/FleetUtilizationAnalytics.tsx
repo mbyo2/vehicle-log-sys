@@ -176,13 +176,13 @@ function UtilizationBadge({ percentage }: { percentage: number }) {
   };
   
   if (percentage >= 75) {
-    badgeProps.className = "bg-green-50 text-green-600 border-green-200";
+    badgeProps.className = "bg-success/10 text-success border-success/30";
   } else if (percentage >= 50) {
-    badgeProps.className = "bg-blue-50 text-blue-600 border-blue-200";
+    badgeProps.className = "bg-info/10 text-info border-info/30";
   } else if (percentage >= 25) {
-    badgeProps.className = "bg-yellow-50 text-yellow-600 border-yellow-200";
+    badgeProps.className = "bg-warning/10 text-warning border-warning/30";
   } else {
-    badgeProps.className = "bg-red-50 text-red-600 border-red-200";
+    badgeProps.className = "bg-destructive/10 text-destructive border-destructive/30";
   }
   
   return (

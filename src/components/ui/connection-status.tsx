@@ -27,12 +27,12 @@ export function ConnectionStatus({ className, showDetails = false }: ConnectionS
   if (!isOnline) {
     return (
       <div className={cn(
-        "flex items-center px-3 py-1 text-xs rounded-full bg-red-100 text-red-800", 
+        "flex items-center px-3 py-1 text-xs rounded-full bg-destructive/10 text-destructive", 
         className
       )}>
         <WifiOff className="h-3 w-3 mr-1" />
         <span className="mr-1">Offline</span>
-        {showDetails && <span className="text-xs text-red-600">(Sync disabled)</span>}
+        {showDetails && <span className="text-xs text-destructive">(Sync disabled)</span>}
       </div>
     );
   }
@@ -40,7 +40,7 @@ export function ConnectionStatus({ className, showDetails = false }: ConnectionS
   if (connectionQuality === 'poor') {
     return (
       <div className={cn(
-        "flex items-center px-3 py-1 text-xs rounded-full bg-amber-100 text-amber-800", 
+        "flex items-center px-3 py-1 text-xs rounded-full bg-warning/10 text-warning", 
         className
       )}>
         <SignalLow className="h-3 w-3 mr-1" />
@@ -56,7 +56,7 @@ export function ConnectionStatus({ className, showDetails = false }: ConnectionS
   
   return (
     <div className={cn(
-      "flex items-center px-3 py-1 text-xs rounded-full bg-green-100 text-green-800", 
+      "flex items-center px-3 py-1 text-xs rounded-full bg-success/10 text-success", 
       className
     )}>
       {connectionQuality === 'excellent' ? (

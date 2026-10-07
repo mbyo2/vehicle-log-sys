@@ -157,7 +157,7 @@ export function TripApprovals() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500">Approved</Badge>;
+        return <Badge className="bg-success">Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -236,7 +236,7 @@ export function TripApprovals() {
                         <div className="flex gap-2 mt-4">
                           <Button
                             onClick={() => handleApproval(trip.id, "approved")}
-                            className="bg-green-500 hover:bg-green-600"
+                            className="bg-success hover:bg-success"
                           >
                             <Check className="mr-2 h-4 w-4" />
                             Approve

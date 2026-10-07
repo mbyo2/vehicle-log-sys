@@ -44,7 +44,7 @@ export function ApprovalAgingCard({ rows, onDrillDown }: Props) {
                     <TableCell className="text-right">{r.total}</TableCell>
                     <TableCell className="text-right">{r.fresh}</TableCell>
                     <TableCell className="text-right">
-                      {r.aging > 0 ? <span className="text-amber-600 dark:text-amber-400">{r.aging}</span> : r.aging}
+                      {r.aging > 0 ? <span className="text-warning">{r.aging}</span> : r.aging}
                     </TableCell>
                     <TableCell className="text-right">
                       {r.overdue > 0 ? <span className="text-destructive font-medium">{r.overdue}</span> : r.overdue}

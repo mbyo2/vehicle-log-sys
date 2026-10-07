@@ -119,9 +119,9 @@ export function CompanyManagementWorkflow() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'in_progress':
-        return <Clock className="h-4 w-4 text-blue-600" />;
+        return <Clock className="h-4 w-4 text-info" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }
@@ -161,7 +161,7 @@ export function CompanyManagementWorkflow() {
           <Card 
             key={step.id} 
             className={`cursor-pointer hover:shadow-md transition-shadow ${
-              step.status === 'completed' ? 'border-green-200 bg-green-50/50' : ''
+              step.status === 'completed' ? 'border-success/30 bg-success/10' : ''
             }`}
             onClick={step.action}
           >

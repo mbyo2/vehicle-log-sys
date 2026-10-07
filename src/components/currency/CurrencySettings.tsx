@@ -31,7 +31,7 @@ export function CurrencySettings() {
                   </p>
                 </div>
                 {currency.is_default && (
-                  <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                  <span className="px-2 py-1 text-xs bg-success/10 text-success rounded-full">
                     Default
                   </span>
                 )}

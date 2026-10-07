@@ -25,15 +25,15 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const typeIcons: Record<string, React.ReactNode> = {
-  info: <Info className="h-4 w-4 text-blue-500" />,
-  success: <CheckCircle className="h-4 w-4 text-green-500" />,
-  warning: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
-  error: <AlertCircle className="h-4 w-4 text-red-500" />,
-  maintenance: <AlertTriangle className="h-4 w-4 text-orange-500" />,
-  document_expiry: <AlertCircle className="h-4 w-4 text-red-500" />,
-  approval_required: <Info className="h-4 w-4 text-blue-500" />,
-  vehicle_issue: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
-  urgent: <AlertCircle className="h-4 w-4 text-red-500" />,
+  info: <Info className="h-4 w-4 text-info" />,
+  success: <CheckCircle className="h-4 w-4 text-success" />,
+  warning: <AlertTriangle className="h-4 w-4 text-warning" />,
+  error: <AlertCircle className="h-4 w-4 text-destructive" />,
+  maintenance: <AlertTriangle className="h-4 w-4 text-warning" />,
+  document_expiry: <AlertCircle className="h-4 w-4 text-destructive" />,
+  approval_required: <Info className="h-4 w-4 text-info" />,
+  vehicle_issue: <AlertTriangle className="h-4 w-4 text-warning" />,
+  urgent: <AlertCircle className="h-4 w-4 text-destructive" />,
 };
 
 function NotificationItem({

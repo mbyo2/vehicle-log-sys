@@ -64,9 +64,9 @@ export function ProductionReadiness() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Completed</Badge>;
+        return <Badge className="bg-success/10 text-success">Completed</Badge>;
       case 'ready':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Ready</Badge>;
+        return <Badge className="bg-info/10 text-info">Ready</Badge>;
       default:
         return <Badge variant="outline">Pending</Badge>;
     }
@@ -100,7 +100,7 @@ export function ProductionReadiness() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div className="flex items-center space-x-2">
                 {step.status === 'completed' && (
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-success" />
                 )}
                 <CardTitle className="text-lg">{step.title}</CardTitle>
                 {getStatusBadge(step.status)}
@@ -128,44 +128,44 @@ export function ProductionReadiness() {
         ))}
       </div>
 
-      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+      <Card className="bg-info/10 border-info/30">
         <CardHeader>
-          <CardTitle className="text-blue-900 dark:text-blue-100">Quick Start Guide</CardTitle>
+          <CardTitle className="text-info">Quick Start Guide</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3">
             <div className="flex items-start space-x-3">
-              <Users className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Users className="h-5 w-5 text-info mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">1. Set up your team</h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <h4 className="font-medium text-info">1. Set up your team</h4>
+                <p className="text-sm text-info">
                   Create company admin accounts and invite supervisors and drivers
                 </p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Building className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Building className="h-5 w-5 text-info mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">2. Configure companies</h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <h4 className="font-medium text-info">2. Configure companies</h4>
+                <p className="text-sm text-info">
                   Set up company profiles, branding, and subscription types
                 </p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Settings className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Settings className="h-5 w-5 text-info mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">3. Configure authentication</h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <h4 className="font-medium text-info">3. Configure authentication</h4>
+                <p className="text-sm text-info">
                   Set up proper redirect URLs and email templates in Supabase
                 </p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+              <Shield className="h-5 w-5 text-info mt-0.5" />
               <div>
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">4. Review security</h4>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <h4 className="font-medium text-info">4. Review security</h4>
+                <p className="text-sm text-info">
                   Ensure all security policies are properly configured
                 </p>
               </div>

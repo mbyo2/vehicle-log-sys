@@ -154,9 +154,9 @@ export default function DriverDetails() {
               {licenseExpired ? (
                 <Badge variant="destructive">License expired</Badge>
               ) : licenseExpiringSoon ? (
-                <Badge className="bg-yellow-500 text-white">License expiring soon</Badge>
+                <Badge className="bg-warning text-white">License expiring soon</Badge>
               ) : driver.license_expiry ? (
-                <Badge className="bg-green-600 text-white">License valid</Badge>
+                <Badge className="bg-success text-white">License valid</Badge>
               ) : null}
             </div>
           </div>

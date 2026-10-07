@@ -116,7 +116,7 @@ export function VehicleStatus() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTriangle className="h-5 w-5 text-warning" />
               Pending Inspections
             </CardTitle>
           </CardHeader>
@@ -130,7 +130,7 @@ export function VehicleStatus() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-success" />
               Completed Today
             </CardTitle>
           </CardHeader>
@@ -147,7 +147,7 @@ export function VehicleStatus() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className="h-5 w-5 text-info" />
               Next Service Due
             </CardTitle>
           </CardHeader>

@@ -38,11 +38,11 @@ export function NotificationCenter() {
       case 'urgent':
         return <AlertCircle className="h-5 w-5 text-destructive" />;
       case 'vehicle_issue':
-        return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+        return <AlertTriangle className="h-5 w-5 text-warning" />;
       case 'document_expiry':
-        return <MailOpen className="h-5 w-5 text-amber-500" />;
+        return <MailOpen className="h-5 w-5 text-warning" />;
       case 'approval_required':
-        return <BellRing className="h-5 w-5 text-blue-500" />;
+        return <BellRing className="h-5 w-5 text-info" />;
       default:
         return <Bell className="h-5 w-5 text-muted-foreground" />;
     }

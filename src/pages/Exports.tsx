@@ -316,7 +316,7 @@ export function Exports() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center gap-3">
-              <FileSpreadsheet className="h-8 w-8 text-orange-500" />
+              <FileSpreadsheet className="h-8 w-8 text-warning" />
               <div>
                 <CardTitle className="text-lg">Fuel Logs</CardTitle>
                 <CardDescription>Refill history with prices, liters, stations, and per-vehicle cost tracking</CardDescription>
@@ -326,7 +326,7 @@ export function Exports() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center gap-3">
-              <FileSpreadsheet className="h-8 w-8 text-blue-500" />
+              <FileSpreadsheet className="h-8 w-8 text-info" />
               <div>
                 <CardTitle className="text-lg">Maintenance Records</CardTitle>
                 <CardDescription>Service history with costs, parts, and service types per vehicle</CardDescription>
@@ -336,7 +336,7 @@ export function Exports() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center gap-3">
-              <Building2 className="h-8 w-8 text-green-600" />
+              <Building2 className="h-8 w-8 text-success" />
               <div>
                 <CardTitle className="text-lg">Full Cost Ledger (ERP)</CardTitle>
                 <CardDescription>Combined fuel + maintenance + trip data with GL codes, ready for accounting import</CardDescription>

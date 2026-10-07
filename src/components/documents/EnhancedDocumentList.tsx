@@ -162,11 +162,11 @@ export function EnhancedDocumentList({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-600">Verified</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success">Verified</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-600">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600">Pending</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning">Pending</Badge>;
     }
   };
 
@@ -240,8 +240,8 @@ export function EnhancedDocumentList({
                     <TableCell>
                       {document.expiry_date ? (
                         <span className={cn(
-                          isExpired(document.expiry_date) && "text-red-600",
-                          isExpiringSoon(document.expiry_date) && "text-amber-600"
+                          isExpired(document.expiry_date) && "text-destructive",
+                          isExpiringSoon(document.expiry_date) && "text-warning"
                         )}>
                           {format(new Date(document.expiry_date), 'dd MMM yyyy')}
                           {isExpired(document.expiry_date) && " (Expired)"}
@@ -275,7 +275,7 @@ export function EnhancedDocumentList({
                               Verify
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-red-600">
+                          <DropdownMenuItem onClick={() => setDocToDelete(document.id)} className="text-destructive">
                             <Trash className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
@@ -291,7 +291,7 @@ export function EnhancedDocumentList({
               {filteredDocuments.map((document) => (
                 <div key={document.id} className="border rounded-lg p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <FileText className="h-8 w-8 text-blue-500" />
+                    <FileText className="h-8 w-8 text-info" />
                     {getStatusBadge(document.verification_status)}
                   </div>
                   <div>
@@ -302,8 +302,8 @@ export function EnhancedDocumentList({
                     <div className="text-sm">
                       <span className={cn(
                         "font-medium",
-                        isExpired(document.expiry_date) && "text-red-600",
-                        isExpiringSoon(document.expiry_date) && "text-amber-600"
+                        isExpired(document.expiry_date) && "text-destructive",
+                        isExpiringSoon(document.expiry_date) && "text-warning"
                       )}>
                         Expires: {format(new Date(document.expiry_date), 'dd MMM yyyy')}
                       </span>

@@ -87,7 +87,7 @@ export function MaintenanceSchedules() {
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'completed':
-        return <Badge className="bg-green-600 hover:bg-green-700 text-white">Completed</Badge>;
+        return <Badge className="bg-success hover:bg-success text-white">Completed</Badge>;
       case 'overdue':
         return <Badge variant="destructive">Overdue</Badge>;
       default:

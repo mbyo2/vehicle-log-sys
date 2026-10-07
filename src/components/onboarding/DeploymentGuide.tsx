@@ -117,9 +117,9 @@ function DeploymentContent({
         </p>
       </div>
 
-      <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950 dark:border-orange-800">
-        <AlertTriangle className="h-4 w-4 text-orange-600" />
-        <AlertDescription className="text-orange-800 dark:text-orange-200">
+      <Alert className="border-warning/30 bg-warning/10">
+        <AlertTriangle className="h-4 w-4 text-warning" />
+        <AlertDescription className="text-warning">
           <strong>Important:</strong> Configure authentication URLs before allowing users to sign up.
         </AlertDescription>
       </Alert>
@@ -176,7 +176,7 @@ function DeploymentContent({
                   {step.critical ? (
                     <Badge variant="destructive">Critical</Badge>
                   ) : step.status === "recommended" ? (
-                    <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                    <Badge className="bg-warning/10 text-warning">
                       Recommended
                     </Badge>
                   ) : (
@@ -211,15 +211,15 @@ function DeploymentContent({
         ))}
       </div>
 
-      <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+      <Card className="bg-success/10 border-success/30">
         <CardHeader>
-          <CardTitle className="text-green-900 dark:text-green-100">
+          <CardTitle className="text-success">
             <CheckCircle className="h-5 w-5 inline mr-2" />
             Ready to Deploy
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-green-800 dark:text-green-200 mb-4">
+          <p className="text-success mb-4">
             Your application is ready for production! Once you configure the authentication URLs,
             you can start inviting users and companies to use your fleet management system.
           </p>

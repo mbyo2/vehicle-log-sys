@@ -62,11 +62,11 @@ export function TestingGuide() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'critical':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return 'bg-destructive/10 text-destructive';
       case 'important':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+        return 'bg-warning/10 text-warning';
       default:
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-info/10 text-info';
     }
   };
 
@@ -79,9 +79,9 @@ export function TestingGuide() {
         </p>
       </div>
 
-      <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800">
-        <CheckCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800 dark:text-blue-200">
+      <Alert className="border-info/30 bg-info/10">
+        <CheckCircle className="h-4 w-4 text-info" />
+        <AlertDescription className="text-info">
           <strong>Start Here:</strong> Make sure authentication URLs are configured in Supabase before testing.
         </AlertDescription>
       </Alert>
@@ -119,9 +119,9 @@ export function TestingGuide() {
         ))}
       </div>
 
-      <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+      <Card className="bg-success/10 border-success/30">
         <CardHeader>
-          <CardTitle className="text-green-900 dark:text-green-100">Quick Test Checklist</CardTitle>
+          <CardTitle className="text-success">Quick Test Checklist</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 text-sm">

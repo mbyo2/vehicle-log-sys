@@ -37,7 +37,7 @@ export function SyncStatus({ className }: SyncStatusProps) {
               size="sm"
               className={cn(
                 "gap-1 text-xs", 
-                isSyncing ? "bg-blue-50" : "bg-amber-50"
+                isSyncing ? "bg-info/10" : "bg-warning/10"
               )}
               onClick={manualSync}
               disabled={isSyncing}
@@ -60,7 +60,7 @@ export function SyncStatus({ className }: SyncStatusProps) {
   // Show just an indicator when offline
   return (
     <div className={cn(
-      "flex items-center gap-1 px-2 py-1 text-xs bg-amber-50 text-amber-800 rounded-md",
+      "flex items-center gap-1 px-2 py-1 text-xs bg-warning/10 text-warning rounded-md",
       className
     )}>
       <AlertCircle className="h-3.5 w-3.5" />

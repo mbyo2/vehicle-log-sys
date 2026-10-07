@@ -44,11 +44,11 @@ export function DocumentWorkflow({ companyId }: DocumentWorkflowProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'verified':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       case 'pending':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-warning" />;
       default:
         return <FileText className="h-4 w-4 text-gray-500" />;
     }
@@ -57,11 +57,11 @@ export function DocumentWorkflow({ companyId }: DocumentWorkflowProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge variant="outline" className="bg-green-50 text-green-600">Verified</Badge>;
+        return <Badge variant="outline" className="bg-success/10 text-success">Verified</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-600">Rejected</Badge>;
+        return <Badge variant="outline" className="bg-destructive/10 text-destructive">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-600">Pending</Badge>;
+        return <Badge variant="outline" className="bg-warning/10 text-warning">Pending</Badge>;
     }
   };
 
@@ -75,7 +75,7 @@ export function DocumentWorkflow({ companyId }: DocumentWorkflowProps) {
     if (daysUntilExpiry < 0) {
       return <Badge variant="destructive" className="ml-2">Expired</Badge>;
     } else if (daysUntilExpiry <= 30) {
-      return <Badge variant="outline" className="bg-orange-50 text-orange-600 ml-2">Expires in {daysUntilExpiry} days</Badge>;
+      return <Badge variant="outline" className="bg-warning/10 text-warning ml-2">Expires in {daysUntilExpiry} days</Badge>;
     }
     return null;
   };
