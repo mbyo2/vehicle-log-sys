@@ -30,7 +30,8 @@ import {
   GraduationCap,
   TrendingUp,
   ExternalLink,
-, Fuel } from 'lucide-react';
+  Fuel,
+} from 'lucide-react';
 
 interface NavItem {
   title: string;

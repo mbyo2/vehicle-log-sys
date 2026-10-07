@@ -31,7 +31,8 @@ import {
   GraduationCap,
   Calendar,
   MapPin
-, Fuel } from 'lucide-react';
+  Fuel,
+} from 'lucide-react';
 
 interface NavItem {
   title: string;
