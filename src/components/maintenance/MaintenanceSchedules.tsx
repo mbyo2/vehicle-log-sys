@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -33,6 +34,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { EmptyState } from '@/components/ui/empty-state';
 
 export function MaintenanceSchedules() {
+  const { format: fmt } = useCompanyCurrency();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export function MaintenanceSchedules() {
                     </div>
                   </TableCell>
                   <TableCell>{getStatusBadge(schedule.status)}</TableCell>
-                  <TableCell>${schedule.estimated_cost || 0}</TableCell>
+                  <TableCell>{fmt(schedule.estimated_cost || 0)}</TableCell>
                   <TableCell className="text-right">
                     <Button 
                       variant="outline" 

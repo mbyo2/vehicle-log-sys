@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ interface ServiceHistoryDetailsProps {
 }
 
 export function ServiceHistoryDetails({ service }: ServiceHistoryDetailsProps) {
+  const { format: fmt } = useCompanyCurrency();
   const totalPartsCost = service.maintenance_parts?.reduce(
     (acc: number, part: any) => acc + (part.quantity_used * part.unit_cost),
     0
@@ -68,13 +70,13 @@ export function ServiceHistoryDetails({ service }: ServiceHistoryDetailsProps) {
                         {part.parts_inventory.part_name} ({part.parts_inventory.part_number})
                         x{part.quantity_used}
                       </span>
-                      <span>${part.quantity_used * part.unit_cost}</span>
+                      <span>{fmt(part.quantity_used * part.unit_cost)}</span>
                     </div>
                   ))}
                   <Separator />
                   <div className="flex justify-between font-medium">
                     <span>Total Parts Cost</span>
-                    <span>${totalPartsCost}</span>
+                    <span>{fmt(totalPartsCost)}</span>
                   </div>
                 </div>
               ) : (
@@ -86,7 +88,7 @@ export function ServiceHistoryDetails({ service }: ServiceHistoryDetailsProps) {
 
             <div className="flex justify-between font-medium">
               <span>Total Service Cost</span>
-              <span>${service.cost}</span>
+              <span>{fmt(service.cost)}</span>
             </div>
           </div>
         </CardContent>

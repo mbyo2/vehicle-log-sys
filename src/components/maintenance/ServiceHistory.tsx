@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -18,6 +19,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Loader2 } from 'lucide-react';
 
 export function ServiceHistory() {
+  const { format: fmt } = useCompanyCurrency();
   const [expandedService, setExpandedService] = useState<string | null>(null);
 
   const { data: services, isLoading, error, refetch } = useQuery({
@@ -119,7 +121,7 @@ export function ServiceHistory() {
                   <TableCell>{format(new Date(service.service_date), 'MMM dd, yyyy')}</TableCell>
                   <TableCell>{service.service_type}</TableCell>
                   <TableCell>{service.kilometers} km</TableCell>
-                  <TableCell>${service.cost}</TableCell>
+                  <TableCell>{fmt(service.cost)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" aria-label="View service details">
                       <FileText className="h-4 w-4" />

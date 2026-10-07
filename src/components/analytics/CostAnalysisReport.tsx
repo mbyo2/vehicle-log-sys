@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 import { CostAnalysisData } from '@/types/analytics';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ interface CostAnalysisReportProps {
 
 export function CostAnalysisReport({ data }: CostAnalysisReportProps) {
   // Calculate totals
+  const { format: fmt } = useCompanyCurrency();
   const totalFuelCosts = data.reduce((sum, vehicle) => sum + vehicle.fuelCosts, 0);
   const totalMaintenanceCosts = data.reduce((sum, vehicle) => sum + vehicle.maintenanceCosts, 0);
   const totalOverallCosts = data.reduce((sum, vehicle) => sum + vehicle.totalCosts, 0);
@@ -58,7 +60,7 @@ export function CostAnalysisReport({ data }: CostAnalysisReportProps) {
             <CardTitle className="text-sm font-medium">Total Fuel Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalFuelCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalFuelCosts)}</div>
           </CardContent>
         </Card>
         
@@ -67,7 +69,7 @@ export function CostAnalysisReport({ data }: CostAnalysisReportProps) {
             <CardTitle className="text-sm font-medium">Total Maintenance Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalMaintenanceCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalMaintenanceCosts)}</div>
           </CardContent>
         </Card>
         
@@ -76,7 +78,7 @@ export function CostAnalysisReport({ data }: CostAnalysisReportProps) {
             <CardTitle className="text-sm font-medium">Total Fleet Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalOverallCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalOverallCosts)}</div>
           </CardContent>
         </Card>
       </div>
@@ -183,13 +185,13 @@ export function CostAnalysisReport({ data }: CostAnalysisReportProps) {
               {data.map(vehicle => (
                 <TableRow key={vehicle.vehicleId}>
                   <TableCell className="font-medium">{vehicle.plateNumber}</TableCell>
-                  <TableCell>${vehicle.fuelCosts.toLocaleString()}</TableCell>
-                  <TableCell>${vehicle.maintenanceCosts.toLocaleString()}</TableCell>
-                  <TableCell>${vehicle.totalCosts.toLocaleString()}</TableCell>
+                  <TableCell>{fmt(vehicle.fuelCosts)}</TableCell>
+                  <TableCell>{fmt(vehicle.maintenanceCosts)}</TableCell>
+                  <TableCell>{fmt(vehicle.totalCosts)}</TableCell>
                   <TableCell>
-                    ${vehicle.costPerKilometer.toFixed(2)}/km
+                    {fmt(vehicle.costPerKilometer)}/km
                   </TableCell>
-                  <TableCell>${vehicle.monthlyAverageCost.toLocaleString()}</TableCell>
+                  <TableCell>{fmt(vehicle.monthlyAverageCost)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 import { 
   AnalyticsDashboardData 
@@ -12,6 +13,7 @@ interface AnalyticsDashboardProps {
 
 export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
   // Colors for charts
+  const { format: fmt } = useCompanyCurrency();
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
   
   // For the cost breakdown pie chart
@@ -57,7 +59,7 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${data.costBreakdown.totalCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(data.costBreakdown.totalCosts)}</div>
             <p className="text-xs text-muted-foreground">
               For the selected period
             </p>
@@ -219,7 +221,7 @@ export function AnalyticsDashboard({ data }: AnalyticsDashboardProps) {
                   <span>Est. Monthly Costs</span>
                 </div>
                 <div className="font-semibold">
-                  ${data.maintenanceOverview.estimatedMonthlyCosts.toLocaleString()}
+                  {fmt(data.maintenanceOverview.estimatedMonthlyCosts)}
                 </div>
               </div>
             </div>

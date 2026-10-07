@@ -1,3 +1,4 @@
+import { useCompanyCurrency } from "@/hooks/useCompanyCurrency";
 
 import { MaintenanceAnalysis } from '@/types/analytics';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ interface MaintenanceForecastingProps {
 
 export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
   // Calculate total past and projected costs
+  const { format: fmt } = useCompanyCurrency();
   const totalPastCosts = data.reduce((sum, vehicle) => sum + vehicle.pastCosts, 0);
   const totalProjectedCosts = data.reduce((sum, vehicle) => sum + vehicle.projectedCosts, 0);
   
@@ -68,7 +70,7 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
             <CardTitle className="text-sm font-medium">Historical Maintenance Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalPastCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalPastCosts)}</div>
           </CardContent>
         </Card>
         
@@ -77,7 +79,7 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
             <CardTitle className="text-sm font-medium">Projected Maintenance Costs</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalProjectedCosts.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{fmt(totalProjectedCosts)}</div>
           </CardContent>
         </Card>
         
@@ -174,8 +176,8 @@ export function MaintenanceForecasting({ data }: MaintenanceForecastingProps) {
                       <MaintenanceDateBadge date={vehicle.nextMaintenanceDate} />
                     )}
                   </TableCell>
-                  <TableCell>${vehicle.pastCosts.toLocaleString()}</TableCell>
-                  <TableCell>${vehicle.projectedCosts.toLocaleString()}</TableCell>
+                  <TableCell>{fmt(vehicle.pastCosts)}</TableCell>
+                  <TableCell>{fmt(vehicle.projectedCosts)}</TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {vehicle.maintenanceItems
