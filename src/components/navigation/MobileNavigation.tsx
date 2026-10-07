@@ -31,7 +31,7 @@ import {
   GraduationCap,
   Calendar,
   MapPin
-} from 'lucide-react';
+, Fuel } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -132,8 +132,14 @@ export function MobileNavigation() {
     },
     {
       title: 'My Trips',
-      href: '/trips',
+      href: '/driver/trips',
       icon: <Map className="h-5 w-5" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'My Fuel',
+      href: '/driver/fuel',
+      icon: <Fuel className="h-5 w-5" />,
       roles: ['driver'],
     },
     {

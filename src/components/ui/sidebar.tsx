@@ -30,7 +30,7 @@ import {
   GraduationCap,
   TrendingUp,
   ExternalLink,
-} from 'lucide-react';
+, Fuel } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -152,8 +152,14 @@ export function Sidebar() {
     },
     {
       title: 'My Trips',
-      href: '/trips',
+      href: '/driver/trips',
       icon: <Map className="mr-2 h-4 w-4" />,
+      roles: ['driver'],
+    },
+    {
+      title: 'My Fuel',
+      href: '/driver/fuel',
+      icon: <Fuel className="mr-2 h-4 w-4" />,
       roles: ['driver'],
     },
     {
