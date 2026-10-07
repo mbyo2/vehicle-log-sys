@@ -112,7 +112,7 @@ export function MessageList() {
                         <div className="flex items-center">
                           <div>
                             {!message.is_read && (
-                              <div className="h-2 w-2 rounded-full bg-info mr-2"></div>
+                              <div className="h-2 w-2 rounded-full bg-info text-info-foreground mr-2"></div>
                             )}
                           </div>
                           <div>From: {message.sender_name}</div>

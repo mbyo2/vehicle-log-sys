@@ -92,13 +92,13 @@ export function ServiceBookings() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-warning";
+        return "bg-warning text-warning-foreground";
       case "confirmed":
-        return "bg-success";
+        return "bg-success text-success-foreground";
       case "completed":
-        return "bg-info";
+        return "bg-info text-info-foreground";
       case "cancelled":
-        return "bg-destructive";
+        return "bg-destructive text-destructive-foreground";
       default:
         return "bg-gray-500";
     }

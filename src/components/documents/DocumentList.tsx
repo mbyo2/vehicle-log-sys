@@ -228,7 +228,7 @@ export function DocumentList({ vehicleId, driverId, showVerification = false }: 
                   setDocToDelete(null);
                 }
               }}
-              className="bg-destructive hover:bg-destructive"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive"
             >
               Delete
             </AlertDialogAction>

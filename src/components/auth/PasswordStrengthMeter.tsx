@@ -20,10 +20,10 @@ export function PasswordStrengthMeter({ password }: PasswordStrengthMeterProps) 
   };
 
   const getStrengthColor = (score: number): string => {
-    if (score <= 25) return "bg-destructive";
-    if (score <= 50) return "bg-warning";
-    if (score <= 75) return "bg-info";
-    return "bg-success";
+    if (score <= 25) return "bg-destructive text-destructive-foreground";
+    if (score <= 50) return "bg-warning text-warning-foreground";
+    if (score <= 75) return "bg-info text-info-foreground";
+    return "bg-success text-success-foreground";
   };
 
   return (

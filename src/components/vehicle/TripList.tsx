@@ -258,7 +258,7 @@ export function TripList({ filterType, trips: initialTrips, onRefresh }: TripLis
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-success">Approved</Badge>;
+        return <Badge className="bg-success text-success-foreground">Approved</Badge>;
       case "rejected":
         return <Badge variant="destructive">Rejected</Badge>;
       default:
