@@ -37,3 +37,9 @@ verify_jwt = false
 
 [functions.send-invitation]
 verify_jwt = false
+
+[functions.lenco-payments]
+verify_jwt = false
+
+[functions.lenco-webhook]
+verify_jwt = false
