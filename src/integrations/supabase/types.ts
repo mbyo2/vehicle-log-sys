@@ -275,11 +275,13 @@ export type Database = {
           branding_secondary_color: string | null
           created_at: string
           created_by: string | null
+          current_period_end: string | null
           id: string
           industry_type: string
           is_active: boolean | null
           logo_url: string | null
           name: string
+          subscription_status: string
           subscription_type: Database["public"]["Enums"]["subscription_type"]
           trial_end_date: string | null
           trial_start_date: string | null
@@ -290,11 +292,13 @@ export type Database = {
           branding_secondary_color?: string | null
           created_at?: string
           created_by?: string | null
+          current_period_end?: string | null
           id?: string
           industry_type?: string
           is_active?: boolean | null
           logo_url?: string | null
           name: string
+          subscription_status?: string
           subscription_type?: Database["public"]["Enums"]["subscription_type"]
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -305,11 +309,13 @@ export type Database = {
           branding_secondary_color?: string | null
           created_at?: string
           created_by?: string | null
+          current_period_end?: string | null
           id?: string
           industry_type?: string
           is_active?: boolean | null
           logo_url?: string | null
           name?: string
+          subscription_status?: string
           subscription_type?: Database["public"]["Enums"]["subscription_type"]
           trial_end_date?: string | null
           trial_start_date?: string | null
@@ -1790,6 +1796,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "service_centers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_payments: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          failure_reason: string | null
+          id: string
+          lenco_reference: string | null
+          paid_at: string | null
+          payment_type: string | null
+          period_end: string | null
+          period_start: string | null
+          reference: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          currency: string
+          failure_reason?: string | null
+          id?: string
+          lenco_reference?: string | null
+          paid_at?: string | null
+          payment_type?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          reference: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          failure_reason?: string | null
+          id?: string
+          lenco_reference?: string | null
+          paid_at?: string | null
+          payment_type?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          reference?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
