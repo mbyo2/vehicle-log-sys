@@ -14,6 +14,7 @@ import {
   Car,
   Users,
   Settings,
+  CreditCard,
   Building,
   ClipboardCheck,
   User,
@@ -172,6 +173,12 @@ export function MobileNavigation() {
       title: 'Integrations',
       href: '/integrations',
       icon: <Plug className="h-5 w-5" />,
+      roles: ['super_admin', 'company_admin'],
+    },
+    {
+      title: 'Billing',
+      href: '/billing',
+      icon: <CreditCard className="h-5 w-5" />,
       roles: ['super_admin', 'company_admin'],
     },
     {

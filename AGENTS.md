@@ -1,0 +1,1 @@
+- Payments: Lenco popup checkout; access is granted only server-side (lenco-payments verify + signed lenco-webhook re-querying Lenco), never from the browser callback. Why: client callbacks can be forged.

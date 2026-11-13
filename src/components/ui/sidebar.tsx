@@ -12,6 +12,7 @@ import {
   Car,
   Users,
   Settings,
+  CreditCard,
   Building,
   ClipboardCheck,
   User,
@@ -205,6 +206,12 @@ export function Sidebar() {
       title: 'Integrations',
       href: '/integrations',
       icon: <ExternalLink className="mr-2 h-4 w-4" />,
+      roles: ['super_admin', 'company_admin'],
+    },
+    {
+      title: 'Billing',
+      href: '/billing',
+      icon: <CreditCard className="mr-2 h-4 w-4" />,
       roles: ['super_admin', 'company_admin'],
     },
     {

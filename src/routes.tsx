@@ -23,6 +23,7 @@ const Documents = lazy(() => import("./pages/Documents"));
 const Maintenance = lazy(() => import("./pages/Maintenance").then(m => ({ default: m.Maintenance })));
 const AcceptInvitation = lazy(() => import("./pages/AcceptInvitation"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Billing = lazy(() => import("./pages/Billing"));
 const Settings = lazy(() => import("./pages/Settings").then(m => ({ default: m.Settings })));
 const ServiceBookings = lazy(() => import("./pages/ServiceBookings").then(m => ({ default: m.ServiceBookings })));
 const Trips = lazy(() => import("./pages/Trips").then(m => ({ default: m.Trips })));
@@ -108,6 +109,7 @@ export const router = createBrowserRouter([
           { path: "reports", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><Reports /></ProtectedRoute> },
           { path: "fuel", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin', 'supervisor']}><FuelManagement /></ProtectedRoute> },
           { path: "exports", element: <ProtectedRoute allowedRoles={['super_admin', 'company_admin']}><Exports /></ProtectedRoute> },
+          { path: "billing", element: <ProtectedRoute allowedRoles={['company_admin', 'super_admin']}><Billing /></ProtectedRoute> },
           { path: "settings", element: <ProtectedRoute allowedRoles={['company_admin', 'super_admin']}><Settings /></ProtectedRoute> },
           { path: "service-bookings", element: <ServiceBookings /> },
           { path: "new-trip", element: <ProtectedRoute allowedRoles={['driver', 'supervisor', 'company_admin', 'super_admin']}><NewTrip /></ProtectedRoute> },
