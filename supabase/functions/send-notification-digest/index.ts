@@ -104,11 +104,11 @@ const handler = async (req: Request): Promise<Response> => {
 
       if (!res.ok) {
         const error = await res.text();
-        console.error(`Failed to send digest to ${user.email}:`, error);
+        console.error(`Failed to send digest to user ${pref.user_id}:`, error);
         continue;
       }
 
-      console.log(`Sent digest with ${queuedNotifications.length} notifications to ${user.email}`);
+      console.log(`Sent digest with ${queuedNotifications.length} notifications to user ${pref.user_id}`);
 
       // Delete processed notifications from queue
       const notificationIds = queuedNotifications.map(n => n.id);

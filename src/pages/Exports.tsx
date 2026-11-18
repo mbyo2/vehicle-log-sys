@@ -212,7 +212,7 @@ export function Exports() {
       }
 
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
+      const ws = XLSX.utils.json_to_sheet(neutralizeFormulas(data));
       
       // Auto-size columns
       const colWidths = Object.keys(data[0]).map((key) => ({
@@ -348,4 +348,14 @@ export function Exports() {
       </div>
     </div>
   );
+}
+
+function neutralizeFormulas<T extends Record<string, any>>(rows: T[]): T[] {
+  return rows.map((row) => {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(row)) {
+      out[k] = typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    }
+    return out as T;
+  });
 }

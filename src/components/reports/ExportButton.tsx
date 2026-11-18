@@ -20,7 +20,7 @@ export function ExportButton({ data, filename, type = 'xlsx' }: ExportButtonProp
       setExporting(true);
       
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
+      const ws = XLSX.utils.json_to_sheet(neutralizeFormulas(data));
       XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
       
       if (type === 'xlsx') {
@@ -55,4 +55,13 @@ export function ExportButton({ data, filename, type = 'xlsx' }: ExportButtonProp
       {exporting ? "Exporting..." : "Export"}
     </Button>
   );
+}
+function neutralizeFormulas<T extends Record<string, any>>(rows: T[]): T[] {
+  return rows.map((row) => {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(row)) {
+      out[k] = typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    }
+    return out as T;
+  });
 }

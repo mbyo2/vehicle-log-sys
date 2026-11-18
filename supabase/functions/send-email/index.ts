@@ -50,6 +50,15 @@ const handler = async (req: Request): Promise<Response> => {
     if (type === 'welcome' && !isAdminRole(caller.role)) {
       return forbidden('Admin role required to send welcome emails');
     }
+    if (type === 'welcome' && caller.role !== 'super_admin') {
+      // Recipient must be an existing member of the caller's company
+      const { data: recipient } = await supabase
+        .from('profiles').select('id').ilike('email', String(email || '').trim())
+        .eq('company_id', caller.companyId ?? '').maybeSingle();
+      if (!recipient || !caller.companyId) {
+        return forbidden('Welcome emails can only be sent to members of your company');
+      }
+    }
     if ((type === 'verification' || type === 'password_reset')) {
       // Look up caller's email via admin client
       const { data: userRow } = await supabase.auth.admin.getUserById(caller.userId);
@@ -59,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`Sending ${type} email to ${email}`);
+    console.log(`Sending ${type} email`);
 
     let html = '';
     let subject = '';

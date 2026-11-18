@@ -226,9 +226,9 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (!res.ok) {
           const error = await res.text();
-          console.error(`Email sending failed for ${user.email}:`, error);
+          console.error(`Email sending failed for user ${user.id}:`, error);
         } else {
-          console.log(`Email sent to ${user.email}`);
+          console.log(`Email sent to user ${user.id}`);
         }
       }));
     }
@@ -305,7 +305,7 @@ async function sendSMS(phoneNumber: string, message: string) {
       throw new Error(`Twilio API error: ${errorDetails}`);
     }
     
-    console.log(`SMS sent successfully to ${phoneNumber}`);
+    console.log(`SMS sent successfully`);
   } catch (error) {
     console.error('Error sending SMS:', error);
   }

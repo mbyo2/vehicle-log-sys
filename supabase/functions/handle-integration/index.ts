@@ -66,7 +66,7 @@ serve(async (req) => {
 })
 
 async function handleFuelCardIntegration(action, payload, supabaseClient) {
-  console.log('Handling fuel card integration:', action, payload);
+  console.log('Handling fuel card integration:', action);
   
   switch (action) {
     case 'connect':
@@ -152,7 +152,7 @@ async function handleFuelCardIntegration(action, payload, supabaseClient) {
 }
 
 async function handleGPSIntegration(action, payload, supabaseClient) {
-  console.log('Handling GPS integration:', action, payload);
+  console.log('Handling GPS integration:', action);
   
   switch (action) {
     case 'update_location':
@@ -195,7 +195,7 @@ async function handleGPSIntegration(action, payload, supabaseClient) {
 }
 
 async function handleMaintenanceIntegration(action, payload, supabaseClient) {
-  console.log('Handling maintenance integration:', action, payload);
+  console.log('Handling maintenance integration:', action);
   
   switch (action) {
     case 'connect_provider':

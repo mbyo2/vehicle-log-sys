@@ -29,7 +29,7 @@ async function sendEmailNotification(
         html: htmlContent,
       }),
     });
-    console.log(`Email sent to ${to.join(', ')}`);
+    console.log(`Email sent to ${to.length} recipient(s)`);
   } catch (error) {
     console.error("Error sending email:", error);
     throw error;
