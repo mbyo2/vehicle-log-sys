@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { authRouteState } from '@/contexts/auth/routeState';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,8 +24,9 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   const currentUser = user.get();
   const currentProfile = profile.get();
   const isLoading = loading.get();
+  const routeState = authRouteState(currentUser, currentProfile, isLoading);
 
-  if (isLoading) {
+  if (routeState === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center animate-fade-in">
         <div className="text-center space-y-4">

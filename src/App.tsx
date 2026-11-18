@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Outlet } from "react-router-dom";
-import { PerformanceMonitor } from "@/components/ui/performance-monitor";
 import { SecurityValidationWrapper } from "@/components/security/SecurityValidationWrapper";
 import { CompanyBrandingProvider } from "@/components/branding/CompanyBrandingProvider";
 
@@ -15,7 +14,6 @@ const App = () => (
           <Outlet />
           <Toaster />
           <Sonner />
-          <PerformanceMonitor />
         </div>
       </CompanyBrandingProvider>
     </SecurityValidationWrapper>

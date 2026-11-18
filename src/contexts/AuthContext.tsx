@@ -111,14 +111,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (event !== 'INITIAL_SESSION' && !alreadyLoaded) {
           authState.loading.set(true);
-          fetchUserProfile(session.user.id)
+          // Run outside the Supabase auth callback so database requests do not
+          // wait on the auth lock that this callback currently owns.
+          setTimeout(() => {
+            if (!mounted || authState.user.peek()?.id !== session.user.id) return;
+            fetchUserProfile(session.user.id)
             .then(profileData => {
-              if (mounted && profileData) authState.profile.set(profileData);
+              if (mounted && authState.user.peek()?.id === session.user.id) authState.profile.set(profileData);
             })
             .catch(err => console.error('[Auth] Profile re-fetch error:', err))
             .finally(() => {
               if (mounted) authState.loading.set(false);
             });
+          }, 0);
         } else if (bootstrapDone && authState.loading.get()) {
           // Defensive: only after bootstrap has finished resolving the profile.
           authState.loading.set(false);

@@ -5,15 +5,18 @@ import { SignInForm } from '@/components/auth/SignInForm';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { Navigate } from 'react-router-dom';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { authRouteState } from '@/contexts/auth/routeState';
+import { Button } from '@/components/ui/button';
 
 export default function SignIn() {
-  const { user, loading } = useEnhancedAuth();
+  const { user, profile, loading, refetchProfile, signOut } = useEnhancedAuth();
+  const routeState = authRouteState(user, profile, loading);
 
   useEffect(() => {
     document.title = 'Sign In to Fleet Manager';
   }, []);
 
-  if (loading) {
+  if (routeState === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background animate-fade-in">
         <div className="flex flex-col items-center space-y-4">
@@ -24,8 +27,21 @@ export default function SignIn() {
     );
   }
 
-  if (user) {
+  if (routeState === 'ready') {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  if (routeState === 'profile-error') {
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background p-4">
+        <h1 className="text-xl font-semibold">Your account could not be loaded</h1>
+        <p className="text-muted-foreground text-center">Check your connection and try again.</p>
+        <div className="flex gap-3">
+          <Button onClick={() => void refetchProfile()}>Try again</Button>
+          <Button variant="outline" onClick={() => void signOut()}>Sign out</Button>
+        </div>
+      </main>
+    );
   }
 
   return (

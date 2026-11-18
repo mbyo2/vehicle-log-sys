@@ -25,6 +25,8 @@ export const fetchUserProfile = (userId: string) => {
 };
 
 const fetchUserProfileImpl = async (userId: string) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
   const t0 = performance.now();
   const mark = (label: string, start: number) =>
     console.log(`[Auth][timing] ${label}: ${(performance.now() - start).toFixed(0)}ms (fp total ${(performance.now() - t0).toFixed(0)}ms)`);
@@ -37,8 +39,8 @@ const fetchUserProfileImpl = async (userId: string) => {
     // Round-trip 1: profile + user's companies in parallel
     const tRt1 = performance.now();
     const [profileRes, companiesRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
-      supabase.rpc('get_user_companies', { p_user_id: userId }),
+      supabase.from('profiles').select('*').eq('id', userId).abortSignal(controller.signal).maybeSingle(),
+      supabase.rpc('get_user_companies', { p_user_id: userId }).abortSignal(controller.signal),
     ]);
     mark('rt1:profile+get_user_companies', tRt1);
 
@@ -70,11 +72,15 @@ const fetchUserProfileImpl = async (userId: string) => {
           .select('role')
           .eq('user_id', userId)
           .eq('company_id', targetCompanyId)
+          .order('role', { ascending: true })
+          .limit(1)
+          .abortSignal(controller.signal)
           .maybeSingle(),
         supabase
           .from('companies')
           .select('industry_type')
           .eq('id', targetCompanyId)
+          .abortSignal(controller.signal)
           .maybeSingle(),
       ]);
       mark('rt2:user_roles+companies', tRt2);
@@ -95,6 +101,7 @@ const fetchUserProfileImpl = async (userId: string) => {
       .eq('user_id', userId)
       .order('role', { ascending: true })
       .limit(1)
+      .abortSignal(controller.signal)
       .maybeSingle();
     mark('fallback:user_roles', tFb);
 
@@ -108,5 +115,7 @@ const fetchUserProfileImpl = async (userId: string) => {
   } catch (err) {
     console.error('[Auth] Profile fetch failed:', err);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 };

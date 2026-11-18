@@ -1,1 +1,3 @@
 - Payments: Lenco popup checkout; access is granted only server-side (lenco-payments verify + signed lenco-webhook re-querying Lenco), never from the browser callback. Why: client callbacks can be forged.
+- Authentication: AuthContext owns session loading; useEnhancedAuth only derives permissions from it, and sign-in redirects require a loaded profile. Why: independent auth stores caused redirect loops and duplicate slow queries.
+- Auth callbacks must defer database requests until after the callback returns, with bounded profile requests. Why: Supabase auth locks can stall requests inside auth listeners.

@@ -25,7 +25,7 @@ import {
 const integrationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   type: z.string(),
-  config: z.record(z.string()),
+  config: z.record(z.string(), z.string()),
 });
 
 type IntegrationFormValues = z.infer<typeof integrationSchema>;
