@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "../_shared/pwned.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,6 +45,13 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "Invalid or expired invitation" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (await isPasswordPwned(password)) {
+      return new Response(
+        JSON.stringify({ error: PWNED_PASSWORD_MESSAGE }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 

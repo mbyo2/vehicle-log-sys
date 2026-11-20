@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.8";
 import { isInternalCaller } from "../_shared/auth.ts";
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "../_shared/pwned.ts";
 
 
 const corsHeaders: Record<string, string> = {
@@ -300,6 +301,8 @@ serve(async (req) => {
         return json(500, { error: e instanceof Error ? e.message : "Failed to find user" });
       }
       if (!userId) return json(404, { error: "User not found" });
+
+      if (await isPasswordPwned(newPassword)) return json(400, { error: PWNED_PASSWORD_MESSAGE });
 
       const { error: updateError } = await admin.auth.admin.updateUserById(userId, { password: newPassword });
       if (updateError) return json(500, { error: updateError.message });

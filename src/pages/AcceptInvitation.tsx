@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "@/lib/pwnedPassword";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,6 +88,9 @@ export default function AcceptInvitation() {
     if (!invitation || !token) return;
     setAccepting(true);
     try {
+      if (await isPasswordPwned(values.password)) {
+        throw new Error(PWNED_PASSWORD_MESSAGE);
+      }
       const { data, error: fnError } = await supabase.functions.invoke('accept-invitation', {
         body: { token, password: values.password, fullName: values.fullName },
       });
