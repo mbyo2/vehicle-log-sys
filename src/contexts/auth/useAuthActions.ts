@@ -1,3 +1,4 @@
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "@/lib/pwnedPassword";
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -156,6 +157,10 @@ export const useAuthActions = () => {
       const passwordValidation = SecurityUtils.validatePassword(password);
       if (!passwordValidation.isValid) {
         return { success: false, error: `Password requirements not met: ${passwordValidation.feedback.join(', ')}` };
+      }
+
+      if (await isPasswordPwned(password)) {
+        return { success: false, error: PWNED_PASSWORD_MESSAGE };
       }
 
       const sanitizedEmail = emailValidation.sanitized;

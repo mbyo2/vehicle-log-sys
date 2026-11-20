@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "@/lib/pwnedPassword";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -102,6 +103,10 @@ export default function ResetPassword() {
     setError(null);
 
     try {
+      if (await isPasswordPwned(values.password)) {
+        throw new Error(PWNED_PASSWORD_MESSAGE);
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: values.password,
       });

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { isPasswordPwned, PWNED_PASSWORD_MESSAGE } from "@/lib/pwnedPassword";
 import { supabase } from '@/integrations/supabase/client';
 import { SecurityUtils } from '@/lib/security';
 import { useToast } from '@/hooks/use-toast';
@@ -144,6 +145,11 @@ export function useSecureAuth() {
           });
           return false;
         }
+      }
+
+      if (await isPasswordPwned(newPassword)) {
+        toast({ variant: "destructive", title: "Password not allowed", description: PWNED_PASSWORD_MESSAGE });
+        return false;
       }
 
       const { error } = await supabase.auth.updateUser({
