@@ -4,17 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2, Calendar, AlarmClock } from 'lucide-react';
+import { Loader2, Calendar, AlarmClock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-
-interface MaintenanceProvider {
-  id: string;
-  name: string;
-  type: string;
-}
 
 interface ScheduledMaintenance {
   id: string;
@@ -25,48 +18,21 @@ interface ScheduledMaintenance {
 }
 
 export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: string }) => {
-  const [providers, setProviders] = useState<MaintenanceProvider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [providerName, setProviderName] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
   const [scheduledServices, setScheduledServices] = useState<ScheduledMaintenance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Fetch available maintenance providers
-  useEffect(() => {
-    const fetchProviders = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Simulate API call to get maintenance providers
-        // In a real implementation, this would come from the database or an external API
-        setTimeout(() => {
-          setProviders([
-            { id: 'provider1', name: 'AutoCare Services', type: 'general' },
-            { id: 'provider2', name: 'TireWorks', type: 'tires' },
-            { id: 'provider3', name: 'ElectricalExperts', type: 'electrical' },
-            { id: 'provider4', name: 'FastLube', type: 'oil_change' }
-          ]);
-          setIsLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error fetching providers:', error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchProviders();
-  }, []);
-
   // Fetch scheduled maintenance for the vehicle
   useEffect(() => {
     const fetchScheduledMaintenance = async () => {
       if (!vehicleId) return;
-      
+
       try {
         setIsLoading(true);
-        
+
         const result = await supabase.functions.invoke('handle-integration', {
           body: {
             type: 'maintenance',
@@ -76,9 +42,9 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
             }
           }
         });
-        
+
         if (result.error) throw new Error(result.error.message);
-        
+
         // Process the result data
         setScheduledServices(result.data || []);
       } catch (error) {
@@ -94,30 +60,30 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
   }, [vehicleId]);
 
   const connectProvider = async () => {
-    if (!selectedProvider || !accountNumber || !vehicleId) return;
+    if (!providerName.trim() || !accountNumber || !vehicleId) return;
 
     try {
       setIsConnecting(true);
-      
+
       const result = await supabase.functions.invoke('handle-integration', {
         body: {
           type: 'maintenance',
           action: 'connect_provider',
           payload: {
             vehicleId,
-            providerId: selectedProvider,
+            providerName: providerName.trim(),
             accountNumber
           }
         }
       });
-      
+
       if (result.error) throw new Error(result.error.message);
-      
+
       toast({
-        title: "Provider connected",
-        description: "Maintenance provider has been successfully connected"
+        title: "Provider saved",
+        description: result.data?.message || `${providerName.trim()} saved for this vehicle`
       });
-      
+
       // Refresh the scheduled maintenance data
       const scheduleResult = await supabase.functions.invoke('handle-integration', {
         body: {
@@ -126,7 +92,7 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
           payload: { vehicleId }
         }
       });
-      
+
       if (!scheduleResult.error) {
         setScheduledServices(scheduleResult.data || []);
       }
@@ -135,7 +101,7 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
       toast({
         variant: "destructive",
         title: "Connection failed",
-        description: error.message || "Could not connect to the maintenance provider"
+        description: error.message || "Could not save the maintenance provider"
       });
     } finally {
       setIsConnecting(false);
@@ -151,21 +117,15 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="provider">Select Maintenance Provider</Label>
-              <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                <SelectTrigger id="provider">
-                  <SelectValue placeholder="Select a provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  {providers.map(provider => (
-                    <SelectItem key={provider.id} value={provider.id}>
-                      {provider.name} - {provider.type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="providerName">Maintenance Provider Name</Label>
+              <Input
+                id="providerName"
+                placeholder="e.g. your workshop or servicing partner"
+                value={providerName}
+                onChange={(e) => setProviderName(e.target.value)}
+              />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="accountNumber">Account/Reference Number</Label>
               <Input
@@ -175,18 +135,24 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
                 onChange={(e) => setAccountNumber(e.target.value)}
               />
             </div>
-            
-            <Button 
-              onClick={connectProvider} 
-              disabled={isConnecting || !selectedProvider || !accountNumber}
+
+            <Button
+              onClick={connectProvider}
+              disabled={isConnecting || !providerName.trim() || !accountNumber}
             >
               {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Connect Provider
+              Save Provider
             </Button>
+
+            <p className="text-xs text-muted-foreground">
+              Saving a provider records it against this vehicle. Service jobs are only
+              listed here once they exist in your maintenance schedule — nothing is
+              invented automatically.
+            </p>
           </div>
-          
+
           <Separator />
-          
+
           <div>
             <h3 className="text-lg font-medium mb-2">Scheduled Maintenance</h3>
             {isLoading ? (
@@ -225,7 +191,8 @@ export const MaintenanceProviderIntegration = ({ vehicleId }: { vehicleId?: stri
               </div>
             ) : (
               <p className="text-muted-foreground text-sm">
-                No scheduled maintenance found. Connect with a provider to view scheduled services.
+                No scheduled maintenance for this vehicle yet. Add one from the
+                Maintenance page.
               </p>
             )}
           </div>

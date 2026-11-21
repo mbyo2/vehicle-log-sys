@@ -71,10 +71,11 @@ export const FuelCardIntegration = ({ vehicleId }: { vehicleId?: string }) => {
       });
       
       if (result.error) throw new Error(result.error.message);
-      
+
+      const imported = result.data?.imported ?? 0;
       toast({
-        title: "Transactions synced",
-        description: "Fuel card transactions have been successfully synced"
+        title: imported > 0 ? "Transactions synced" : "Nothing imported",
+        description: result.data?.message || "No live fuel card provider is connected yet, so no transactions were imported."
       });
     } catch (error: any) {
       console.error('Error syncing transactions:', error);
