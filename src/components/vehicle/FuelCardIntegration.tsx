@@ -38,16 +38,16 @@ export const FuelCardIntegration = ({ vehicleId }: { vehicleId?: string }) => {
       
       setIsConnected(true);
       toast({
-        title: "Fuel card connected",
-        description: "Fuel card has been successfully linked to this vehicle"
+        title: "Details saved",
+        description: "Fuel card details saved for this vehicle. No live fuel card provider is connected yet."
       });
     } catch (error: any) {
       console.error('Error connecting fuel card:', error);
-      setError(error.message || 'Failed to connect fuel card');
+      setError(error.message || 'Failed to save fuel card details');
       toast({
         variant: "destructive",
-        title: "Connection failed",
-        description: error.message || "Could not connect the fuel card"
+        title: "Save failed",
+        description: error.message || "Could not save fuel card details"
       });
     } finally {
       setIsConnecting(false);
@@ -107,9 +107,9 @@ export const FuelCardIntegration = ({ vehicleId }: { vehicleId?: string }) => {
           <div className="space-y-4">
             <Alert className="bg-primary/10 border-primary/20">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <AlertTitle>Connected</AlertTitle>
+              <AlertTitle>Details saved</AlertTitle>
               <AlertDescription>
-                Fuel card is connected to this vehicle
+                Fuel card details are saved for this vehicle. No live fuel card provider is connected yet.
               </AlertDescription>
             </Alert>
             
@@ -132,7 +132,7 @@ export const FuelCardIntegration = ({ vehicleId }: { vehicleId?: string }) => {
             
             <Button onClick={connectFuelCard} disabled={isConnecting || !cardNumber}>
               {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Connect Fuel Card
+              Save Card Details
             </Button>
           </div>
         )}
